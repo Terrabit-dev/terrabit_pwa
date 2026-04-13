@@ -34,6 +34,8 @@ interface SeccionCard {
   subtitleKey: string;
   path: string;
   icon: React.ReactNode;
+  color: string;
+  bgColor: string;
 }
 
 export default function HomeBovinos() {
@@ -47,24 +49,32 @@ export default function HomeBovinos() {
       subtitleKey: "bovinos.listar_sub",
       path:        "/home/bovinos/listar",
       icon:        <IconListar />,
+      color: "text-main-orange",
+      bgColor: "bg-main-orange-bg",
     },
     {
       titleKey:    "bovinos.gestion",
       subtitleKey: "bovinos.gestion_sub",
       path:        "/home/bovinos/gestion",
       icon:        <IconGestion />,
+      color: "text-main-green",
+      bgColor: "bg-main-green-bg",
     },
     {
       titleKey:    "bovinos.guias_movimientos",
       subtitleKey: "bovinos.guias_movimientos_sub",
       path:        "/home/bovinos/guias-movimientos",
       icon:        <IconGuias />,
+      color: "text-main-orange",
+      bgColor: "bg-main-orange-bg",
     },
     {
       titleKey:    "bovinos.material",
       subtitleKey: "bovinos.material_sub",
       path:        "/home/bovinos/material-categoria",
       icon:        <IconMaterial />,
+      color: "text-main-green",
+      bgColor: "bg-main-green-bg",
     }
   ];
 
@@ -79,7 +89,7 @@ export default function HomeBovinos() {
             onClick={() => router.push(seccion.path)}
             className="bg-white rounded-2xl p-4 shadow-sm flex items-center gap-4 active:scale-95 transition-transform text-left w-full"
           >
-            <div className="bg-main-green-bg text-main-green p-3 rounded-xl shrink-0">
+            <div className={`${seccion.bgColor} ${seccion.color} p-3 rounded-xl shrink-0`}>
               {seccion.icon}
             </div>
             <div className="flex-1">
