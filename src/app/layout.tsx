@@ -8,6 +8,10 @@ export const metadata: Metadata = {
   title: "Terrabit",
   description: "Gestió ramadera - Bovins i Porcins",
   manifest: "/manifest.json",
+  icons: {
+    icon: "/public/images/terrabit_prime_sin_letra.png",
+    apple: "/public/images/terrabit_prime_sin_letra.png",
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
