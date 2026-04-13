@@ -1,0 +1,54 @@
+{
+  "app_name": "Terrabit",
+  "login": {
+    "title": "Iniciar sessió",
+    "nif": "NIF",
+    "password": "Contrasenya",
+    "btn_login": "Accedir",
+    "btn_next": "Següent",
+    "error_empty_fields": "Si us plau, omple tots els camps",
+    "error_invalid_credentials": "Credencials incorrectes",
+    "codiMO": "Codi MO"
+  },
+  "nav": {
+    "bovinos": "Bovins",
+    "porcinos": "Porcins",
+    "historial": "Historial",
+    "borradores": "Esborranys",
+    "configuracion": "Configuració",
+    "cerrar_sesion": "Tancar sessió"
+  },
+  "bovinos": {
+    "title": "Bovins",
+    "nacimiento": "Naixement",
+    "fallecimiento": "Defunció",
+    "correccion_sexo": "Correcció de sexe",
+    "guias": "Gestió de guies",
+    "movimientos": "Moviments",
+    "material": "Material",
+    "listar": "Llistar animals",
+    "nacimiento_sub": "Registrar nou naixement",
+    "fallecimiento_sub": "Reportar mort d'animal",
+    "correccion_sexo_sub": "Corregir sexe d'animal",
+    "guias_sub": "Gestió de guies de trasllat",
+    "movimientos_sub": "Confirmar moviments",
+    "material_sub": "Sol·licitar material identificatiu",
+    "listar_sub": "Veure llistat d'animals"
+  },
+  "porcinos": {
+    "title": "Porcins",
+    "guias": "Gestió de guies",
+    "listar": "Llistar guies"
+  },
+  "common": {
+    "btn_send": "Enviar",
+    "btn_cancel": "Cancel·lar",
+    "btn_save": "Desar",
+    "btn_delete": "Eliminar",
+    "loading": "Carregant...",
+    "error_generic": "S'ha produït un error",
+    "error_network": "Error de connexió",
+    "success": "Operació completada correctament",
+    "no_data": "Sense dades"
+  }
+}

@@ -1,0 +1,54 @@
+{
+  "app_name": "Terrabit",
+  "login": {
+    "title": "Iniciar sesión",
+    "nif": "NIF",
+    "password": "Contraseña",
+    "btn_login": "Acceder",
+    "btn_next": "Siguiente",
+    "error_empty_fields": "Por favor, rellena todos los campos",
+    "error_invalid_credentials": "Credenciales incorrectas",
+    "codiMO": "Código MO"
+  },
+  "nav": {
+    "bovinos": "Bovinos",
+    "porcinos": "Porcinos",
+    "historial": "Historial",
+    "borradores": "Borradores",
+    "configuracion": "Configuración",
+    "cerrar_sesion": "Cerrar sesión"
+  },
+  "bovinos": {
+    "title": "Bovinos",
+    "nacimiento": "Nacimiento",
+    "fallecimiento": "Fallecimiento",
+    "correccion_sexo": "Corrección de sexo",
+    "guias": "Gestión de guías",
+    "movimientos": "Movimientos",
+    "material": "Material",
+    "listar": "Listar animales",
+    "nacimiento_sub": "Registrar nuevo nacimiento",
+    "fallecimiento_sub": "Reportar muerte de animal",
+    "correccion_sexo_sub": "Corregir sexo de animal",
+    "guias_sub": "Gestión de guías de traslado",
+    "movimientos_sub": "Confirmar movimientos",
+    "material_sub": "Solicitar material identificativo",
+    "listar_sub": "Ver listado de animales"
+  },
+  "porcinos": {
+    "title": "Porcinos",
+    "guias": "Gestión de guías",
+    "listar": "Listar guías"
+  },
+  "common": {
+    "btn_send": "Enviar",
+    "btn_cancel": "Cancelar",
+    "btn_save": "Guardar",
+    "btn_delete": "Eliminar",
+    "loading": "Cargando...",
+    "error_generic": "Ha ocurrido un error",
+    "error_network": "Error de conexión",
+    "success": "Operación completada correctamente",
+    "no_data": "Sin datos"
+  }
+}
