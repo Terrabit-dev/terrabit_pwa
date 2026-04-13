@@ -8,6 +8,10 @@ export interface Credentials {
   rememberMe: boolean;
 }
 
+function isClient(): boolean {
+  return typeof window !== "undefined";
+}
+
 function encode(data: string): string {
   return btoa(unescape(encodeURIComponent(data)));
 }
@@ -17,11 +21,13 @@ function decode(data: string): string {
 }
 
 export function saveCredentials(credentials: Credentials): void {
+  if (!isClient()) return;
   const encoded = encode(JSON.stringify(credentials));
   localStorage.setItem(CREDENTIALS_KEY, encoded);
 }
 
 export function getCredentials(): Credentials | null {
+  if (!isClient()) return null;
   try {
     const encoded = localStorage.getItem(CREDENTIALS_KEY);
     if (!encoded) return null;
@@ -32,14 +38,17 @@ export function getCredentials(): Credentials | null {
 }
 
 export function clearCredentials(): void {
+  if (!isClient()) return;
   localStorage.removeItem(CREDENTIALS_KEY);
 }
 
 export function isAuthenticated(): boolean {
+  if (!isClient()) return false;
   return getCredentials() !== null;
 }
 
 export function addCodiMO(codigo: string): void {
+  if (!isClient()) return;
   const credentials = getCredentials();
   if (!credentials) return;
   if (!credentials.codiMOList.includes(codigo)) {

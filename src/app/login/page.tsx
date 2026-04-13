@@ -53,14 +53,12 @@ export default function LoginPage() {
 
       {/* Logo */}
       <div className="mb-6 flex flex-col items-center">
-        <div className="w-16 h-16 rounded-2xl bg-main-green-bg flex items-center justify-center mb-3 shadow-sm">
-          <svg viewBox="0 0 64 64" className="w-10 h-10" fill="none">
-            <circle cx="32" cy="32" r="30" fill="#E8F5E9" />
-            <path d="M20 44 C20 30 32 18 44 18" stroke="#2E7D32" strokeWidth="4" strokeLinecap="round"/>
-            <path d="M32 44 C32 36 38 28 46 26" stroke="#43A047" strokeWidth="3" strokeLinecap="round"/>
-            <circle cx="22" cy="42" r="4" fill="#2E7D32" />
-            <circle cx="34" cy="36" r="3" fill="#43A047" />
-          </svg>
+        <div className="w-20 h-20 rounded-2xl bg-main-green-bg flex items-center justify-center mb-3 shadow-sm">
+          <img
+            src="/images/terrabit_prime_sin_letra.png"
+            alt="Terrabit logo"
+            className="w-16 h-16 object-contain"
+          />
         </div>
         <h1 className="text-3xl font-bold text-dark-blue-grey">Terrabit</h1>
         <p className="text-sm text-main-green font-medium mt-1">
