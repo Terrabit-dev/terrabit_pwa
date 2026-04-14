@@ -39,6 +39,20 @@
     "movimientos": "Movimientos",
     "movimientos_sub": "Confirmar movimientos"
   },
+  "gestion": {
+    "title" : "Gestión de Bovinos",
+    "nacimiento": "Registrar nacimiento",
+    "fallecimiento": "Reportar muerte",
+    "correccion_sexo": "Corregir sexo",
+    "indentificacion": "Identificar animal"
+  },
+  "guias": {
+    "title": "Guías y Movimientos",
+    "alta": "Altas guías",
+    "confirmar_movimiento": "Confirmar Movimientos",
+    "lista_guias": "Lista guías",
+    "lista_movimientos": "Lista movimientos"
+  },
   "porcinos": {
     "title": "Porcinos",
     "guias": "Gestión de guías",
@@ -48,6 +62,9 @@
     "title": "Material",
     "solicitar" : "Solicitar material",
     "duplicado" : "Solicitar duplicado"
+  },
+  "submenu": {
+    "selecciona_accion" : "Selecciona una acción"
   },
   "common": {
     "btn_send": "Enviar",

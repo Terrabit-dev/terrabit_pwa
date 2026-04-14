@@ -39,6 +39,20 @@
     "movimientos": "Moviments",
     "movimientos_sub": "Confirmar moviments"
   },
+  "gestion": {
+    "title" : "Gestió de Bovins",
+    "nacimiento": "Registrar naixement",
+    "fallecimiento": "Reportar mort",
+    "correccion_sexo": "Corregir sexe",
+    "indentificacion": "Identificar animal"
+  },
+  "guias": {
+    "title": "Guies i Moviments",
+    "alta": "Altes guies",
+    "confirmar_movimiento": "Confirmar Moviments",
+    "lista_guias": "Llesta guies",
+    "lista_movimientos": "Llesta moviments"
+  },
   "porcinos": {
     "title": "Porcins",
     "guias": "Gestió de guies",
@@ -48,6 +62,9 @@
     "title": "Material",
     "solicitar" : "Sol·licitar material",
     "duplicado" : "Sol·licitar duplicat"
+  },
+  "submenu": {
+    "selecciona_accion" : "Selecciona una acció"
   },
   "common": {
     "btn_send": "Enviar",
