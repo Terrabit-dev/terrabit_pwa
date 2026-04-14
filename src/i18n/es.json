@@ -44,7 +44,7 @@
     "nacimiento": "Registrar nacimiento",
     "fallecimiento": "Reportar muerte",
     "correccion_sexo": "Corregir sexo",
-    "indentificacion": "Identificar animal"
+    "identificacion": "Identificar animal"
   },
   "guias": {
     "title": "Guías y Movimientos",
