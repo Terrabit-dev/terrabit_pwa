@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 interface TopBarProps {
   title: string;
   onMenuClick: () => void;
-  accentColor?: "green" | "orange";
+  accentColor?: "green" | "orange" |"red";
   showBack?: boolean;
 }
 
@@ -18,8 +18,10 @@ export default function TopBar({
 }: TopBarProps) {
   const { lang, changeLanguage } = useI18n();
   const router = useRouter();
-  const bgColor = accentColor === "green" ? "bg-main-green" : "bg-main-orange";
-
+    const bgColor =
+        accentColor === "green"  ? "bg-main-green"  :
+            accentColor === "red"    ? "bg-error-red"   :
+                "bg-main-orange";
   return (
     <header className={`${bgColor} px-4 pt-10 pb-4 flex items-center justify-between shadow-md`}>
       <div className="flex items-center gap-3">
