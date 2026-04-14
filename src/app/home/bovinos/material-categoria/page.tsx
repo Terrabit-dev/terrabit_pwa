@@ -16,7 +16,8 @@ const IconDuplicate = () => (
 );
 
 export default function MaterialPage() {
-  const { t } = useI18n();
+  // Extraemos 'lang' para forzar el re-renderizado cuando cambie el idioma desde el TopBar
+  const { t, lang } = useI18n();
 
   const actions: SubMenuAction[] = [
     {

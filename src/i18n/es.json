@@ -44,6 +44,11 @@
     "guias": "Gestión de guías",
     "listar": "Listar guías"
   },
+  "material": {
+    "title": "Material",
+    "solicitar" : "Solicitar material",
+    "duplicado" : "Solicitar duplicado"
+  },
   "common": {
     "btn_send": "Enviar",
     "btn_cancel": "Cancelar",

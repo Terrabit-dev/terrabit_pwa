@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Geist } from "next/font/google";
 import "./globals.css";
+// 1. Importamos el proveedor desde nuestra carpeta hooks
+import { I18nProvider } from "@/hooks/useI18n"; 
 
 const geist = Geist({ subsets: ["latin"] });
 
@@ -38,7 +40,12 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
       </head>
-      <body className={geist.className}>{children}</body>
+      <body className={geist.className}>
+        {/* 2. Envolvemos a los hijos con el I18nProvider */}
+        <I18nProvider>
+          {children}
+        </I18nProvider>
+      </body>
     </html>
   );
 }

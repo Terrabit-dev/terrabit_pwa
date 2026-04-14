@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
 import es from "@/i18n/es.json";
 import ca from "@/i18n/ca.json";
 
@@ -8,7 +8,6 @@ type Language = "es" | "ca";
 type Translations = typeof es;
 
 const LANG_KEY = "terrabit_lang";
-
 const translations: Record<Language, Translations> = { es, ca };
 
 function getNestedValue(obj: Record<string, unknown>, path: string): string {
@@ -20,7 +19,16 @@ function getNestedValue(obj: Record<string, unknown>, path: string): string {
   }, obj) as string ?? path;
 }
 
-export function useI18n() {
+interface I18nContextProps {
+  t: (key: string) => string;
+  lang: Language;
+  changeLanguage: (newLang: Language) => void;
+}
+
+const I18nContext = createContext<I18nContextProps | undefined>(undefined);
+
+// Este es el Proveedor que envolverá tu aplicación
+export function I18nProvider({ children }: { children: ReactNode }) {
   const [lang, setLang] = useState<Language>("es");
 
   useEffect(() => {
@@ -45,5 +53,18 @@ export function useI18n() {
     [lang]
   );
 
-  return { t, lang, changeLanguage };
+  return (
+    <I18nContext.Provider value={{ t, lang, changeLanguage }}>
+      {children}
+    </I18nContext.Provider>
+  );
+}
+
+// Este es el hook que usarás en tus componentes
+export function useI18n() {
+  const context = useContext(I18nContext);
+  if (context === undefined) {
+    throw new Error("useI18n debe usarse dentro de un I18nProvider");
+  }
+  return context;
 }
