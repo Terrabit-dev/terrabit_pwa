@@ -1,13 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import TopBar from "@/components/layout/TopBar";
 import { useDrawer } from "@/context/DrawerContext";
 import { useI18n } from "@/hooks/useI18n";
 import FormField from "@/components/forms/FormField";
-import TextInput from "@/components/forms/TextInput";
-import DateInput from "@/components/forms/DateInput";
 import SelectInput from "@/components/forms/SelectInput";
+import AutoCompleteIdentificador from "@/components/forms/AutoCompleteIdentificador";
 import {
     RAZAS_BOVINAS,
     SEXOS, SEXOS_CA,
@@ -17,51 +16,145 @@ import {
     NACIMIENTO_FORM_INICIAL,
     type NacimientoForm,
 } from "@/lib/bovinos/types";
-import { validarNacimiento, enviarNacimiento } from "@/lib/bovinos/nacimiento";
+import {
+    validarNacimiento,
+    enviarNacimiento,
+    formatearFechaDisplay,
+} from "@/lib/bovinos/nacimiento";
+import { getErrorMessage } from "@/lib/bovinos/errors";
+import { useListarBovinos } from "@/hooks/useListarBovinos";
+import { useAutoCompleteBovinos } from "@/hooks/useAutoCompleteBovinos";
+
+// ─── DateInput dd/mm/aaaa ─────────────────────────────────────────────────────
+
+function DateInputDMY({
+                          value,
+                          onChange,
+                          placeholder,
+                      }: {
+    value: string;
+    onChange: (v: string) => void;
+    placeholder?: string;
+}) {
+    const [inputValue, setInputValue] = useState(
+        value ? formatearFechaDisplay(value) : ""
+    );
+
+    const handleChange = (raw: string) => {
+        let digits = raw.replace(/[^\d]/g, "");
+        if (digits.length > 8) digits = digits.slice(0, 8);
+        let formatted = digits;
+        if (digits.length > 2) formatted = digits.slice(0, 2) + "/" + digits.slice(2);
+        if (digits.length > 4) formatted = formatted.slice(0, 5) + "/" + formatted.slice(5);
+        setInputValue(formatted);
+        if (digits.length === 8) {
+            const day = digits.slice(0, 2);
+            const month = digits.slice(2, 4);
+            const year = digits.slice(4, 8);
+            onChange(`${year}-${month}-${day}`);
+        } else {
+            onChange("");
+        }
+    };
+
+    return (
+        <div className="flex items-center border border-surface-variant rounded-xl px-3 py-2.5 bg-surface focus-within:border-main-green transition-colors">
+            <svg className="w-4 h-4 text-blue-grey shrink-0 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd"/>
+            </svg>
+            <input
+                type="text"
+                value={inputValue}
+                onChange={(e) => handleChange(e.target.value)}
+                placeholder={placeholder ?? "dd/mm/aaaa"}
+                maxLength={10}
+                inputMode="numeric"
+                className="flex-1 text-sm bg-transparent outline-none text-dark-blue-grey placeholder-blue-grey/50"
+            />
+        </div>
+    );
+}
+
+// ─── Modal error ──────────────────────────────────────────────────────────────
+
+function ErrorModal({ mensaje, onClose, lang }: { mensaje: string; onClose: () => void; lang: string }) {
+    return (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center px-4">
+            <div className="bg-white rounded-2xl p-6 w-full max-w-sm">
+                <div className="flex flex-col items-center gap-3 mb-4">
+                    <div className="w-12 h-12 bg-error-red-bg rounded-full flex items-center justify-center">
+                        <svg className="w-6 h-6 text-error-red" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd"/>
+                        </svg>
+                    </div>
+                    <h3 className="text-base font-bold text-dark-blue-grey text-center">
+                        {lang === "ca" ? "Error" : "Error"}
+                    </h3>
+                    <p className="text-sm text-blue-grey text-center">{mensaje}</p>
+                </div>
+                <button
+                    onClick={onClose}
+                    className="w-full bg-error-red text-white rounded-xl py-2.5 text-sm font-semibold"
+                >
+                    {lang === "ca" ? "Acceptar" : "Aceptar"}
+                </button>
+            </div>
+        </div>
+    );
+}
+
+// ─── Pantalla ─────────────────────────────────────────────────────────────────
 
 export default function NacimientoPage() {
     const { toggle } = useDrawer();
-    const { lang } = useI18n();
+    const { lang }   = useI18n();
 
-    const [form, setForm] = useState<NacimientoForm>(NACIMIENTO_FORM_INICIAL);
-    const [enviando, setEnviando]         = useState(false);
-    const [exito, setExito]               = useState(false);
-    const [error, setError]               = useState<string | null>(null);
+    const [form, setForm]             = useState<NacimientoForm>(NACIMIENTO_FORM_INICIAL);
+    const [enviando, setEnviando]     = useState(false);
+    const [exito, setExito]           = useState(false);
+    const [errorMsg, setErrorMsg]     = useState<string | null>(null);
     const [mostrarConfirm, setMostrarConfirm] = useState(false);
 
     const t = (es: string, ca: string) => lang === "ca" ? ca : es;
-
     const update = (field: Partial<NacimientoForm>) =>
         setForm((prev) => ({ ...prev, ...field }));
 
+    // Carga la lista de bovinos para autocompletado
+    const { lista: listaBovinos, cargarBovinos } = useListarBovinos();
+    useEffect(() => { cargarBovinos(); }, [cargarBovinos]);
+
+    // Autocompletado — campo 0 = madre, campo 1 = cría
+    const { suggestions, activeField, isLoading, buscar, limpiarSugerencias } =
+        useAutoCompleteBovinos(listaBovinos);
+
+    const sexos    = lang === "ca" ? SEXOS_CA : SEXOS;
+    const aptitudes = lang === "ca" ? APTITUDES_CA : APTITUDES;
+
     const handleEnviar = () => {
+        setExito(false);
         const err = validarNacimiento(form);
-        if (err) { setError(err); return; }
-        setError(null);
+        if (err) { setErrorMsg(getErrorMessage(err.codigo, lang)); return; }
         setMostrarConfirm(true);
     };
 
     const confirmarEnvio = async () => {
         setMostrarConfirm(false);
         setEnviando(true);
-        try {
-            const res = await enviarNacimiento(form);
-            if (res.errors && res.errors.length > 0) {
-                setError(res.errors[0].descripcio);
+        const resultado = await enviarNacimiento(form);
+        setEnviando(false);
+        if (!resultado.exito) {
+            if (resultado.error?.tipo === "api") {
+                setErrorMsg(resultado.error.mensaje);
             } else {
-                setExito(true);
-                setForm(NACIMIENTO_FORM_INICIAL);
+                setErrorMsg(t("Error de conexión con la GTR API", "Error de connexió amb la GTR API"));
             }
-        } catch {
-            setError(t("Error de conexión", "Error de connexió"));
-        } finally {
-            setEnviando(false);
+            return;
         }
+        setExito(true);
+        setForm(NACIMIENTO_FORM_INICIAL);
     };
 
     const esValido = !validarNacimiento(form);
-    const sexos    = lang === "ca" ? SEXOS_CA : SEXOS;
-    const aptitudes = lang === "ca" ? APTITUDES_CA : APTITUDES;
 
     return (
         <div className="min-h-screen bg-surface">
@@ -79,20 +172,40 @@ export default function NacimientoPage() {
                     <h2 className="text-sm font-bold text-dark-blue-grey">
                         {t("Identificadores", "Identificadors")}
                     </h2>
-                    <FormField label={t("Identificador madre", "Identificador mare")}>
-                        <TextInput
-                            value={form.idMadre}
-                            onChange={(v) => update({ idMadre: v })}
-                            placeholder="ES724100041234"
-                        />
-                    </FormField>
-                    <FormField label={`${t("Identificador cría", "Identificador cria")} *`}>
-                        <TextInput
-                            value={form.idCria}
-                            onChange={(v) => update({ idCria: v })}
-                            placeholder="ES724100041235"
-                        />
-                    </FormField>
+
+                    <AutoCompleteIdentificador
+                        label={`${t("Identificador madre", "Identificador mare")} *`}
+                        value={form.idMadre}
+                        onChange={(v) => {
+                            update({ idMadre: v });
+                            buscar(v, 0);
+                        }}
+                        onAnimalSelected={(animal) => {
+                            update({ idMadre: animal.identificador });
+                            limpiarSugerencias();
+                        }}
+                        suggestions={activeField === 0 ? suggestions : []}
+                        isLoading={isLoading && activeField === 0}
+                        placeholder="ES724100041234"
+                        lang={lang}
+                    />
+
+                    <AutoCompleteIdentificador
+                        label={`${t("Identificador cría", "Identificador cria")} *`}
+                        value={form.idCria}
+                        onChange={(v) => {
+                            update({ idCria: v });
+                            buscar(v, 1);
+                        }}
+                        onAnimalSelected={(animal) => {
+                            update({ idCria: animal.identificador });
+                            limpiarSugerencias();
+                        }}
+                        suggestions={activeField === 1 ? suggestions : []}
+                        isLoading={isLoading && activeField === 1}
+                        placeholder="ES724100041235"
+                        lang={lang}
+                    />
                 </div>
 
                 {/* Fechas */}
@@ -101,13 +214,13 @@ export default function NacimientoPage() {
                         {t("Fechas", "Dates")}
                     </h2>
                     <FormField label={`${t("Fecha de nacimiento", "Data de naixement")} *`}>
-                        <DateInput
+                        <DateInputDMY
                             value={form.fechaNacimiento}
                             onChange={(v) => update({ fechaNacimiento: v })}
                         />
                     </FormField>
                     <FormField label={t("Fecha de identificación", "Data d'identificació")}>
-                        <DateInput
+                        <DateInputDMY
                             value={form.fechaIdentificacion}
                             onChange={(v) => update({ fechaIdentificacion: v })}
                         />
@@ -135,7 +248,7 @@ export default function NacimientoPage() {
                             placeholder={t("Seleccionar raza", "Seleccionar raça")}
                         />
                     </FormField>
-                    <FormField label={t("Aptitud", "Aptitud")}>
+                    <FormField label={`${t("Aptitud", "Aptitud")} *`}>
                         <SelectInput
                             value={form.aptitudCodigo}
                             onChange={(c, n) => update({ aptitudCodigo: c, aptitudNombre: n })}
@@ -144,13 +257,6 @@ export default function NacimientoPage() {
                         />
                     </FormField>
                 </div>
-
-                {/* Error */}
-                {error && (
-                    <div className="px-4 py-3 bg-error-red-bg rounded-xl">
-                        <p className="text-xs text-error-red text-center">{error}</p>
-                    </div>
-                )}
 
                 {/* Éxito */}
                 {exito && (
@@ -165,7 +271,7 @@ export default function NacimientoPage() {
                 )}
             </div>
 
-            {/* Botón enviar fijo */}
+            {/* Botón fijo */}
             <div className="fixed bottom-0 left-0 right-0 px-4 py-4 bg-white border-t border-surface-variant">
                 <button
                     onClick={handleEnviar}
@@ -189,23 +295,15 @@ export default function NacimientoPage() {
                             {t("¿Confirmas el registro del nacimiento?", "Confirmes el registre del naixement?")}
                         </p>
                         <div className="bg-surface rounded-xl p-3 mb-5 flex flex-col gap-1.5">
-                            {form.idMadre && (
-                                <p className="text-xs text-blue-grey">
-                                    {t("Madre", "Mare")}: <span className="text-dark-blue-grey font-medium">{form.idMadre}</span>
-                                </p>
+                            <p className="text-xs text-blue-grey">{t("Madre", "Mare")}: <span className="text-dark-blue-grey font-medium">{form.idMadre}</span></p>
+                            <p className="text-xs text-blue-grey">{t("Cría", "Cria")}: <span className="text-dark-blue-grey font-medium">{form.idCria}</span></p>
+                            <p className="text-xs text-blue-grey">{t("Fecha nacimiento", "Data naixement")}: <span className="text-dark-blue-grey font-medium">{formatearFechaDisplay(form.fechaNacimiento)}</span></p>
+                            {form.fechaIdentificacion && (
+                                <p className="text-xs text-blue-grey">{t("Fecha identificación", "Data identificació")}: <span className="text-dark-blue-grey font-medium">{formatearFechaDisplay(form.fechaIdentificacion)}</span></p>
                             )}
-                            <p className="text-xs text-blue-grey">
-                                {t("Cría", "Cria")}: <span className="text-dark-blue-grey font-medium">{form.idCria}</span>
-                            </p>
-                            <p className="text-xs text-blue-grey">
-                                {t("Fecha", "Data")}: <span className="text-dark-blue-grey font-medium">{form.fechaNacimiento}</span>
-                            </p>
-                            <p className="text-xs text-blue-grey">
-                                {t("Sexo", "Sexe")}: <span className="text-dark-blue-grey font-medium">{form.sexoNombre}</span>
-                            </p>
-                            <p className="text-xs text-blue-grey">
-                                {t("Raza", "Raça")}: <span className="text-dark-blue-grey font-medium">{form.razaNombre}</span>
-                            </p>
+                            <p className="text-xs text-blue-grey">{t("Sexo", "Sexe")}: <span className="text-dark-blue-grey font-medium">{form.sexoNombre}</span></p>
+                            <p className="text-xs text-blue-grey">{t("Raza", "Raça")}: <span className="text-dark-blue-grey font-medium">{form.razaNombre}</span></p>
+                            <p className="text-xs text-blue-grey">{t("Aptitud", "Aptitud")}: <span className="text-dark-blue-grey font-medium">{form.aptitudNombre}</span></p>
                         </div>
                         <div className="flex gap-3">
                             <button
@@ -221,6 +319,21 @@ export default function NacimientoPage() {
                                 {t("Confirmar", "Confirmar")}
                             </button>
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal error */}
+            {errorMsg && (
+                <ErrorModal mensaje={errorMsg} onClose={() => setErrorMsg(null)} lang={lang}/>
+            )}
+
+            {/* Loading overlay */}
+            {enviando && (
+                <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center">
+                    <div className="bg-white rounded-2xl p-6 flex flex-col items-center gap-3">
+                        <div className="w-10 h-10 border-4 border-main-green border-t-transparent rounded-full animate-spin"/>
+                        <p className="text-sm text-blue-grey">{t("Enviando...", "Enviant...")}</p>
                     </div>
                 </div>
             )}
