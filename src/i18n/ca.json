@@ -76,5 +76,33 @@
     "error_network": "Error de connexió",
     "success": "Operació completada correctament",
     "no_data": "Sense dades"
+  },
+  "errors": {
+    "universal": "Si us plau, completa tots els camps obligatoris marcats amb *.",
+    "mother_id": "Si us plau, introdueix l'identificador de la mare.",
+    "breeding_id": "Si us plau, introdueix l'identificador de la cria.",
+    "birthdate": "Si us plau, selecciona la data de naixement.",
+    "sex": "Si us plau, selecciona el sexe de l'animal.",
+    "breed": "Si us plau, selecciona la raça.",
+    "aptitude": "Si us plau, selecciona l'aptitud.",
+    "death_type": "Si us plau, selecciona el tipus (Mort o Avortament).",
+    "death_date": "Si us plau, selecciona la data de mort.",
+    "gestation_months": "Si us plau, introdueix els mesos de gestació (1-9).",
+    "latitude": "Si us plau, introdueix la coordenada X (Latitud).",
+    "longitude": "Si us plau, introdueix la coordenada Y (Longitud).",
+    "animal_id": "Si us plau, introdueix l'identificador de l'animal.",
+    "identification_date": "Si us plau, introdueix la data d'identificació de l'animal.",
+    "remo_code": "Si us plau, introdueix el codi REMO de la guia.",
+    "arrival_date": "Si us plau, selecciona la data d'arribada.",
+    "arrival_time": "Si us plau, selecciona l'hora d'arribada.",
+    "ates_code": "Si us plau, selecciona el codi ATES.",
+    "destination_farm": "Si us plau, introdueix l'explotació de destí.",
+    "arrival_status": "Si us plau, selecciona l'estat d'arribada.",
+    "origin_farm": "Si us plau, introdueix l'explotació d'origen.",
+    "temporal": "Si us plau, selecciona si és temporal.",
+    "exit_date": "Si us plau, selecciona la data de sortida.",
+    "exit_time": "Si us plau, selecciona l'hora de sortida.",
+    "mobility": "Si us plau, selecciona si és guia per mobilitat.",
+    "network": "No s'ha pogut connectar amb el servidor GTR. Comprova la connexió i torna-ho a intentar."
   }
 }

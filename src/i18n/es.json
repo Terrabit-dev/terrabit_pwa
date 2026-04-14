@@ -76,5 +76,33 @@
     "error_network": "Error de conexión",
     "success": "Operación completada correctamente",
     "no_data": "Sin datos"
+  },
+  "errors": {
+    "universal": "Por favor, complete todos los campos obligatorios marcados con *.",
+    "mother_id": "Por favor, introduzca el identificador de la madre.",
+    "breeding_id": "Por favor, introduzca el identificador de la cría.",
+    "birthdate": "Por favor, seleccione la fecha de nacimiento.",
+    "sex": "Por favor, seleccione el sexo del animal.",
+    "breed": "Por favor, seleccione la raza.",
+    "aptitude": "Por favor, seleccione la aptitud.",
+    "death_type": "Por favor, seleccione el tipo (Fallecimiento o Aborto).",
+    "death_date": "Por favor, seleccione la fecha de muerte.",
+    "gestation_months": "Por favor, introduzca los meses de gestación (1-9).",
+    "latitude": "Por favor, introduzca la coordenada X (Latitud).",
+    "longitude": "Por favor, introduzca la coordenada Y (Longitud).",
+    "animal_id": "Por favor, introduzca el identificador del animal.",
+    "identification_date": "Por favor, introduzca la fecha de identificación del animal.",
+    "remo_code": "Por favor, introduzca el código REMO de la guía.",
+    "arrival_date": "Por favor, seleccione la fecha de llegada.",
+    "arrival_time": "Por favor, seleccione la hora de llegada.",
+    "ates_code": "Por favor, seleccione el código ATES.",
+    "destination_farm": "Por favor, introduzca la explotación de destino.",
+    "arrival_status": "Por favor, seleccione el estado de llegada.",
+    "origin_farm": "Por favor, introduzca la explotación de origen.",
+    "temporal": "Por favor, seleccione si es temporal.",
+    "exit_date": "Por favor, seleccione la fecha de salida.",
+    "exit_time": "Por favor, seleccione la hora de salida.",
+    "mobility": "Por favor, seleccione si es guía por movilidad.",
+    "network": "No se ha podido conectar con el servidor GTR. Comprueba tu conexión e inténtalo de nuevo."
   }
 }
