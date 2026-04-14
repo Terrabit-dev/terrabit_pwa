@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import type { Animal } from "@/lib/bovinos/types";
 
 interface AutoCompleteIdentificadorProps {
@@ -33,7 +34,22 @@ export default function AutoCompleteIdentificador({
                                                       lang = "es",
                                                   }: AutoCompleteIdentificadorProps) {
     const [expanded, setExpanded] = useState(false);
+    const [dropdownStyle, setDropdownStyle] = useState<React.CSSProperties>({});
     const containerRef = useRef<HTMLDivElement>(null);
+    const inputWrapRef = useRef<HTMLDivElement>(null);
+
+    // Calcular posición del dropdown en coordenadas de pantalla (portal)
+    const calcularPosicion = () => {
+        if (!inputWrapRef.current) return;
+        const rect = inputWrapRef.current.getBoundingClientRect();
+        setDropdownStyle({
+            position: "fixed",
+            top: rect.bottom + 4,
+            left: rect.left,
+            width: rect.width,
+            zIndex: 9999,
+        });
+    };
 
     // Cerrar al hacer click fuera
     useEffect(() => {
@@ -46,9 +62,22 @@ export default function AutoCompleteIdentificador({
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
-    // Abrir cuando hay sugerencias
+    // Recalcular posición al hacer scroll o resize
+    useEffect(() => {
+        if (!expanded) return;
+        const handleScroll = () => calcularPosicion();
+        window.addEventListener("scroll", handleScroll, true);
+        window.addEventListener("resize", handleScroll);
+        return () => {
+            window.removeEventListener("scroll", handleScroll, true);
+            window.removeEventListener("resize", handleScroll);
+        };
+    }, [expanded]);
+
+    // Abrir/cerrar según sugerencias
     useEffect(() => {
         if (suggestions.length > 0 && value.length > 0) {
+            calcularPosicion();
             setExpanded(true);
         } else {
             setExpanded(false);
@@ -66,14 +95,49 @@ export default function AutoCompleteIdentificador({
         setExpanded(false);
     };
 
+    // Dropdown renderizado con portal — escapa de cualquier overflow:hidden padre
+    const dropdown = expanded && suggestions.length > 0 && typeof document !== "undefined"
+        ? createPortal(
+            <div
+                style={{ ...dropdownStyle, maxHeight: "240px", WebkitOverflowScrolling: "touch" } as React.CSSProperties}
+                className="bg-white border border-surface-variant rounded-xl shadow-xl overflow-y-auto overscroll-contain"
+            >
+                {suggestions.map((animal) => (
+                    <button
+                        key={animal.identificador}
+                        type="button"
+                        onMouseDown={(e) => {
+                            // onMouseDown en lugar de onClick para que no cierre antes de seleccionar
+                            e.preventDefault();
+                            handleSelect(animal);
+                        }}
+                        className="w-full px-4 py-3 text-left active:bg-surface border-b border-surface-variant last:border-0"
+                    >
+                        <p className="text-sm font-medium text-dark-blue-grey">
+                            {animal.identificador}
+                        </p>
+                        <p className="text-xs text-blue-grey mt-0.5">
+                            {getSexoTexto(animal.sexe, lang)} · {animal.raza}
+                            {animal.identificadorMare && ` · ${lang === "ca" ? "Mare" : "Madre"}: ${animal.identificadorMare}`}
+                        </p>
+                    </button>
+                ))}
+            </div>,
+            document.body
+        )
+        : null;
+
     return (
-        <div ref={containerRef} className="flex flex-col gap-1.5 relative">
+        <div ref={containerRef} className="flex flex-col gap-1.5">
             <label className="text-xs font-semibold text-blue-grey uppercase tracking-wide">
                 {label}
             </label>
 
             {/* Input */}
-            <div className="flex items-center border border-surface-variant rounded-xl px-3 py-2.5 bg-surface focus-within:border-main-green transition-colors">
+            <div
+                ref={inputWrapRef}
+                className="flex items-center border border-surface-variant rounded-xl px-3 py-2.5 bg-surface focus-within:border-main-green transition-colors"
+            >
                 <input
                     type="text"
                     value={value}
@@ -83,12 +147,10 @@ export default function AutoCompleteIdentificador({
                     className="flex-1 text-sm bg-transparent outline-none text-dark-blue-grey placeholder-blue-grey/50 disabled:opacity-50"
                 />
 
-                {/* Loading */}
                 {isLoading && (
                     <div className="w-4 h-4 border-2 border-main-green border-t-transparent rounded-full animate-spin shrink-0"/>
                 )}
 
-                {/* Botón limpiar */}
                 {value && !disabled && !isLoading && (
                     <button
                         type="button"
@@ -102,27 +164,7 @@ export default function AutoCompleteIdentificador({
                 )}
             </div>
 
-            {/* Dropdown sugerencias */}
-            {expanded && suggestions.length > 0 && (
-                <div className="absolute top-full left-0 right-0 z-30 mt-1 bg-white border border-surface-variant rounded-xl shadow-lg max-h-64 overflow-y-auto overscroll-contain">
-                    {suggestions.map((animal) => (
-                        <button
-                            key={animal.identificador}
-                            type="button"
-                            onClick={() => handleSelect(animal)}
-                            className="w-full px-4 py-3 text-left hover:bg-surface transition-colors border-b border-surface-variant last:border-0"
-                        >
-                            <p className="text-sm font-medium text-dark-blue-grey">
-                                {animal.identificador}
-                            </p>
-                            <p className="text-xs text-blue-grey mt-0.5">
-                                {getSexoTexto(animal.sexe, lang)} · {animal.raza}
-                                {animal.identificadorMare && ` · ${lang === "ca" ? "Mare" : "Madre"}: ${animal.identificadorMare}`}
-                            </p>
-                        </button>
-                    ))}
-                </div>
-            )}
+            {dropdown}
         </div>
     );
 }

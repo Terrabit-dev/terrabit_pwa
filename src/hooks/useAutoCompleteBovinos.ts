@@ -28,8 +28,7 @@ export function useAutoCompleteBovinos(listaCompleta: Animal[]) {
                         (a) =>
                             a.identificador.toLowerCase().includes(q) ||
                             a.identificadorMare?.toLowerCase().includes(q)
-                    )
-                    .slice(0, 4); // Máximo 10 sugerencias
+                    );
                 setSuggestions(filtered);
                 setIsLoading(false);
             }, 300);
