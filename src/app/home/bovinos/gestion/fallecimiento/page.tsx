@@ -42,8 +42,8 @@ export default function FallecimientoPage() {
         ? errorApi.tipo === "api" ? errorApi.mensaje : t("errors.network")
         : null;
 
-    const esAbort  = form.tipusMort === "02";
-    const esMuerte = form.tipusMort === "01";
+    const esAbort  = form.tipus === "02";
+    const esMuerte = form.tipus === "01";
 
     const handleEnviar = () => {
         setErrorLocal(null);
@@ -98,9 +98,9 @@ export default function FallecimientoPage() {
 
                     <FormField label={`${lang === "ca" ? "Tipus" : "Tipo"} *`}>
                         <SelectInput
-                            value={form.tipusMort}
+                            value={form.tipus}
                             onChange={(c, n) => update({
-                                tipusMort:    c,
+                                tipus:    c,
                                 tipusNombre:  n,
                                 // Limpiar campos condicionales al cambiar tipo
                                 mesoGestacio:       "",

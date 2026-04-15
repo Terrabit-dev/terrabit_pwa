@@ -6,7 +6,7 @@ import type { OpcionSelect } from "./constants";
 
 export interface FallecimientoForm {
     idAnimal:           string;
-    tipusMort:          string;   // "01" Muerte | "02" Aborto
+    tipus:          string;   // "01" Muerte | "02" Aborto
     tipusNombre:        string;
     dataMort:           string;
     cadaverInaccesible: boolean;  // solo visible si tipusMort === "01"
@@ -17,7 +17,7 @@ export interface FallecimientoForm {
 
 export const FALLECIMIENTO_FORM_INICIAL: FallecimientoForm = {
     idAnimal:           "",
-    tipusMort:          "",
+    tipus:          "",
     tipusNombre:        "",
     dataMort:           "",
     cadaverInaccesible: false,
@@ -60,17 +60,17 @@ export function validarFallecimiento(
     form: FallecimientoForm
 ): FallecimientoValidationError | null {
     if (!form.idAnimal.trim()) return { tipo: "validacion", codigo: FALLECIMIENTO_ERRORES.ANIMAL_ID };
-    if (!form.tipusMort)       return { tipo: "validacion", codigo: FALLECIMIENTO_ERRORES.TIPO_MUERTE };
+    if (!form.tipus)       return { tipo: "validacion", codigo: FALLECIMIENTO_ERRORES.TIPO_MUERTE };
     if (!form.dataMort)        return { tipo: "validacion", codigo: FALLECIMIENTO_ERRORES.FECHA_MORT };
 
     // Solo si es Aborto
-    if (form.tipusMort === "02") {
+    if (form.tipus === "02") {
         if (!form.mesoGestacio.trim())
             return { tipo: "validacion", codigo: FALLECIMIENTO_ERRORES.MESOS_GEST };
     }
 
     // Solo si es Muerte + cadáver inaccesible
-    if (form.tipusMort === "01" && form.cadaverInaccesible) {
+    if (form.tipus === "01" && form.cadaverInaccesible) {
         if (!form.latitud.trim())  return { tipo: "validacion", codigo: FALLECIMIENTO_ERRORES.LATITUD };
         if (!form.longitud.trim()) return { tipo: "validacion", codigo: FALLECIMIENTO_ERRORES.LONGITUD };
     }
@@ -94,19 +94,19 @@ export async function enviarFallecimiento(
     const body: Record<string, unknown> = {
         nif:                creds.nif,
         passwordMobilitat:  creds.password,
-        tipus:              form.tipusMort,
+        tipus:              form.tipus,
         identificador:      form.idAnimal,
         dataMort:           formatearFechaAPI(form.dataMort),
         cadaverInaccesible: form.cadaverInaccesible ? "true" : "false",
     };
 
     // Solo si es Aborto
-    if (form.tipusMort === "02" && form.mesoGestacio.trim()) {
+    if (form.tipus === "02" && form.mesoGestacio.trim()) {
         body.mesosGestacio = form.mesoGestacio.trim();
     }
 
     // Solo si cadáver inaccesible
-    if (form.tipusMort === "01" && form.cadaverInaccesible) {
+    if (form.tipus === "01" && form.cadaverInaccesible) {
         if (form.latitud.trim())  body.coordenadaX = form.latitud.trim();
         if (form.longitud.trim()) body.coordenadaY = form.longitud.trim();
     }

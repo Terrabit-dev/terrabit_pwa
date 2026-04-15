@@ -76,25 +76,32 @@ export function useFallecimiento(): UseFallecimientoReturn {
         setErrorApi(null);
         setExito(false);
 
-        const body: Record<string, string | boolean> = {
+        const body: Record<string, string> = {
             nif:               credentials.nif,
             passwordMobilitat: credentials.password,
             identificador:     form.idAnimal.trim(),
-            tipusMort:         form.tipusMort,
+            tipus:             form.tipus,
             dataMort:          formatearFechaAPI(form.dataMort),
         };
 
         // Solo si es Aborto
-        if (form.tipusMort === "02") {
-            body.mesoGestacio = form.mesoGestacio.trim();
+        if (form.tipus === "02") {
+            body.mesosGestacio = form.mesoGestacio.trim();
         }
 
         // Solo si es Muerte
-        if (form.tipusMort === "01") {
-            body.cadaverInaccessible = form.cadaverInaccesible;
+        if (form.tipus === "01") {
+            // ¡OJO AQUÍ! Una sola 's' en la clave, y convertimos a "SI" o "NO"
+            body.cadaverInaccesible = form.cadaverInaccesible ? "SI" : "NO";
+
             if (form.cadaverInaccesible) {
-                body.latitud  = form.latitud.trim();
-                body.longitud = form.longitud.trim();
+                // Enviamos valores vacíos en lugar de undefined si no hay coordenadas, o los reemplazamos
+                body.coordenadaX = form.latitud ? form.latitud.trim().replace('.', ',') : "";
+                body.coordenadaY = form.longitud ? form.longitud.trim().replace('.', ',') : "";
+            } else {
+                // Si la API exige que las claves existan aunque sea NO, las mandamos vacías
+                body.coordenadaX = "";
+                body.coordenadaY = "";
             }
         }
 
@@ -103,7 +110,7 @@ export function useFallecimiento(): UseFallecimientoReturn {
 
         try {
             const response = await fetch(
-                "/api/gtr/proxy?endpoint=WSBovi/AppJava/Bovi/WSBaixa/",
+                "/api/gtr/proxy?endpoint=WSBovi/AppJava/Bovi/WSEnregistramentMort", // <-- ¡Cambiado y sin barra al final!
                 {
                     method: "PUT",
                     headers: { "Content-Type": "application/json" },
