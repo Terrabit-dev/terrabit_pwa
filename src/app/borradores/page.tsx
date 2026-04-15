@@ -55,7 +55,7 @@ export default function HistorialPage() {
     return (
         <div className="min-h-screen bg-surface">
             <TopBar
-                title={lang === "ca" ? "Historial" : "Historial"}
+                title={lang === "ca" ? "Esborranys" : "Borradores"}
                 onMenuClick={toggle}
                 accentColor="green"
                 badge={`${listaFiltrada.length} ${lang === "ca" ? "registres" : "registros"}`}
