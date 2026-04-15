@@ -9,28 +9,26 @@ import SelectInput from "@/components/forms/SelectInput";
 import DateInputDMY from "@/components/forms/DateInputDMY";
 import AutoCompleteIdentificador from "@/components/forms/AutoCompleteIdentificador";
 import ErrorModal from "@/components/common/ErrorModal";
+import SuccessModal from "@/components/common/SuccesModal";
 import LoadingOverlay from "@/components/common/LoadingOverlay";
-import SuccessBanner from "@/components/common/SuccessBanner";
 import { RAZAS_BOVINAS, SEXOS, SEXOS_CA, APTITUDES, APTITUDES_CA } from "@/lib/bovinos/constants";
-import { NACIMIENTO_FORM_INICIAL, type NacimientoForm } from "@/lib/bovinos/types";
-import { validarNacimiento, enviarNacimiento, formatearFechaDisplay } from "@/lib/bovinos/nacimiento";
-import { getErrorMessage } from "@/lib/bovinos/errors";
+import { validarNacimiento, formatearFechaDisplay } from "@/lib/bovinos/nacimiento";
+import { getAppError } from "@/lib/errors/appErrors";
+import { useNacimiento } from "@/hooks/useNacimiento";
 import { useListarBovinos } from "@/hooks/useListarBovinos";
 import { useAutoCompleteBovinos } from "@/hooks/useAutoCompleteBovinos";
 
 export default function NacimientoPage() {
-    const { toggle } = useDrawer();
-    const { lang }   = useI18n();
+    const { toggle }  = useDrawer();
+    const { t, lang } = useI18n();
 
-    const [form, setForm]                     = useState<NacimientoForm>(NACIMIENTO_FORM_INICIAL);
-    const [enviando, setEnviando]             = useState(false);
-    const [exito, setExito]                   = useState(false);
-    const [errorMsg, setErrorMsg]             = useState<string | null>(null);
+    const {
+        form, enviando, exito, errorApi,
+        update, enviar, cerrarExito, limpiarErrorApi,
+    } = useNacimiento();
+
+    const [errorLocal, setErrorLocal]         = useState<string | null>(null);
     const [mostrarConfirm, setMostrarConfirm] = useState(false);
-
-    const t = (es: string, ca: string) => lang === "ca" ? ca : es;
-    const update = (field: Partial<NacimientoForm>) =>
-        setForm((prev) => ({ ...prev, ...field }));
 
     const { lista: listaBovinos, cargarBovinos } = useListarBovinos();
     useEffect(() => { cargarBovinos(); }, [cargarBovinos]);
@@ -41,56 +39,55 @@ export default function NacimientoPage() {
     const sexos     = lang === "ca" ? SEXOS_CA : SEXOS;
     const aptitudes = lang === "ca" ? APTITUDES_CA : APTITUDES;
 
+    const errorApiMsg = errorApi
+        ? errorApi.tipo === "api"
+            ? errorApi.mensaje
+            : t("errors.network")
+        : null;
+
     const handleEnviar = () => {
-        setExito(false);
+        setErrorLocal(null);
         const err = validarNacimiento(form);
-        if (err) { setErrorMsg(getErrorMessage(err.codigo, lang)); return; }
+        if (err) {
+            setErrorLocal(getAppError(err.codigo, t));
+            return;
+        }
         setMostrarConfirm(true);
     };
 
     const confirmarEnvio = async () => {
         setMostrarConfirm(false);
-        setEnviando(true);
-        const resultado = await enviarNacimiento(form);
-        setEnviando(false);
-        if (!resultado.exito) {
-            setErrorMsg(
-                resultado.error?.tipo === "api"
-                    ? resultado.error.mensaje
-                    : t("Error de conexión con la GTR API", "Error de connexió amb la GTR API")
-            );
-            return;
-        }
-        setExito(true);
-        setForm(NACIMIENTO_FORM_INICIAL);
+        await enviar();
     };
 
     const esValido = !validarNacimiento(form);
 
     return (
         <div className="min-h-screen bg-surface">
-            <TopBar title={t("Nacimiento", "Naixement")} onMenuClick={toggle} accentColor="green" showBack/>
+            <TopBar title={t("bovinos.nacimiento")} onMenuClick={toggle} accentColor="green" showBack/>
 
             <div className="px-4 py-5 flex flex-col gap-4 pb-24">
 
                 {/* Identificadores */}
                 <div className="bg-white rounded-2xl shadow-sm p-4 flex flex-col gap-4">
-                    <h2 className="text-sm font-bold text-dark-blue-grey">{t("Identificadores", "Identificadors")}</h2>
+                    <h2 className="text-sm font-bold text-dark-blue-grey">
+                        {lang === "ca" ? "Identificadors" : "Identificadores"}
+                    </h2>
                     <AutoCompleteIdentificador
-                        label={`${t("Identificador madre", "Identificador mare")} *`}
+                        label={`${lang === "ca" ? "Identificador mare" : "Identificador madre"} *`}
                         value={form.idMadre}
                         onChange={(v) => { update({ idMadre: v }); buscar(v, 0); }}
-                        onAnimalSelected={(animal) => { update({ idMadre: animal.identificador }); limpiarSugerencias(); }}
+                        onAnimalSelected={(a) => { update({ idMadre: a.identificador }); limpiarSugerencias(); }}
                         suggestions={activeField === 0 ? suggestions : []}
                         isLoading={isLoading && activeField === 0}
                         placeholder="ES724100041234"
                         lang={lang}
                     />
                     <AutoCompleteIdentificador
-                        label={`${t("Identificador cría", "Identificador cria")} *`}
+                        label={`${lang === "ca" ? "Identificador cria" : "Identificador cría"} *`}
                         value={form.idCria}
                         onChange={(v) => { update({ idCria: v }); buscar(v, 1); }}
-                        onAnimalSelected={(animal) => { update({ idCria: animal.identificador }); limpiarSugerencias(); }}
+                        onAnimalSelected={(a) => { update({ idCria: a.identificador }); limpiarSugerencias(); }}
                         suggestions={activeField === 1 ? suggestions : []}
                         isLoading={isLoading && activeField === 1}
                         placeholder="ES724100041235"
@@ -100,30 +97,53 @@ export default function NacimientoPage() {
 
                 {/* Fechas */}
                 <div className="bg-white rounded-2xl shadow-sm p-4 flex flex-col gap-4">
-                    <h2 className="text-sm font-bold text-dark-blue-grey">{t("Fechas", "Dates")}</h2>
-                    <FormField label={`${t("Fecha de nacimiento", "Data de naixement")} *`}>
-                        <DateInputDMY value={form.fechaNacimiento} onChange={(v) => update({ fechaNacimiento: v })}/>
+                    <h2 className="text-sm font-bold text-dark-blue-grey">
+                        {lang === "ca" ? "Dates" : "Fechas"}
+                    </h2>
+                    <FormField label={`${lang === "ca" ? "Data de naixement" : "Fecha de nacimiento"} *`}>
+                        <DateInputDMY
+                            value={form.fechaNacimiento}
+                            onChange={(v) => update({ fechaNacimiento: v })}
+                        />
                     </FormField>
-                    <FormField label={t("Fecha de identificación", "Data d'identificació")}>
-                        <DateInputDMY value={form.fechaIdentificacion} onChange={(v) => update({ fechaIdentificacion: v })}/>
+                    <FormField label={lang === "ca" ? "Data d'identificació" : "Fecha de identificación"}>
+                        <DateInputDMY
+                            value={form.fechaIdentificacion}
+                            onChange={(v) => update({ fechaIdentificacion: v })}
+                        />
                     </FormField>
                 </div>
 
                 {/* Características */}
                 <div className="bg-white rounded-2xl shadow-sm p-4 flex flex-col gap-4">
-                    <h2 className="text-sm font-bold text-dark-blue-grey">{t("Características", "Característiques")}</h2>
-                    <FormField label={`${t("Sexo", "Sexe")} *`}>
-                        <SelectInput value={form.sexoCodigo} onChange={(c, n) => update({ sexoCodigo: c, sexoNombre: n })} options={sexos} placeholder={t("Seleccionar sexo", "Seleccionar sexe")}/>
+                    <h2 className="text-sm font-bold text-dark-blue-grey">
+                        {lang === "ca" ? "Característiques" : "Características"}
+                    </h2>
+                    <FormField label={`${lang === "ca" ? "Sexe" : "Sexo"} *`}>
+                        <SelectInput
+                            value={form.sexoCodigo}
+                            onChange={(c, n) => update({ sexoCodigo: c, sexoNombre: n })}
+                            options={sexos}
+                            placeholder={lang === "ca" ? "Seleccionar sexe" : "Seleccionar sexo"}
+                        />
                     </FormField>
-                    <FormField label={`${t("Raza", "Raça")} *`}>
-                        <SelectInput value={form.razaCodigo} onChange={(c, n) => update({ razaCodigo: c, razaNombre: n })} options={RAZAS_BOVINAS} placeholder={t("Seleccionar raza", "Seleccionar raça")}/>
+                    <FormField label={`${lang === "ca" ? "Raça" : "Raza"} *`}>
+                        <SelectInput
+                            value={form.razaCodigo}
+                            onChange={(c, n) => update({ razaCodigo: c, razaNombre: n })}
+                            options={RAZAS_BOVINAS}
+                            placeholder={lang === "ca" ? "Seleccionar raça" : "Seleccionar raza"}
+                        />
                     </FormField>
-                    <FormField label={`${t("Aptitud", "Aptitud")} *`}>
-                        <SelectInput value={form.aptitudCodigo} onChange={(c, n) => update({ aptitudCodigo: c, aptitudNombre: n })} options={aptitudes} placeholder={t("Seleccionar aptitud", "Seleccionar aptitud")}/>
+                    <FormField label="Aptitud *">
+                        <SelectInput
+                            value={form.aptitudCodigo}
+                            onChange={(c, n) => update({ aptitudCodigo: c, aptitudNombre: n })}
+                            options={aptitudes}
+                            placeholder="Seleccionar aptitud"
+                        />
                     </FormField>
                 </div>
-
-                {exito && <SuccessBanner mensaje={t("Nacimiento registrado correctamente", "Naixement registrat correctament")}/>}
             </div>
 
             {/* Botón fijo */}
@@ -133,7 +153,7 @@ export default function NacimientoPage() {
                     disabled={enviando || !esValido}
                     className="w-full bg-main-green text-white rounded-xl py-3 text-sm font-semibold disabled:opacity-40 transition-opacity"
                 >
-                    {enviando ? t("Enviando...", "Enviant...") : t("Registrar nacimiento", "Registrar naixement")}
+                    {enviando ? t("common.loading") : t("gestion.nacimiento")}
                 </button>
             </div>
 
@@ -141,33 +161,99 @@ export default function NacimientoPage() {
             {mostrarConfirm && (
                 <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center px-4">
                     <div className="bg-white rounded-2xl p-6 w-full max-w-sm">
-                        <h3 className="text-base font-bold text-dark-blue-grey mb-2">{t("Confirmar registro", "Confirmar registre")}</h3>
-                        <p className="text-sm text-blue-grey mb-4">{t("¿Confirmas el registro del nacimiento?", "Confirmes el registre del naixement?")}</p>
+                        <h3 className="text-base font-bold text-dark-blue-grey mb-2">
+                            {lang === "ca" ? "Confirmar registre" : "Confirmar registro"}
+                        </h3>
+                        <p className="text-sm text-blue-grey mb-4">
+                            {lang === "ca"
+                                ? "Confirmes el registre del naixement?"
+                                : "¿Confirmas el registro del nacimiento?"}
+                        </p>
                         <div className="bg-surface rounded-xl p-3 mb-5 flex flex-col gap-1.5">
-                            <p className="text-xs text-blue-grey">{t("Madre", "Mare")}: <span className="text-dark-blue-grey font-medium">{form.idMadre}</span></p>
-                            <p className="text-xs text-blue-grey">{t("Cría", "Cria")}: <span className="text-dark-blue-grey font-medium">{form.idCria}</span></p>
-                            <p className="text-xs text-blue-grey">{t("Fecha nacimiento", "Data naixement")}: <span className="text-dark-blue-grey font-medium">{formatearFechaDisplay(form.fechaNacimiento)}</span></p>
+                            <p className="text-xs text-blue-grey">
+                                {lang === "ca" ? "Mare" : "Madre"}:{" "}
+                                <span className="text-dark-blue-grey font-medium">{form.idMadre}</span>
+                            </p>
+                            <p className="text-xs text-blue-grey">
+                                {lang === "ca" ? "Cria" : "Cría"}:{" "}
+                                <span className="text-dark-blue-grey font-medium">{form.idCria}</span>
+                            </p>
+                            <p className="text-xs text-blue-grey">
+                                {lang === "ca" ? "Data naixement" : "Fecha nacimiento"}:{" "}
+                                <span className="text-dark-blue-grey font-medium">
+                                    {formatearFechaDisplay(form.fechaNacimiento)}
+                                </span>
+                            </p>
                             {form.fechaIdentificacion && (
-                                <p className="text-xs text-blue-grey">{t("Fecha identificación", "Data identificació")}: <span className="text-dark-blue-grey font-medium">{formatearFechaDisplay(form.fechaIdentificacion)}</span></p>
+                                <p className="text-xs text-blue-grey">
+                                    {lang === "ca" ? "Data identificació" : "Fecha identificación"}:{" "}
+                                    <span className="text-dark-blue-grey font-medium">
+                                        {formatearFechaDisplay(form.fechaIdentificacion)}
+                                    </span>
+                                </p>
                             )}
-                            <p className="text-xs text-blue-grey">{t("Sexo", "Sexe")}: <span className="text-dark-blue-grey font-medium">{form.sexoNombre}</span></p>
-                            <p className="text-xs text-blue-grey">{t("Raza", "Raça")}: <span className="text-dark-blue-grey font-medium">{form.razaNombre}</span></p>
-                            <p className="text-xs text-blue-grey">{t("Aptitud", "Aptitud")}: <span className="text-dark-blue-grey font-medium">{form.aptitudNombre}</span></p>
+                            <p className="text-xs text-blue-grey">
+                                {lang === "ca" ? "Sexe" : "Sexo"}:{" "}
+                                <span className="text-dark-blue-grey font-medium">{form.sexoNombre}</span>
+                            </p>
+                            <p className="text-xs text-blue-grey">
+                                {lang === "ca" ? "Raça" : "Raza"}:{" "}
+                                <span className="text-dark-blue-grey font-medium">{form.razaNombre}</span>
+                            </p>
+                            <p className="text-xs text-blue-grey">
+                                Aptitud:{" "}
+                                <span className="text-dark-blue-grey font-medium">{form.aptitudNombre}</span>
+                            </p>
                         </div>
                         <div className="flex gap-3">
-                            <button onClick={() => setMostrarConfirm(false)} className="flex-1 border border-surface-variant text-blue-grey rounded-xl py-2.5 text-sm font-medium">
-                                {t("Cancelar", "Cancel·lar")}
+                            <button
+                                onClick={() => setMostrarConfirm(false)}
+                                className="flex-1 border border-surface-variant text-blue-grey rounded-xl py-2.5 text-sm font-medium"
+                            >
+                                {t("common.btn_cancel")}
                             </button>
-                            <button onClick={confirmarEnvio} className="flex-1 bg-main-green text-white rounded-xl py-2.5 text-sm font-semibold">
-                                {t("Confirmar", "Confirmar")}
+                            <button
+                                onClick={confirmarEnvio}
+                                className="flex-1 bg-main-green text-white rounded-xl py-2.5 text-sm font-semibold"
+                            >
+                                {t("common.btn_send")}
                             </button>
                         </div>
                     </div>
                 </div>
             )}
 
-            {errorMsg && <ErrorModal mensaje={errorMsg} onClose={() => setErrorMsg(null)} lang={lang}/>}
-            {enviando && <LoadingOverlay mensaje={t("Enviando...", "Enviant...")}/>}
+            {/* Success modal */}
+            {exito && (
+                <SuccessModal
+                    titulo={lang === "ca" ? "Naixement registrat" : "Nacimiento registrado"}
+                    mensaje={lang === "ca"
+                        ? "El naixement ha estat registrat correctament al sistema GTR."
+                        : "El nacimiento ha sido registrado correctamente en el sistema GTR."}
+                    boton={lang === "ca" ? "Acceptar" : "Aceptar"}
+                    onClose={cerrarExito}
+                />
+            )}
+
+            {/* Error local — validación de campos */}
+            {errorLocal && (
+                <ErrorModal
+                    mensaje={errorLocal}
+                    onClose={() => setErrorLocal(null)}
+                    lang={lang}
+                />
+            )}
+
+            {/* Error API — descripcio del servidor o error de red */}
+            {errorApiMsg && (
+                <ErrorModal
+                    mensaje={errorApiMsg}
+                    onClose={limpiarErrorApi}
+                    lang={lang}
+                />
+            )}
+
+            {enviando && <LoadingOverlay mensaje={t("common.loading")}/>}
         </div>
     );
 }
