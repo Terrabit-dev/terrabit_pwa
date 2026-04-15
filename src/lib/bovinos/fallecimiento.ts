@@ -1,80 +1,81 @@
-import { apiPutFallecimiento } from "@/lib/api/endpoints";
-import { isGtrSuccess } from "@/lib/api/endpoints";
+import { apiPutFallecimiento, isGtrSuccess } from "@/lib/api/endpoints";
 import { getCredentials } from "@/lib/storage/credentials";
+import type { OpcionSelect } from "./constants";
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
 export interface FallecimientoForm {
-    tipus: string;         // "01" | "02"
-    tipusNombre: string;
-    identificador: string;
-    dataMort: string;      // "yyyy-mm-dd"
-    cadaverInaccesible: boolean;
-    mesosGestacio: string; // solo obligatorio si tipus === "02"
-    coordenadaX: string;
-    coordenadaY: string;
+    idAnimal:           string;
+    tipusMort:          string;   // "01" Muerte | "02" Aborto
+    tipusNombre:        string;
+    dataMort:           string;
+    cadaverInaccesible: boolean;  // solo visible si tipusMort === "01"
+    latitud:            string;   // solo si cadaverInaccesible
+    longitud:           string;   // solo si cadaverInaccesible
+    mesoGestacio:       string;   // solo si tipusMort === "02"
 }
 
 export const FALLECIMIENTO_FORM_INICIAL: FallecimientoForm = {
-    tipus: "",
-    tipusNombre: "",
-    identificador: "",
-    dataMort: "",
+    idAnimal:           "",
+    tipusMort:          "",
+    tipusNombre:        "",
+    dataMort:           "",
     cadaverInaccesible: false,
-    mesosGestacio: "",
-    coordenadaX: "",
-    coordenadaY: "",
+    latitud:            "",
+    longitud:           "",
+    mesoGestacio:       "",
 };
 
 // ─── Constantes ───────────────────────────────────────────────────────────────
 
-export const TIPOS_MUERTE = [
+export const TIPOS_MUERTE: OpcionSelect[] = [
     { codigo: "01", nombre: "Muerto" },
     { codigo: "02", nombre: "Aborto" },
 ];
 
-export const TIPOS_MUERTE_CA = [
+export const TIPOS_MUERTE_CA: OpcionSelect[] = [
     { codigo: "01", nombre: "Mort" },
     { codigo: "02", nombre: "Avortament" },
 ];
 
-// ─── Validación ───────────────────────────────────────────────────────────────
+// ─── Errores ──────────────────────────────────────────────────────────────────
 
-export type FallecimientoErrorCodigo =
-    | "TIPO_REQUERIDO"
-    | "IDENTIFICADOR_REQUERIDO"
-    | "FECHA_REQUERIDA"
-    | "MESES_GESTACION_REQUERIDOS";
+export const FALLECIMIENTO_ERRORES = {
+    ANIMAL_ID:   12,
+    TIPO_MUERTE: 7,
+    FECHA_MORT:  8,
+    MESOS_GEST:  9,
+    LATITUD:     10,
+    LONGITUD:    11,
+} as const;
+
+export interface FallecimientoValidationError {
+    tipo:   "validacion";
+    codigo: number;
+}
+
+// ─── Validación ───────────────────────────────────────────────────────────────
 
 export function validarFallecimiento(
     form: FallecimientoForm
-): { codigo: FallecimientoErrorCodigo } | null {
-    if (!form.tipus)          return { codigo: "TIPO_REQUERIDO" };
-    if (!form.identificador)  return { codigo: "IDENTIFICADOR_REQUERIDO" };
-    if (!form.dataMort)       return { codigo: "FECHA_REQUERIDA" };
-    if (form.tipus === "02" && !form.mesosGestacio.trim()) {
-        return { codigo: "MESES_GESTACION_REQUERIDOS" };
-    }
-    return null;
-}
+): FallecimientoValidationError | null {
+    if (!form.idAnimal.trim()) return { tipo: "validacion", codigo: FALLECIMIENTO_ERRORES.ANIMAL_ID };
+    if (!form.tipusMort)       return { tipo: "validacion", codigo: FALLECIMIENTO_ERRORES.TIPO_MUERTE };
+    if (!form.dataMort)        return { tipo: "validacion", codigo: FALLECIMIENTO_ERRORES.FECHA_MORT };
 
-export function getFallecimientoErrorMessage(
-    codigo: FallecimientoErrorCodigo,
-    lang: string
-): string {
-    const es: Record<FallecimientoErrorCodigo, string> = {
-        TIPO_REQUERIDO:             "Debes seleccionar el tipo de muerte.",
-        IDENTIFICADOR_REQUERIDO:    "El identificador es obligatorio.",
-        FECHA_REQUERIDA:            "La fecha de muerte es obligatoria.",
-        MESES_GESTACION_REQUERIDOS: "Los meses de gestación son obligatorios para un aborto.",
-    };
-    const ca: Record<FallecimientoErrorCodigo, string> = {
-        TIPO_REQUERIDO:             "Has de seleccionar el tipus de mort.",
-        IDENTIFICADOR_REQUERIDO:    "L'identificador és obligatori.",
-        FECHA_REQUERIDA:            "La data de mort és obligatòria.",
-        MESES_GESTACION_REQUERIDOS: "Els mesos de gestació són obligatoris per a un avortament.",
-    };
-    return (lang === "ca" ? ca : es)[codigo];
+    // Solo si es Aborto
+    if (form.tipusMort === "02") {
+        if (!form.mesoGestacio.trim())
+            return { tipo: "validacion", codigo: FALLECIMIENTO_ERRORES.MESOS_GEST };
+    }
+
+    // Solo si es Muerte + cadáver inaccesible
+    if (form.tipusMort === "01" && form.cadaverInaccesible) {
+        if (!form.latitud.trim())  return { tipo: "validacion", codigo: FALLECIMIENTO_ERRORES.LATITUD };
+        if (!form.longitud.trim()) return { tipo: "validacion", codigo: FALLECIMIENTO_ERRORES.LONGITUD };
+    }
+
+    return null;
 }
 
 // ─── Envío ────────────────────────────────────────────────────────────────────
@@ -93,17 +94,22 @@ export async function enviarFallecimiento(
     const body: Record<string, unknown> = {
         nif:                creds.nif,
         passwordMobilitat:  creds.password,
-        tipus:              form.tipus,
-        identificador:      form.identificador,
-        dataMort:           form.dataMort,
+        tipus:              form.tipusMort,
+        identificador:      form.idAnimal,
+        dataMort:           formatearFechaAPI(form.dataMort),
         cadaverInaccesible: form.cadaverInaccesible ? "true" : "false",
     };
 
-    if (form.tipus === "02" && form.mesosGestacio.trim()) {
-        body.mesosGestacio = form.mesosGestacio.trim();
+    // Solo si es Aborto
+    if (form.tipusMort === "02" && form.mesoGestacio.trim()) {
+        body.mesosGestacio = form.mesoGestacio.trim();
     }
-    if (form.coordenadaX.trim()) body.coordenadaX = form.coordenadaX.trim();
-    if (form.coordenadaY.trim()) body.coordenadaY = form.coordenadaY.trim();
+
+    // Solo si cadáver inaccesible
+    if (form.tipusMort === "01" && form.cadaverInaccesible) {
+        if (form.latitud.trim())  body.coordenadaX = form.latitud.trim();
+        if (form.longitud.trim()) body.coordenadaY = form.longitud.trim();
+    }
 
     try {
         const res = await apiPutFallecimiento(body);
@@ -122,8 +128,12 @@ export async function enviarFallecimiento(
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-export function formatearFechaDisplay(isoDate: string): string {
-    if (!isoDate) return "";
-    const [y, m, d] = isoDate.split("-");
-    return `${d}/${m}/${y}`;
+export function formatearFechaAPI(fecha: string): string {
+    return fecha.replace(/-/g, "");
+}
+
+export function formatearFechaDisplay(fecha: string): string {
+    if (!fecha) return "";
+    const [year, month, day] = fecha.split("-");
+    return `${day}/${month}/${year}`;
 }

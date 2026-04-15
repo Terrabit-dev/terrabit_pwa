@@ -1,160 +1,34 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import TopBar from "@/components/layout/TopBar";
 import { useDrawer } from "@/context/DrawerContext";
 import { useI18n } from "@/hooks/useI18n";
 import FormField from "@/components/forms/FormField";
 import SelectInput from "@/components/forms/SelectInput";
+import DateInputDMY from "@/components/forms/DateInputDMY";
 import AutoCompleteIdentificador from "@/components/forms/AutoCompleteIdentificador";
-import MOSelector from "@/components/forms/MOSelector";
-import {
-    FALLECIMIENTO_FORM_INICIAL,
-    TIPOS_MUERTE,
-    TIPOS_MUERTE_CA,
-    validarFallecimiento,
-    enviarFallecimiento,
-    getFallecimientoErrorMessage,
-    formatearFechaDisplay,
-    type FallecimientoForm,
-} from "@/lib/bovinos/fallecimiento";
+import ErrorModal from "@/components/common/ErrorModal";
+import SuccessModal from "@/components/common/SuccessModal";
+import LoadingOverlay from "@/components/common/LoadingOverlay";
+import { TIPOS_MUERTE, TIPOS_MUERTE_CA } from "@/lib/bovinos/constants";
+import { validarFallecimiento, formatearFechaDisplay } from "@/lib/bovinos/fallecimiento";
+import { getAppError } from "@/lib/errors/appErrors";
+import { useFallecimiento } from "@/hooks/useFallecimiento";
 import { useListarBovinos } from "@/hooks/useListarBovinos";
 import { useAutoCompleteBovinos } from "@/hooks/useAutoCompleteBovinos";
 
-// ─── DateInput dd/mm/aaaa ─────────────────────────────────────────────────────
-
-function DateInputDMY({
-                          value,
-                          onChange,
-                          placeholder,
-                      }: {
-    value: string;
-    onChange: (v: string) => void;
-    placeholder?: string;
-}) {
-    const [inputValue, setInputValue] = useState(
-        value ? formatearFechaDisplay(value) : ""
-    );
-
-    const handleChange = (raw: string) => {
-        let digits = raw.replace(/[^\d]/g, "");
-        if (digits.length > 8) digits = digits.slice(0, 8);
-        let formatted = digits;
-        if (digits.length > 2) formatted = digits.slice(0, 2) + "/" + digits.slice(2);
-        if (digits.length > 4) formatted = formatted.slice(0, 5) + "/" + formatted.slice(5);
-        setInputValue(formatted);
-        if (digits.length === 8) {
-            const day   = digits.slice(0, 2);
-            const month = digits.slice(2, 4);
-            const year  = digits.slice(4, 8);
-            onChange(`${year}-${month}-${day}`);
-        } else {
-            onChange("");
-        }
-    };
-
-    return (
-        <div className="flex items-center border border-surface-variant rounded-xl px-3 py-2.5 bg-surface focus-within:border-error-red transition-colors">
-            <svg className="w-4 h-4 text-blue-grey shrink-0 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd"/>
-            </svg>
-            <input
-                type="text"
-                value={inputValue}
-                onChange={(e) => handleChange(e.target.value)}
-                placeholder={placeholder ?? "dd/mm/aaaa"}
-                maxLength={10}
-                inputMode="numeric"
-                className="flex-1 text-sm bg-transparent outline-none text-dark-blue-grey placeholder-blue-grey/50"
-            />
-        </div>
-    );
-}
-
-// ─── Toggle cadáver inaccesible ───────────────────────────────────────────────
-
-function ToggleCadaver({
-                           value,
-                           onChange,
-                           label,
-                       }: {
-    value: boolean;
-    onChange: (v: boolean) => void;
-    label: string;
-}) {
-    return (
-        <button
-            type="button"
-            onClick={() => onChange(!value)}
-            className="flex items-center justify-between w-full py-1"
-        >
-            <span className="text-sm text-dark-blue-grey">{label}</span>
-            <div
-                className={`relative w-11 h-6 rounded-full transition-colors duration-200 ${
-                    value ? "bg-error-red" : "bg-surface-variant"
-                }`}
-            >
-        <span
-            className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200 ${
-                value ? "translate-x-5" : "translate-x-0"
-            }`}
-        />
-            </div>
-        </button>
-    );
-}
-
-// ─── Modal error ──────────────────────────────────────────────────────────────
-
-function ErrorModal({
-                        mensaje,
-                        onClose,
-                        lang,
-                    }: {
-    mensaje: string;
-    onClose: () => void;
-    lang: string;
-}) {
-    return (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center px-4">
-            <div className="bg-white rounded-2xl p-6 w-full max-w-sm">
-                <div className="flex flex-col items-center gap-3 mb-4">
-                    <div className="w-12 h-12 bg-error-red-bg rounded-full flex items-center justify-center">
-                        <svg className="w-6 h-6 text-error-red" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd"/>
-                        </svg>
-                    </div>
-                    <h3 className="text-base font-bold text-dark-blue-grey">Error</h3>
-                    <p className="text-sm text-blue-grey text-center">{mensaje}</p>
-                </div>
-                <button
-                    onClick={onClose}
-                    className="w-full bg-error-red text-white rounded-xl py-2.5 text-sm font-semibold"
-                >
-                    {lang === "ca" ? "Acceptar" : "Aceptar"}
-                </button>
-            </div>
-        </div>
-    );
-}
-
-// ─── Página ───────────────────────────────────────────────────────────────────
-
 export default function FallecimientoPage() {
-    const { toggle } = useDrawer();
-    const { lang }   = useI18n();
+    const { toggle }  = useDrawer();
+    const { t, lang } = useI18n();
 
-    const [form, setForm]         = useState<FallecimientoForm>(FALLECIMIENTO_FORM_INICIAL);
-    const [enviando, setEnviando] = useState(false);
-    const [exito, setExito]       = useState(false);
-    const [errorMsg, setErrorMsg] = useState<string | null>(null);
+    const {
+        form, enviando, exito, errorApi, obtenendoGps,
+        update, enviar, obtenerCoordenadas, cerrarExito, limpiarErrorApi,
+    } = useFallecimiento();
+
+    const [errorLocal, setErrorLocal]         = useState<string | null>(null);
     const [mostrarConfirm, setMostrarConfirm] = useState(false);
-
-    const t = (es: string, ca: string) => lang === "ca" ? ca : es;
-    const update = useCallback(
-        (field: Partial<FallecimientoForm>) => setForm((prev) => ({ ...prev, ...field })),
-        []
-    );
 
     const { lista: listaBovinos, cargarBovinos } = useListarBovinos();
     useEffect(() => { cargarBovinos(); }, [cargarBovinos]);
@@ -163,18 +37,19 @@ export default function FallecimientoPage() {
         useAutoCompleteBovinos(listaBovinos);
 
     const tiposMuerte = lang === "ca" ? TIPOS_MUERTE_CA : TIPOS_MUERTE;
-    const esAborto    = form.tipus === "02";
 
-    // Label del campo identificador cambia según tipo
-    const labelIdentificador = esAborto
-        ? t("Identificador madre *", "Identificador mare *")
-        : t("Identificador animal *", "Identificador animal *");
+    const errorApiMsg = errorApi
+        ? errorApi.tipo === "api" ? errorApi.mensaje : t("errors.network")
+        : null;
+
+    const esAbort  = form.tipusMort === "02";
+    const esMuerte = form.tipusMort === "01";
 
     const handleEnviar = () => {
-        setExito(false);
+        setErrorLocal(null);
         const err = validarFallecimiento(form);
         if (err) {
-            setErrorMsg(getFallecimientoErrorMessage(err.codigo, lang));
+            setErrorLocal(getAppError(err.codigo, t));
             return;
         }
         setMostrarConfirm(true);
@@ -182,19 +57,7 @@ export default function FallecimientoPage() {
 
     const confirmarEnvio = async () => {
         setMostrarConfirm(false);
-        setEnviando(true);
-        const resultado = await enviarFallecimiento(form);
-        setEnviando(false);
-        if (!resultado.exito) {
-            setErrorMsg(
-                resultado.error?.tipo === "api"
-                    ? resultado.error.mensaje
-                    : t("Error de conexión con la GTR API", "Error de connexió amb la GTR API")
-            );
-            return;
-        }
-        setExito(true);
-        setForm(FALLECIMIENTO_FORM_INICIAL);
+        await enviar();
     };
 
     const esValido = !validarFallecimiento(form);
@@ -202,147 +65,165 @@ export default function FallecimientoPage() {
     return (
         <div className="min-h-screen bg-surface">
             <TopBar
-                title={t("Registrar Fallecimiento", "Registrar Defunció")}
+                title={lang === "ca" ? "Registrar Defunció" : "Registrar Fallecimiento"}
                 onMenuClick={toggle}
                 accentColor="red"
                 showBack
             />
 
-            <div className="px-4 py-4 flex flex-col gap-4 pb-24">
+            <div className="px-4 py-5 flex flex-col gap-4 pb-24">
 
-                {/* Selector MO */}
-                <div className="flex justify-start">
-                    <MOSelector variant="red" />
-                </div>
-
-                {/* Tipo de muerte */}
+                {/* Identificador del animal */}
                 <div className="bg-white rounded-2xl shadow-sm p-4 flex flex-col gap-4">
                     <h2 className="text-sm font-bold text-dark-blue-grey">
-                        {t("Tipo de muerte", "Tipus de mort")}
+                        {lang === "ca" ? "Identificador de l'animal" : "Identificador del animal"}
                     </h2>
-                    <FormField label={`${t("Tipo", "Tipus")} *`}>
-                        <SelectInput
-                            value={form.tipus}
-                            onChange={(c, n) => {
-                                // Al cambiar tipo, limpiar campos dependientes
-                                update({
-                                    tipus: c,
-                                    tipusNombre: n,
-                                    mesosGestacio: "",
-                                    identificador: "",
-                                });
-                                limpiarSugerencias();
-                            }}
-                            options={tiposMuerte}
-                            placeholder={t("Seleccionar tipo", "Seleccionar tipus")}
-                        />
-                    </FormField>
-                </div>
-
-                {/* Identificador */}
-                <div className="bg-white rounded-2xl shadow-sm p-4 flex flex-col gap-4">
-                    <h2 className="text-sm font-bold text-dark-blue-grey">
-                        {t("Identificación", "Identificació")}
-                    </h2>
-
                     <AutoCompleteIdentificador
-                        label={labelIdentificador}
-                        value={form.identificador}
-                        onChange={(v) => {
-                            update({ identificador: v });
-                            buscar(v, 0);
-                        }}
-                        onAnimalSelected={(animal) => {
-                            update({ identificador: animal.identificador });
-                            limpiarSugerencias();
-                        }}
+                        label={`${lang === "ca" ? "ID Animal" : "ID Animal"} *`}
+                        value={form.idAnimal}
+                        onChange={(v) => { update({ idAnimal: v }); buscar(v, 0); }}
+                        onAnimalSelected={(a) => { update({ idAnimal: a.identificador }); limpiarSugerencias(); }}
                         suggestions={activeField === 0 ? suggestions : []}
                         isLoading={isLoading && activeField === 0}
                         placeholder="ES724100041234"
                         lang={lang}
                     />
-
-                    {/* Meses de gestación — solo visible si es aborto */}
-                    {esAborto && (
-                        <FormField label={`${t("Meses de gestación", "Mesos de gestació")} *`}>
-                            <div className="flex items-center border border-surface-variant rounded-xl px-3 py-2.5 bg-surface focus-within:border-error-red transition-colors">
-                                <input
-                                    type="number"
-                                    min={1}
-                                    max={12}
-                                    value={form.mesosGestacio}
-                                    onChange={(e) => update({ mesosGestacio: e.target.value })}
-                                    placeholder={t("Ej: 7", "Ex: 7")}
-                                    inputMode="numeric"
-                                    className="flex-1 text-sm bg-transparent outline-none text-dark-blue-grey placeholder-blue-grey/50"
-                                />
-                            </div>
-                        </FormField>
-                    )}
                 </div>
 
-                {/* Fecha y opciones */}
+                {/* Tipo y fecha */}
                 <div className="bg-white rounded-2xl shadow-sm p-4 flex flex-col gap-4">
                     <h2 className="text-sm font-bold text-dark-blue-grey">
-                        {t("Fecha y opciones", "Data i opcions")}
+                        {lang === "ca" ? "Dades de la defunció" : "Datos del fallecimiento"}
                     </h2>
 
-                    <FormField label={`${t("Fecha de muerte", "Data de mort")} *`}>
+                    <FormField label={`${lang === "ca" ? "Tipus" : "Tipo"} *`}>
+                        <SelectInput
+                            value={form.tipusMort}
+                            onChange={(c, n) => update({
+                                tipusMort:    c,
+                                tipusNombre:  n,
+                                // Limpiar campos condicionales al cambiar tipo
+                                mesoGestacio:       "",
+                                cadaverInaccesible: false,
+                                latitud:            "",
+                                longitud:           "",
+                            })}
+                            options={tiposMuerte}
+                            placeholder={lang === "ca" ? "Seleccionar tipus" : "Seleccionar tipo"}
+                        />
+                    </FormField>
+
+                    <FormField label={`${lang === "ca" ? "Data de mort" : "Fecha de muerte"} *`}>
                         <DateInputDMY
                             value={form.dataMort}
                             onChange={(v) => update({ dataMort: v })}
                         />
                     </FormField>
 
-                    <ToggleCadaver
-                        value={form.cadaverInaccesible}
-                        onChange={(v) => update({ cadaverInaccesible: v })}
-                        label={t("Cadáver inaccesible", "Cadàver inaccessible")}
-                    />
+                    {/* Meses gestación — solo si es Aborto */}
+                    {esAbort && (
+                        <FormField label={`${lang === "ca" ? "Mesos de gestació (1-9)" : "Meses de gestación (1-9)"} *`}>
+                            <input
+                                type="number"
+                                min={1}
+                                max={9}
+                                value={form.mesoGestacio}
+                                onChange={(e) => {
+                                    const val = e.target.value;
+                                    if (val === "" || (Number(val) >= 1 && Number(val) <= 9)) {
+                                        update({ mesoGestacio: val });
+                                    }
+                                }}
+                                placeholder="1 - 9"
+                                className="w-full border border-surface-variant rounded-xl px-3 py-2.5 text-sm text-dark-blue-grey bg-surface focus:outline-none focus:border-main-green"
+                            />
+                        </FormField>
+                    )}
                 </div>
 
-                {/* Coordenadas (opcionales) */}
-                <div className="bg-white rounded-2xl shadow-sm p-4 flex flex-col gap-4">
-                    <h2 className="text-sm font-bold text-dark-blue-grey">
-                        {t("Coordenadas (opcional)", "Coordenades (opcional)")}
-                    </h2>
-                    <div className="grid grid-cols-2 gap-3">
-                        <FormField label="X">
-                            <div className="flex items-center border border-surface-variant rounded-xl px-3 py-2.5 bg-surface focus-within:border-error-red transition-colors">
-                                <input
-                                    type="text"
-                                    value={form.coordenadaX}
-                                    onChange={(e) => update({ coordenadaX: e.target.value })}
-                                    placeholder="0.000000"
-                                    inputMode="decimal"
-                                    className="flex-1 text-sm bg-transparent outline-none text-dark-blue-grey placeholder-blue-grey/50"
-                                />
+                {/* Cadáver inaccesible — solo si es Muerte */}
+                {esMuerte && (
+                    <div className="bg-white rounded-2xl shadow-sm p-4 flex flex-col gap-4">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-sm font-bold text-dark-blue-grey">
+                                    {lang === "ca" ? "Cadàver Inaccessible" : "Cadáver Inaccesible"}
+                                </p>
+                                <p className="text-xs text-blue-grey mt-0.5">
+                                    {lang === "ca"
+                                        ? "Activa si la ubicació no pot ser accedida"
+                                        : "Activar si la ubicación no puede ser accedida"}
+                                </p>
                             </div>
-                        </FormField>
-                        <FormField label="Y">
-                            <div className="flex items-center border border-surface-variant rounded-xl px-3 py-2.5 bg-surface focus-within:border-error-red transition-colors">
-                                <input
-                                    type="text"
-                                    value={form.coordenadaY}
-                                    onChange={(e) => update({ coordenadaY: e.target.value })}
-                                    placeholder="0.000000"
-                                    inputMode="decimal"
-                                    className="flex-1 text-sm bg-transparent outline-none text-dark-blue-grey placeholder-blue-grey/50"
-                                />
-                            </div>
-                        </FormField>
-                    </div>
-                </div>
+                            <button
+                                onClick={() => update({
+                                    cadaverInaccesible: !form.cadaverInaccesible,
+                                    latitud:  "",
+                                    longitud: "",
+                                })}
+                                className={`relative w-12 h-6 rounded-full transition-colors ${
+                                    form.cadaverInaccesible ? "bg-main-green" : "bg-surface-variant"
+                                }`}
+                            >
+                                <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${
+                                    form.cadaverInaccesible ? "translate-x-6" : "translate-x-0.5"
+                                }`}/>
+                            </button>
+                        </div>
 
-                {/* Banner éxito */}
-                {exito && (
-                    <div className="px-4 py-3 bg-main-green-bg rounded-xl flex items-center gap-2">
-                        <svg className="w-4 h-4 text-main-green shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/>
-                        </svg>
-                        <p className="text-xs text-main-green font-medium">
-                            {t("Fallecimiento registrado correctamente", "Defunció registrada correctament")}
-                        </p>
+                        {/* Coordenadas GPS — solo si cadáver inaccesible */}
+                        {form.cadaverInaccesible && (
+                            <div className="flex flex-col gap-3 pt-2 border-t border-surface-variant">
+                                <p className="text-sm font-semibold text-dark-blue-grey">
+                                    {lang === "ca" ? "Coordenades GPS" : "Coordenadas GPS"}
+                                </p>
+
+                                {/* Botón obtener ubicación */}
+                                <button
+                                    onClick={obtenerCoordenadas}
+                                    disabled={obtenendoGps}
+                                    className="flex items-center justify-center gap-2 border border-main-green text-main-green rounded-xl py-2.5 text-sm font-medium disabled:opacity-50"
+                                >
+                                    {obtenendoGps ? (
+                                        <>
+                                            <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+                                            </svg>
+                                            {lang === "ca" ? "Obtenint ubicació..." : "Obteniendo ubicación..."}
+                                        </>
+                                    ) : (
+                                        <>
+                                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                            </svg>
+                                            {lang === "ca" ? "Obtenir ubicació actual" : "Obtener ubicación actual"}
+                                        </>
+                                    )}
+                                </button>
+
+                                <FormField label={`${lang === "ca" ? "Latitud (X)" : "Latitud (X)"} *`}>
+                                    <input
+                                        type="text"
+                                        value={form.latitud}
+                                        onChange={(e) => update({ latitud: e.target.value })}
+                                        placeholder="41.123456"
+                                        className="w-full border border-surface-variant rounded-xl px-3 py-2.5 text-sm text-dark-blue-grey bg-surface focus:outline-none focus:border-main-green"
+                                    />
+                                </FormField>
+
+                                <FormField label={`${lang === "ca" ? "Longitud (Y)" : "Longitud (Y)"} *`}>
+                                    <input
+                                        type="text"
+                                        value={form.longitud}
+                                        onChange={(e) => update({ longitud: e.target.value })}
+                                        placeholder="2.123456"
+                                        className="w-full border border-surface-variant rounded-xl px-3 py-2.5 text-sm text-dark-blue-grey bg-surface focus:outline-none focus:border-main-green"
+                                    />
+                                </FormField>
+                            </div>
+                        )}
                     </div>
                 )}
             </div>
@@ -352,11 +233,11 @@ export default function FallecimientoPage() {
                 <button
                     onClick={handleEnviar}
                     disabled={enviando || !esValido}
-                    className="w-full bg-error-red text-white rounded-xl py-3 text-sm font-semibold disabled:opacity-40 transition-opacity"
+                    className="w-full bg-main-green text-white rounded-xl py-3 text-sm font-semibold disabled:opacity-40 transition-opacity"
                 >
                     {enviando
-                        ? t("Enviando...", "Enviant...")
-                        : t("Registrar fallecimiento", "Registrar defunció")}
+                        ? t("common.loading")
+                        : lang === "ca" ? "Reportar mort" : "Reportar muerte"}
                 </button>
             </div>
 
@@ -365,84 +246,89 @@ export default function FallecimientoPage() {
                 <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center px-4">
                     <div className="bg-white rounded-2xl p-6 w-full max-w-sm">
                         <h3 className="text-base font-bold text-dark-blue-grey mb-2">
-                            {t("Confirmar registro", "Confirmar registre")}
+                            {lang === "ca" ? "Confirmar defunció" : "Confirmar fallecimiento"}
                         </h3>
                         <p className="text-sm text-blue-grey mb-4">
-                            {t(
-                                "¿Confirmas el registro del fallecimiento?",
-                                "Confirmes el registre de la defunció?"
-                            )}
+                            {lang === "ca"
+                                ? "Confirmes el registre de la defunció?"
+                                : "¿Confirmas el registro del fallecimiento?"}
                         </p>
-
                         <div className="bg-surface rounded-xl p-3 mb-5 flex flex-col gap-1.5">
                             <p className="text-xs text-blue-grey">
-                                {t("Tipo", "Tipus")}:{" "}
+                                {lang === "ca" ? "Animal" : "Animal"}:{" "}
+                                <span className="text-dark-blue-grey font-medium">{form.idAnimal}</span>
+                            </p>
+                            <p className="text-xs text-blue-grey">
+                                {lang === "ca" ? "Tipus" : "Tipo"}:{" "}
                                 <span className="text-dark-blue-grey font-medium">{form.tipusNombre}</span>
                             </p>
                             <p className="text-xs text-blue-grey">
-                                {esAborto ? t("Madre", "Mare") : t("Animal", "Animal")}:{" "}
-                                <span className="text-dark-blue-grey font-medium">{form.identificador}</span>
+                                {lang === "ca" ? "Data de mort" : "Fecha de muerte"}:{" "}
+                                <span className="text-dark-blue-grey font-medium">{formatearFechaDisplay(form.dataMort)}</span>
                             </p>
-                            <p className="text-xs text-blue-grey">
-                                {t("Fecha de muerte", "Data de mort")}:{" "}
-                                <span className="text-dark-blue-grey font-medium">
-                  {formatearFechaDisplay(form.dataMort)}
-                </span>
-                            </p>
-                            {esAborto && form.mesosGestacio && (
+                            {esAbort && form.mesoGestacio && (
                                 <p className="text-xs text-blue-grey">
-                                    {t("Meses gestación", "Mesos gestació")}:{" "}
-                                    <span className="text-dark-blue-grey font-medium">{form.mesosGestacio}</span>
+                                    {lang === "ca" ? "Mesos gestació" : "Meses gestación"}:{" "}
+                                    <span className="text-dark-blue-grey font-medium">{form.mesoGestacio}</span>
                                 </p>
                             )}
-                            <p className="text-xs text-blue-grey">
-                                {t("Cadáver inaccesible", "Cadàver inaccessible")}:{" "}
-                                <span className="text-dark-blue-grey font-medium">
-                  {form.cadaverInaccesible ? t("Sí", "Sí") : t("No", "No")}
-                </span>
-                            </p>
-                            {form.coordenadaX && (
-                                <p className="text-xs text-blue-grey">
-                                    {t("Coordenadas", "Coordenades")}:{" "}
-                                    <span className="text-dark-blue-grey font-medium">
-                    {form.coordenadaX}, {form.coordenadaY}
-                  </span>
-                                </p>
+                            {esMuerte && form.cadaverInaccesible && (
+                                <>
+                                    <p className="text-xs text-blue-grey">
+                                        {lang === "ca" ? "Cadàver inaccessible" : "Cadáver inaccesible"}:{" "}
+                                        <span className="text-dark-blue-grey font-medium">
+                                            {lang === "ca" ? "Sí" : "Sí"}
+                                        </span>
+                                    </p>
+                                    {form.latitud && (
+                                        <p className="text-xs text-blue-grey">
+                                            GPS:{" "}
+                                            <span className="text-dark-blue-grey font-medium">
+                                                {form.latitud}, {form.longitud}
+                                            </span>
+                                        </p>
+                                    )}
+                                </>
                             )}
                         </div>
-
                         <div className="flex gap-3">
                             <button
                                 onClick={() => setMostrarConfirm(false)}
                                 className="flex-1 border border-surface-variant text-blue-grey rounded-xl py-2.5 text-sm font-medium"
                             >
-                                {t("Cancelar", "Cancel·lar")}
+                                {t("common.btn_cancel")}
                             </button>
                             <button
                                 onClick={confirmarEnvio}
-                                className="flex-1 bg-error-red text-white rounded-xl py-2.5 text-sm font-semibold"
+                                className="flex-1 bg-main-green text-white rounded-xl py-2.5 text-sm font-semibold"
                             >
-                                {t("Confirmar", "Confirmar")}
+                                {t("common.btn_send")}
                             </button>
                         </div>
                     </div>
                 </div>
             )}
 
-            {/* Modal error */}
-            {errorMsg && (
-                <ErrorModal mensaje={errorMsg} onClose={() => setErrorMsg(null)} lang={lang} />
+            {exito && (
+                <SuccessModal
+                    titulo={lang === "ca" ? "Defunció registrada" : "Fallecimiento registrado"}
+                    mensaje={lang === "ca"
+                        ? "La defunció ha estat registrada correctament al sistema GTR."
+                        : "El fallecimiento ha sido registrado correctamente en el sistema GTR."}
+                    boton={lang === "ca" ? "Acceptar" : "Aceptar"}
+                    onClose={cerrarExito}
+                />
             )}
 
-            {/* Loading overlay */}
-            {enviando && (
-                <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center">
-                    <div className="bg-white rounded-2xl p-6 flex flex-col items-center gap-3">
-                        <div className="w-10 h-10 border-4 border-error-red border-t-transparent rounded-full animate-spin"/>
-                        <p className="text-sm text-blue-grey">{t("Enviando...", "Enviant...")}</p>
-                    </div>
-                </div>
+            {errorLocal && (
+                <ErrorModal mensaje={errorLocal} onClose={() => setErrorLocal(null)} lang={lang}/>
             )}
+
+            {errorApiMsg && (
+                <ErrorModal mensaje={errorApiMsg} onClose={limpiarErrorApi} lang={lang}/>
+            )}
+
+            {enviando && <LoadingOverlay mensaje={t("common.loading")}/>}
         </div>
     );
 }

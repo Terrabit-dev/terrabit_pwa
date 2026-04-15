@@ -9,7 +9,7 @@ import SelectInput from "@/components/forms/SelectInput";
 import DateInputDMY from "@/components/forms/DateInputDMY";
 import AutoCompleteIdentificador from "@/components/forms/AutoCompleteIdentificador";
 import ErrorModal from "@/components/common/ErrorModal";
-import SuccessModal from "@/components/common/SuccesModal";
+import SuccessModal from "@/components/common/SuccessModal";
 import LoadingOverlay from "@/components/common/LoadingOverlay";
 import { RAZAS_BOVINAS, SEXOS, SEXOS_CA, APTITUDES, APTITUDES_CA } from "@/lib/bovinos/constants";
 import { validarNacimiento, formatearFechaDisplay } from "@/lib/bovinos/nacimiento";
