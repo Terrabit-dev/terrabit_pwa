@@ -77,7 +77,7 @@ export default function HomeBovinos() {
       bgColor: "bg-main-green-bg",
     }
   ];
-//Six seven wazaaaaa
+
   return (
     <div className="min-h-screen bg-surface">
       <TopBar title={t("bovinos.title")} onMenuClick={toggle} accentColor="green" />

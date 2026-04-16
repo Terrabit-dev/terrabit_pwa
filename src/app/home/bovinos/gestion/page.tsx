@@ -2,6 +2,7 @@
 
 import SubMenuPage, { SubMenuAction } from "@/components/layout/SubMenuPage";
 import { useI18n } from "@/hooks/useI18n";
+import {WarningIcon} from "next/dist/client/components/builtin/error-styles";
 
 const IconPlus = () => (
   <svg className="w-7 h-7" viewBox="0 0 24 24" fill="currentColor">
@@ -13,6 +14,11 @@ const IconMinus = () => (
   <svg className="w-7 h-7" viewBox="0 0 24 24" fill="currentColor">
     <path d="M19 13H5v-2h14v2z"/>
   </svg>
+);
+const IconX = () => (
+    <svg className="w-7 h-7" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+    </svg>
 );
 
 const IconEdit = () => (
@@ -40,18 +46,18 @@ export default function GestionBovinosPage() {
     {
       label: t("gestion.fallecimiento"),
       path: "/home/bovinos/gestion/fallecimiento",
-      icon: <IconMinus />,
+      icon: <IconX/>,
       variant: "danger",
     },
     {
       label: t("gestion.correccion_sexo"),
-      path: "/home/bovinos/gestion/correccion-sexo",
+      path: "/home/bovinos/gestion/correccion_sexo",
       icon: <IconEdit />,
       variant: "primary",
     },
     {
       label: t("gestion.identificacion"),
-      path: "/home/bovinos/gestion/identificacion",
+      path: "/home/bovinos/gestion/identificacion_aplazada",
       icon: <IconTag />,
       variant: "primary",
     },

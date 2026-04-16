@@ -9,6 +9,11 @@ interface GtrApiResponse {
 }
 
 export function parseGtrResponse(data: GtrApiResponse): string | null {
+    // Si la respuesta es HTML (404, 500 del servidor) no es un error GTR válido
+    if (typeof data === "string" && (data as string).includes("<!DOCTYPE")) {
+        return null; // se tratará como error de red
+    }
+
     if (data.errors && data.errors.length > 0) {
         return data.errors[0].descripcio;
     }
