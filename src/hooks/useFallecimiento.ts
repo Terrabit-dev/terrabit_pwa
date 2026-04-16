@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { latLonToUTM } from "@/lib/utils/locationUtils";
 import {
     FALLECIMIENTO_FORM_INICIAL,
     type FallecimientoForm,
@@ -24,6 +25,7 @@ interface UseFallecimientoReturn {
     exito:              boolean;
     errorApi:           FallecimientoError | null;
     obtenendoGps:       boolean;
+    resetKey:           number;
     update:             (field: Partial<FallecimientoForm>) => void;
     validar:            () => FallecimientoValidationError | null;
     enviar:             () => Promise<void>;
@@ -33,11 +35,12 @@ interface UseFallecimientoReturn {
 }
 
 export function useFallecimiento(): UseFallecimientoReturn {
-    const [form, setForm]               = useState<FallecimientoForm>(FALLECIMIENTO_FORM_INICIAL);
-    const [enviando, setEnviando]       = useState(false);
-    const [exito, setExito]             = useState(false);
-    const [errorApi, setErrorApi]       = useState<FallecimientoError | null>(null);
+    const [form, setForm]                 = useState<FallecimientoForm>(FALLECIMIENTO_FORM_INICIAL);
+    const [enviando, setEnviando]         = useState(false);
+    const [exito, setExito]               = useState(false);
+    const [errorApi, setErrorApi]         = useState<FallecimientoError | null>(null);
     const [obtenendoGps, setObtenendoGps] = useState(false);
+    const [resetKey, setResetKey]         = useState(0);
 
     const update = useCallback((field: Partial<FallecimientoForm>) => {
         setForm((prev) => ({ ...prev, ...field }));
@@ -45,22 +48,20 @@ export function useFallecimiento(): UseFallecimientoReturn {
 
     const validar = useCallback(() => validarFallecimiento(form), [form]);
 
-    // Geolocalización — equivalente al botón GPS del Android
     const obtenerCoordenadas = useCallback(() => {
         if (!navigator.geolocation) return;
         setObtenendoGps(true);
         navigator.geolocation.getCurrentPosition(
             (pos) => {
+                const utm = latLonToUTM(pos.coords.latitude, pos.coords.longitude);
                 setForm((prev) => ({
                     ...prev,
-                    latitud:  pos.coords.latitude.toFixed(6),
-                    longitud: pos.coords.longitude.toFixed(6),
+                    latitud:  utm.x,  // coordenadaX = Easting
+                    longitud: utm.y,  // coordenadaY = Northing
                 }));
                 setObtenendoGps(false);
             },
-            () => {
-                setObtenendoGps(false);
-            },
+            () => { setObtenendoGps(false); },
             { enableHighAccuracy: true, timeout: 10000 }
         );
     }, []);
@@ -77,40 +78,29 @@ export function useFallecimiento(): UseFallecimientoReturn {
         setExito(false);
 
         const body: Record<string, string> = {
-            nif:               credentials.nif,
-            passwordMobilitat: credentials.password,
-            identificador:     form.idAnimal.trim(),
-            tipus:             form.tipus,
-            dataMort:          formatearFechaAPI(form.dataMort),
+            nif:                credentials.nif,
+            passwordMobilitat:  credentials.password,
+            identificador:      form.identificador.trim(),
+            tipus:              form.tipus,
+            dataMort:           formatearFechaAPI(form.dataMort),
+            cadaverInaccesible: form.cadaverInaccesible ? "SI" : "NO",
         };
 
-        // Solo si es Aborto
         if (form.tipus === "02") {
-            body.mesosGestacio = form.mesoGestacio.trim();
+            body.mesosGestacio = form.mesosGestacio.trim();
         }
 
-        // Solo si es Muerte
-        if (form.tipus === "01") {
-            // ¡OJO AQUÍ! Una sola 's' en la clave, y convertimos a "SI" o "NO"
-            body.cadaverInaccesible = form.cadaverInaccesible ? "SI" : "NO";
-
-            if (form.cadaverInaccesible) {
-                // Enviamos valores vacíos en lugar de undefined si no hay coordenadas, o los reemplazamos
-                body.coordenadaX = form.latitud ? form.latitud.trim().replace('.', ',') : "";
-                body.coordenadaY = form.longitud ? form.longitud.trim().replace('.', ',') : "";
-            } else {
-                // Si la API exige que las claves existan aunque sea NO, las mandamos vacías
-                body.coordenadaX = "";
-                body.coordenadaY = "";
-            }
+        if (form.tipus === "01" && form.cadaverInaccesible) {
+            body.coordenadaX = form.latitud.trim().replace(".", ",");
+            body.coordenadaY = form.longitud.trim().replace(".", ",");
         }
 
-        secureLog.group("[GTR] WSBaixa →");
-        secureLog.request("WSBaixa", body as Record<string, unknown>);
+        secureLog.group("[GTR] WSEnregistramentMort →");
+        secureLog.request("WSEnregistramentMort", body as Record<string, unknown>);
 
         try {
             const response = await fetch(
-                "/api/gtr/proxy?endpoint=WSBovi/AppJava/Bovi/WSEnregistramentMort", // <-- ¡Cambiado y sin barra al final!
+                "/api/gtr/proxy?endpoint=WSBovi/AppJava/Bovi/WSEnregistramentMort/",
                 {
                     method: "PUT",
                     headers: { "Content-Type": "application/json" },
@@ -143,11 +133,12 @@ export function useFallecimiento(): UseFallecimientoReturn {
 
             await guardarEnHistorial({
                 tipo:    "FALLECIMIENTO",
-                resumen: `Fallecimiento registrat — ${form.idAnimal}`,
+                resumen: `Mort registrada — ${form.identificador}`,
                 datos:   form as unknown as Record<string, unknown>,
             });
 
             setForm(FALLECIMIENTO_FORM_INICIAL);
+            setResetKey((k) => k + 1);
             setExito(true);
 
         } catch (err) {
@@ -163,7 +154,7 @@ export function useFallecimiento(): UseFallecimientoReturn {
     const limpiarErrorApi = useCallback(() => setErrorApi(null), []);
 
     return {
-        form, enviando, exito, errorApi, obtenendoGps,
+        form, enviando, exito, errorApi, obtenendoGps, resetKey,
         update, validar, enviar, obtenerCoordenadas,
         cerrarExito, limpiarErrorApi,
     };

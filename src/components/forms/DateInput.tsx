@@ -2,13 +2,19 @@ export default function DateInput({
                                       value,
                                       onChange,
                                       disabled = false,
+                                      accentColor = "main-green",
                                   }: {
     value: string;
     onChange: (v: string) => void;
     disabled?: boolean;
+    accentColor?: "main-green" | "error-red";
 }) {
+    const borderFocus = accentColor === "error-red"
+        ? "focus-within:border-error-red"
+        : "focus-within:border-main-green";
+
     return (
-        <div className="flex items-center border border-surface-variant rounded-xl px-3 py-2.5 bg-surface focus-within:border-main-green transition-colors">
+        <div className={`flex items-center border border-surface-variant rounded-xl px-3 py-2.5 bg-surface ${borderFocus} transition-colors`}>
             <input
                 type="date"
                 value={value}
