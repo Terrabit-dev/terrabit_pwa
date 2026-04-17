@@ -10,9 +10,10 @@ import {
 } from "@/lib/bovinos/identificacion";
 import { parseGtrResponse } from "@/lib/gtr/errorHandler";
 import { getCredentials } from "@/lib/storage/credentials";
-import { guardarEnHistorial } from "@/lib/storage/historial";
+import {guardarEnHistorial, obtenerHistorialPorId} from "@/lib/storage/historial";
 import { secureLog } from "@/lib/utils/secureLogger";
 import type { GtrBaseResponse } from "@/lib/api/endpoints";
+import {actualizarBorrador, eliminarBorrador, guardarBorrador, obtenerBorradorPorId} from "@/lib/storage/borradores";
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
@@ -31,16 +32,57 @@ interface UseIdentificacionReturn {
     enviar:          () => Promise<void>;
     cerrarExito:     () => void;
     limpiarErrorApi: () => void;
+    cargarBorrador: (id: number) => Promise<void>;
+    guardarBorradorActual: () => Promise<boolean>;
+    isReadOnly: boolean;
+    cargarDesdeHistorial: (id: number | string) => Promise<void>;
 }
 
 // ─── Hook ─────────────────────────────────────────────────────────────────────
 
 export function useIdentificacion(): UseIdentificacionReturn {
     const [form, setForm]         = useState<IdentificacionForm>(IDENTIFICACION_FORM_INICIAL);
+    const [draftId, setDraftId]   = useState<number | null>(null);
     const [enviando, setEnviando] = useState(false);
     const [exito, setExito]       = useState(false);
     const [errorApi, setErrorApi] = useState<IdentificacionError | null>(null);
     const [resetKey, setResetKey] = useState(0);
+    const [isReadOnly, setIsReadOnly] = useState(false);
+
+
+    const cargarDesdeHistorial = useCallback(async (id: number | string) => {
+        const registro = await obtenerHistorialPorId(id);
+        if (registro && registro.tipo === "IDENTIFICACION") {
+            setForm(registro.datos as IdentificacionForm);
+            setIsReadOnly(true); // ¡Bloqueamos el formulario!
+        }
+    }, []);
+
+    const cargarBorrador = useCallback(async (id: number) => {
+        const borrador = await obtenerBorradorPorId(id);
+        if (borrador && borrador.tipo === "IDENTIFICACION") {
+            setForm(borrador.datos as IdentificacionForm);
+            setDraftId(borrador.id!); // Guardamos el ID para saber que estamos editando
+        }
+    }, []);
+
+    const guardarBorradorActual = useCallback(async () => {
+        try {
+            if (draftId) {
+                await actualizarBorrador(draftId, form as unknown as Record<string, unknown>);
+            } else {
+                const nuevoId = await guardarBorrador({
+                    tipo: "IDENTIFICACION",
+                    datos: form as unknown as Record<string, unknown>,
+                });
+                setDraftId(nuevoId);
+            }
+            return true; // (Todo fue bien)
+        } catch (error) {
+            console.error("Error al guardar el borrador", error);
+            return false; // (Hubo un error)
+        }
+    }, [form, draftId]);
 
     const update = useCallback((field: Partial<IdentificacionForm>) => {
         setForm((prev) => ({ ...prev, ...field }));
@@ -107,6 +149,14 @@ export function useIdentificacion(): UseIdentificacionReturn {
                 resumen: `Identificació registrada — ${form.identificador}`,
                 datos:   form as unknown as Record<string, unknown>,
             });
+            if (draftId) {
+                await eliminarBorrador(draftId);
+                setDraftId(null);
+            }
+
+            setForm(IDENTIFICACION_FORM_INICIAL);
+            setResetKey((k) => k + 1);
+            setExito(true);
 
             setForm(IDENTIFICACION_FORM_INICIAL);
             setResetKey((k) => k + 1);
@@ -125,7 +175,8 @@ export function useIdentificacion(): UseIdentificacionReturn {
     const limpiarErrorApi = useCallback(() => setErrorApi(null), []);
 
     return {
-        form, enviando, exito, errorApi, resetKey,
+        form, enviando, exito, errorApi, resetKey, isReadOnly,
         update, validar, enviar, cerrarExito, limpiarErrorApi,
+        cargarBorrador, guardarBorradorActual, cargarDesdeHistorial
     };
 }

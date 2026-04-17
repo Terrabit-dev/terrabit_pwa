@@ -1,23 +1,38 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import TopBar from "@/components/layout/TopBar";
 import { useDrawer } from "@/context/DrawerContext";
 import { useI18n } from "@/hooks/useI18n";
-
-// ─── Tipos ────────────────────────────────────────────────────────────────────
-
-export interface RegistroHistorial {
-    id: string;
-    // añade aquí los campos reales cuando los tengas
-}
+import { obtenerHistorial, type HistorialEntry } from "@/lib/storage/historial";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function filtrar(lista: RegistroHistorial[], busqueda: string): RegistroHistorial[] {
+// Mapeamos el 'tipo' guardado a la ruta real de tu aplicación
+function obtenerRutaFormulario(tipo: string): string {
+    switch (tipo) {
+        case "IDENTIFICACION":
+            return "/home/bovinos/gestion/identificacion_aplazada";
+        case "NACIMIENTO":
+            return "/home/bovinos/gestion/nacimiento"; // <- Ajusta esta ruta si es diferente
+        case "CORRECCION_SEXO":
+            return "/home/bovinos/gestion/correccion_sexo"; // <- Ajusta esta ruta si es diferente
+        case "FALLECIMIENTO":
+            return "/home/bovinos/gestion/fallecimiento";
+        default:
+            return "/home";
+    }
+}
+
+// Filtramos por el tipo o por el resumen guardado
+function filtrar(lista: HistorialEntry[], busqueda: string): HistorialEntry[] {
     if (!busqueda.trim()) return lista;
     const q = busqueda.toLowerCase();
-    return lista.filter((r) => r.id.toLowerCase().includes(q));
+    return lista.filter((r) =>
+        (r.resumen && r.resumen.toLowerCase().includes(q)) ||
+        (r.tipo && r.tipo.toLowerCase().includes(q))
+    );
 }
 
 // ─── Componente ───────────────────────────────────────────────────────────────
@@ -25,8 +40,9 @@ function filtrar(lista: RegistroHistorial[], busqueda: string): RegistroHistoria
 export default function HistorialPage() {
     const { toggle } = useDrawer();
     const { lang } = useI18n();
+    const router = useRouter();
 
-    const [lista, setLista] = useState<RegistroHistorial[]>([]);
+    const [lista, setLista] = useState<HistorialEntry[]>([]);
     const [cargando, setCargando] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [busqueda, setBusqueda] = useState("");
@@ -37,12 +53,11 @@ export default function HistorialPage() {
         setCargando(true);
         setError(null);
         try {
-            // TODO: reemplaza con tu llamada real
-            // const res = await apiGetHistorial();
-            // setLista(res.data);
-            setLista([]);
+            // Llamamos a la función real de tu lib/storage/historial
+            const res = await obtenerHistorial();
+            setLista(res);
         } catch (e) {
-            setError(e instanceof Error ? e.message : "Error desconocido");
+            setError(e instanceof Error ? e.message : "Error al cargar el historial");
         } finally {
             setCargando(false);
         }
@@ -51,6 +66,12 @@ export default function HistorialPage() {
     useEffect(() => {
         cargarHistorial();
     }, []);
+
+    const handleVerDetalle = (registro: HistorialEntry) => {
+        const ruta = obtenerRutaFormulario(registro.tipo);
+        // Redirigimos pasando el historyId en la URL
+        router.push(`${ruta}?historyId=${registro.id}`);
+    };
 
     return (
         <div className="min-h-screen bg-surface">
@@ -85,7 +106,7 @@ export default function HistorialPage() {
                 </div>
             </div>
 
-            {/* Contador */}
+            {/* Contador y Actualizar */}
             <div className="px-4 py-2 flex items-center justify-between">
                 <p className="text-xs text-blue-grey">
                     {cargando
@@ -137,12 +158,32 @@ export default function HistorialPage() {
                         </div>
                     ) : (
                         listaFiltrada.map((registro) => (
-                            <div
-                                key={registro.id}
-                                className="bg-white rounded-2xl p-4 shadow-sm"
-                            >
-                                {/* TODO: renderiza los campos de cada registro aquí */}
-                                <p className="text-sm font-medium text-dark-blue-grey">{registro.id}</p>
+                            <div key={registro.id} className="bg-white rounded-2xl p-4 shadow-sm border border-surface-variant flex flex-col gap-3">
+                                <div className="flex justify-between items-start">
+                                    <div>
+                                        <span className="text-[10px] font-bold uppercase tracking-wider text-main-green bg-main-green/10 px-2 py-1 rounded-md">
+                                            {registro.tipo.replace("_", " ")}
+                                        </span>
+                                        <h3 className="text-sm font-bold text-dark-blue-grey mt-2">
+                                            {registro.resumen}
+                                        </h3>
+                                    </div>
+                                    <p className="text-xs text-blue-grey">
+                                        {new Date(registro.fecha).toLocaleDateString(lang === "ca" ? "ca-ES" : "es-ES", {
+                                            day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit"
+                                        })}
+                                    </p>
+                                </div>
+
+                                {/* Botón para ir al formulario bloqueado (Sólo lectura) */}
+                                <div className="flex pt-2 border-t border-surface-variant">
+                                    <button
+                                        onClick={() => handleVerDetalle(registro)}
+                                        className="w-full bg-surface text-main-green rounded-xl py-2.5 text-sm font-semibold hover:bg-main-green/5 transition-colors"
+                                    >
+                                        {lang === "ca" ? "Veure detall" : "Ver detalle"}
+                                    </button>
+                                </div>
                             </div>
                         ))
                     )}

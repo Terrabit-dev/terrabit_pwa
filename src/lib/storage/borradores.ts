@@ -1,7 +1,7 @@
 import { openDB, IDBPDatabase } from "idb";
 
 const DB_NAME = "terrabit_db";
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 const STORE_BORRADORES = "borradores";
 
 async function getDB(): Promise<IDBPDatabase> {

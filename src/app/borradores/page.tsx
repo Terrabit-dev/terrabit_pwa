@@ -1,32 +1,49 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import TopBar from "@/components/layout/TopBar";
 import { useDrawer } from "@/context/DrawerContext";
 import { useI18n } from "@/hooks/useI18n";
-
-// ─── Tipos ────────────────────────────────────────────────────────────────────
-
-export interface RegistroHistorial {
-    id: string;
-    // añade aquí los campos reales cuando los tengas
-}
+// Importamos las funciones de la BD de tu compañero
+import { obtenerBorradores, eliminarBorrador, type Borrador } from "@/lib/storage/borradores";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function filtrar(lista: RegistroHistorial[], busqueda: string): RegistroHistorial[] {
+// Función para saber a qué página llevar al usuario cuando pulse "Continuar"
+function obtenerRutaFormulario(tipo: string): string {
+    switch (tipo) {
+        case "IDENTIFICACION":
+            return "/home/bovinos/gestion/identificacion_aplazada"; // <--- RUTA CORRECTA
+        case "FALLECIMIENTO":
+            return "/home/bovinos/gestion/fallecimiento"; // <--- Ajusta esta también a su ruta real
+        // Añade aquí más rutas a medida que hagas más formularios (ALTA, BAJA...)
+        default:
+            return "/home";
+    }
+}
+
+// Filtramos por el tipo (ej: IDENTIFICACION) o por el identificador del animal guardado en 'datos'
+function filtrar(lista: Borrador[], busqueda: string): Borrador[] {
     if (!busqueda.trim()) return lista;
     const q = busqueda.toLowerCase();
-    return lista.filter((r) => r.id.toLowerCase().includes(q));
+
+    return lista.filter((r) => {
+        const matchTipo = r.tipo.toLowerCase().includes(q);
+        const datos = r.datos as Record<string, any>;
+        const matchAnimal = datos?.identificador ? String(datos.identificador).toLowerCase().includes(q) : false;
+        return matchTipo || matchAnimal;
+    });
 }
 
 // ─── Componente ───────────────────────────────────────────────────────────────
 
-export default function HistorialPage() {
+export default function HistorialPage() { // (Nota: Aunque se llame HistorialPage, hace de Borradores)
     const { toggle } = useDrawer();
     const { lang } = useI18n();
+    const router = useRouter();
 
-    const [lista, setLista] = useState<RegistroHistorial[]>([]);
+    const [lista, setLista] = useState<Borrador[]>([]);
     const [cargando, setCargando] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [busqueda, setBusqueda] = useState("");
@@ -37,12 +54,11 @@ export default function HistorialPage() {
         setCargando(true);
         setError(null);
         try {
-            // TODO: reemplaza con tu llamada real
-            // const res = await apiGetHistorial();
-            // setLista(res.data);
-            setLista([]);
+            // Llamamos a la BD de IndexedDB
+            const borradores = await obtenerBorradores();
+            setLista(borradores);
         } catch (e) {
-            setError(e instanceof Error ? e.message : "Error desconocido");
+            setError(e instanceof Error ? e.message : "Error al cargar los borradores");
         } finally {
             setCargando(false);
         }
@@ -51,6 +67,21 @@ export default function HistorialPage() {
     useEffect(() => {
         cargarHistorial();
     }, []);
+
+    // ─── Acciones ─────────────────────────────────────────────────────────────
+
+    const handleEliminar = async (id: number) => {
+        const confirmar = confirm(lang === "ca" ? "Segur que vols esborrar aquest esborrany?" : "¿Seguro que quieres borrar este borrador?");
+        if (confirmar) {
+            await eliminarBorrador(id);
+            await cargarHistorial(); // Recargamos la lista
+        }
+    };
+
+    const handleContinuar = (borrador: Borrador) => {
+        const ruta = obtenerRutaFormulario(borrador.tipo);
+        router.push(`${ruta}?draftId=${borrador.id}`);
+    };
 
     return (
         <div className="min-h-screen bg-surface">
@@ -72,7 +103,7 @@ export default function HistorialPage() {
                         type="text"
                         value={busqueda}
                         onChange={(e) => setBusqueda(e.target.value)}
-                        placeholder={lang === "ca" ? "Cercar en historial..." : "Buscar en historial..."}
+                        placeholder={lang === "ca" ? "Cercar esborrany..." : "Buscar borrador..."}
                         className="flex-1 text-sm bg-transparent outline-none text-dark-blue-grey placeholder-blue-grey/50"
                     />
                     {busqueda && (
@@ -85,12 +116,12 @@ export default function HistorialPage() {
                 </div>
             </div>
 
-            {/* Contador */}
+            {/* Contador y Actualizar */}
             <div className="px-4 py-2 flex items-center justify-between">
                 <p className="text-xs text-blue-grey">
                     {cargando
                         ? (lang === "ca" ? "Carregant..." : "Cargando...")
-                        : `${listaFiltrada.length} ${lang === "ca" ? "registres" : "registros"}`}
+                        : `${listaFiltrada.length} ${lang === "ca" ? "esborranys" : "borradores"}`}
                 </p>
                 <button
                     onClick={cargarHistorial}
@@ -112,10 +143,7 @@ export default function HistorialPage() {
             {error && !cargando && (
                 <div className="mx-4 mt-2 px-4 py-3 bg-error-red-bg rounded-xl">
                     <p className="text-xs text-error-red text-center">{error}</p>
-                    <button
-                        onClick={cargarHistorial}
-                        className="w-full mt-2 text-xs text-error-red font-semibold"
-                    >
+                    <button onClick={cargarHistorial} className="w-full mt-2 text-xs text-error-red font-semibold">
                         {lang === "ca" ? "Tornar a intentar" : "Reintentar"}
                     </button>
                 </div>
@@ -132,19 +160,51 @@ export default function HistorialPage() {
                             <p className="text-sm text-blue-grey">
                                 {busqueda
                                     ? (lang === "ca" ? "Sense resultats" : "Sin resultados")
-                                    : (lang === "ca" ? "No hi ha registres en l'historial" : "No hay registros en el historial")}
+                                    : (lang === "ca" ? "No hi ha cap esborrany guardat" : "No hay ningún borrador guardado")}
                             </p>
                         </div>
                     ) : (
-                        listaFiltrada.map((registro) => (
-                            <div
-                                key={registro.id}
-                                className="bg-white rounded-2xl p-4 shadow-sm"
-                            >
-                                {/* TODO: renderiza los campos de cada registro aquí */}
-                                <p className="text-sm font-medium text-dark-blue-grey">{registro.id}</p>
-                            </div>
-                        ))
+                        listaFiltrada.map((registro) => {
+                            const datos = registro.datos as Record<string, any>;
+                            return (
+                                <div key={registro.id} className="bg-white rounded-2xl p-4 shadow-sm border border-surface-variant flex flex-col gap-3">
+                                    <div className="flex justify-between items-start">
+                                        <div>
+                                            <span className="text-[10px] font-bold uppercase tracking-wider text-main-green bg-main-green/10 px-2 py-1 rounded-md">
+                                                {registro.tipo}
+                                            </span>
+                                            <h3 className="text-sm font-bold text-dark-blue-grey mt-2">
+                                                {/* Extrae el identificador del animal de los datos guardados */}
+                                                {datos.identificador
+                                                    ? `ES${String(datos.identificador).replace('ES', '')}`
+                                                    : (lang === "ca" ? "Sense identificador" : "Sin identificador")}
+                                            </h3>
+                                        </div>
+                                        <p className="text-xs text-blue-grey">
+                                            {new Date(registro.fecha).toLocaleDateString(lang === "ca" ? "ca-ES" : "es-ES", {
+                                                day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit"
+                                            })}
+                                        </p>
+                                    </div>
+
+                                    {/* Botones de acción */}
+                                    <div className="flex gap-2 pt-2 border-t border-surface-variant">
+                                        <button
+                                            onClick={() => handleEliminar(registro.id!)}
+                                            className="flex-1 border border-error-red/20 text-error-red rounded-xl py-2.5 text-xs font-semibold hover:bg-error-red/5 transition-colors"
+                                        >
+                                            {lang === "ca" ? "Esborrar" : "Borrar"}
+                                        </button>
+                                        <button
+                                            onClick={() => handleContinuar(registro)}
+                                            className="flex-1 bg-main-green text-white rounded-xl py-2.5 text-xs font-semibold hover:opacity-90 transition-opacity"
+                                        >
+                                            {lang === "ca" ? "Continuar" : "Continuar"}
+                                        </button>
+                                    </div>
+                                </div>
+                            );
+                        })
                     )}
                 </div>
             )}

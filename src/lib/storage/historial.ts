@@ -1,7 +1,7 @@
 import { openDB, IDBPDatabase } from "idb";
 
 const DB_NAME = "terrabit_db";
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 const STORE_HISTORIAL = "historial";
 const STORE_AUTOCOMPLETE = "autocomplete";
 
@@ -50,6 +50,17 @@ export async function obtenerHistorial(): Promise<HistorialEntry[]> {
 export async function eliminarEntradaHistorial(id: number): Promise<void> {
   const db = await getDB();
   await db.delete(STORE_HISTORIAL, id);
+}
+
+export async function obtenerTodoHistorial() {
+  const db = await openDB(DB_NAME, DB_VERSION);
+  const entries = await db.getAll(STORE_HISTORIAL);
+  return entries.reverse(); // Para mostrar los más recientes primero
+}
+
+export async function obtenerHistorialPorId(id: number | string) {
+  const db = await openDB(DB_NAME, DB_VERSION);
+  return db.get(STORE_HISTORIAL, id);
 }
 
 // ─── Autocompletado de campos ─────────────────────────────────────────────────
