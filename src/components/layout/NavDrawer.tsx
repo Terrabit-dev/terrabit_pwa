@@ -60,9 +60,9 @@ export default function NavDrawer({ isOpen, onClose }: NavDrawerProps) {
   const navItems: NavItem[] = [
     { labelKey: "nav.bovinos",      path: "/home/bovinos",       icon: <IconCow /> },
     { labelKey: "nav.porcinos",     path: "/home/porcinos",      icon: <IconPig /> },
-    { labelKey: "nav.historial",    path: "/historial",     icon: <IconHistory /> },
-    { labelKey: "nav.borradores",   path: "/borradores",    icon: <IconDraft /> },
-    { labelKey: "nav.configuracion",path: "/configuracion", icon: <IconSettings /> },
+    { labelKey: "nav.historial",    path: "/home/historial",     icon: <IconHistory /> },
+    { labelKey: "nav.borradores",   path: "/home/borradores",    icon: <IconDraft /> },
+    { labelKey: "nav.configuracion",path: "/home/configuracion", icon: <IconSettings /> },
   ];
 
   const navigate = (path: string) => {
