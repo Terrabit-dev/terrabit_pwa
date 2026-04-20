@@ -12,7 +12,6 @@ Mantiene paridad funcional y arquitectónica con la app Android (`com.example.te
 - Yujiang Xia
 
 ---
-
 ## Stack
 
 - **Next.js 16** (App Router + Turbopack)
