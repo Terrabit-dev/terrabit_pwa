@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation"; // NUEVO
 import TopBar from "@/components/layout/TopBar";
 import { useDrawer } from "@/context/DrawerContext";
 import { useI18n } from "@/hooks/useI18n";
@@ -21,10 +22,12 @@ import { useAutoCompleteBovinos } from "@/hooks/useAutoCompleteBovinos";
 export default function NacimientoPage() {
     const { toggle }  = useDrawer();
     const { t, lang } = useI18n();
+    const searchParams = useSearchParams(); // NUEVO
 
     const {
-        form, enviando, exito, errorApi,
+        form, enviando, exito, errorApi, isReadOnly, // NUEVO: isReadOnly
         update, enviar, cerrarExito, limpiarErrorApi,
+        cargarBorrador, guardarBorradorActual, cargarDesdeHistorial // NUEVO
     } = useNacimiento();
 
     const [errorLocal, setErrorLocal]         = useState<string | null>(null);
@@ -45,6 +48,28 @@ export default function NacimientoPage() {
             : t("errors.network")
         : null;
 
+    // NUEVO: Interceptar URL para cargar borradores o historial
+    useEffect(() => {
+        const draftId = searchParams.get("draftId");
+        const historyId = searchParams.get("historyId");
+
+        if (draftId) {
+            cargarBorrador(Number(draftId));
+        } else if (historyId) {
+            cargarDesdeHistorial(Number(historyId));
+        }
+    }, [searchParams, cargarBorrador, cargarDesdeHistorial]);
+
+    // NUEVO: Guardar borrador
+    const handleGuardarBorrador = async () => {
+        const guardadoExito = await guardarBorradorActual();
+        if (guardadoExito) {
+            alert(lang === "ca" ? "Esborrany desat correctament!" : "¡Borrador guardado correctamente!");
+        } else {
+            alert(lang === "ca" ? "Error: No s'ha pogut desar l'esborrany." : "Error: No se pudo guardar el borrador.");
+        }
+    };
+
     const handleEnviar = () => {
         setErrorLocal(null);
         const err = validarNacimiento(form);
@@ -63,7 +88,7 @@ export default function NacimientoPage() {
     const esValido = !validarNacimiento(form);
 
     return (
-        <div className="min-h-screen bg-surface">
+        <div className="min-h-screen bg-surface pointer-events-auto">
             <TopBar title={t("bovinos.nacimiento")} onMenuClick={toggle} accentColor="green" showBack/>
 
             <div className="px-4 py-5 flex flex-col gap-4 pb-24">
@@ -73,26 +98,30 @@ export default function NacimientoPage() {
                     <h2 className="text-sm font-bold text-dark-blue-grey">
                         {lang === "ca" ? "Identificadors" : "Identificadores"}
                     </h2>
-                    <AutoCompleteIdentificador
-                        label={`${lang === "ca" ? "Identificador mare" : "Identificador madre"} *`}
-                        value={form.idMadre}
-                        onChange={(v) => { update({ idMadre: v }); buscar(v, 0); }}
-                        onAnimalSelected={(a) => { update({ idMadre: a.identificador }); limpiarSugerencias(); }}
-                        suggestions={activeField === 0 ? suggestions : []}
-                        isLoading={isLoading && activeField === 0}
-                        placeholder="ES724100041234"
-                        lang={lang}
-                    />
-                    <AutoCompleteIdentificador
-                        label={`${lang === "ca" ? "Identificador cria" : "Identificador cría"} *`}
-                        value={form.idCria}
-                        onChange={(v) => { update({ idCria: v }); buscar(v, 1); }}
-                        onAnimalSelected={(a) => { update({ idCria: a.identificador }); limpiarSugerencias(); }}
-                        suggestions={activeField === 1 ? suggestions : []}
-                        isLoading={isLoading && activeField === 1}
-                        placeholder="ES724100041235"
-                        lang={lang}
-                    />
+                    <div className={isReadOnly ? "opacity-70 pointer-events-none" : ""}>
+                        <AutoCompleteIdentificador
+                            label={`${lang === "ca" ? "Identificador mare" : "Identificador madre"} *`}
+                            value={form.idMadre}
+                            onChange={(v) => { update({ idMadre: v }); buscar(v, 0); }}
+                            onAnimalSelected={(a) => { update({ idMadre: a.identificador }); limpiarSugerencias(); }}
+                            suggestions={activeField === 0 ? suggestions : []}
+                            isLoading={isLoading && activeField === 0}
+                            placeholder="ES724100041234"
+                            lang={lang}
+                        />
+                    </div>
+                    <div className={isReadOnly ? "opacity-70 pointer-events-none" : ""}>
+                        <AutoCompleteIdentificador
+                            label={`${lang === "ca" ? "Identificador cria" : "Identificador cría"} *`}
+                            value={form.idCria}
+                            onChange={(v) => { update({ idCria: v }); buscar(v, 1); }}
+                            onAnimalSelected={(a) => { update({ idCria: a.identificador }); limpiarSugerencias(); }}
+                            suggestions={activeField === 1 ? suggestions : []}
+                            isLoading={isLoading && activeField === 1}
+                            placeholder="ES724100041235"
+                            lang={lang}
+                        />
+                    </div>
                 </div>
 
                 {/* Fechas */}
@@ -100,18 +129,24 @@ export default function NacimientoPage() {
                     <h2 className="text-sm font-bold text-dark-blue-grey">
                         {lang === "ca" ? "Dates" : "Fechas"}
                     </h2>
-                    <FormField label={`${lang === "ca" ? "Data de naixement" : "Fecha de nacimiento"} *`}>
-                        <DateInputDMY
-                            value={form.fechaNacimiento}
-                            onChange={(v) => update({ fechaNacimiento: v })}
-                        />
-                    </FormField>
-                    <FormField label={lang === "ca" ? "Data d'identificació" : "Fecha de identificación"}>
-                        <DateInputDMY
-                            value={form.fechaIdentificacion}
-                            onChange={(v) => update({ fechaIdentificacion: v })}
-                        />
-                    </FormField>
+                    <div className={isReadOnly ? "opacity-70 pointer-events-none" : ""}>
+                        <FormField label={`${lang === "ca" ? "Data de naixement" : "Fecha de nacimiento"} *`}>
+                            <DateInputDMY
+                                key={`nac-${form.fechaNacimiento || 'empty'}`} // <--- ¡AQUÍ ESTÁ LA MAGIA!
+                                value={form.fechaNacimiento}
+                                onChange={(v) => update({ fechaNacimiento: v })}
+                            />
+                        </FormField>
+                    </div>
+                    <div className={isReadOnly ? "opacity-70 pointer-events-none" : ""}>
+                        <FormField label={lang === "ca" ? "Data d'identificació" : "Fecha de identificación"}>
+                            <DateInputDMY
+                                key={`id-${form.fechaIdentificacion || 'empty'}`} // <--- Y AQUÍ TAMBIÉN
+                                value={form.fechaIdentificacion}
+                                onChange={(v) => update({ fechaIdentificacion: v })}
+                            />
+                        </FormField>
+                    </div>
                 </div>
 
                 {/* Características */}
@@ -119,45 +154,74 @@ export default function NacimientoPage() {
                     <h2 className="text-sm font-bold text-dark-blue-grey">
                         {lang === "ca" ? "Característiques" : "Características"}
                     </h2>
-                    <FormField label={`${lang === "ca" ? "Sexe" : "Sexo"} *`}>
-                        <SelectInput
-                            value={form.sexoCodigo}
-                            onChange={(c, n) => update({ sexoCodigo: c, sexoNombre: n })}
-                            options={sexos}
-                            placeholder={lang === "ca" ? "Seleccionar sexe" : "Seleccionar sexo"}
-                        />
-                    </FormField>
-                    <FormField label={`${lang === "ca" ? "Raça" : "Raza"} *`}>
-                        <SelectInput
-                            value={form.razaCodigo}
-                            onChange={(c, n) => update({ razaCodigo: c, razaNombre: n })}
-                            options={RAZAS_BOVINAS}
-                            placeholder={lang === "ca" ? "Seleccionar raça" : "Seleccionar raza"}
-                        />
-                    </FormField>
-                    <FormField label="Aptitud *">
-                        <SelectInput
-                            value={form.aptitudCodigo}
-                            onChange={(c, n) => update({ aptitudCodigo: c, aptitudNombre: n })}
-                            options={aptitudes}
-                            placeholder="Seleccionar aptitud"
-                        />
-                    </FormField>
+                    <div className={isReadOnly ? "opacity-70 pointer-events-none" : ""}>
+                        <FormField label={`${lang === "ca" ? "Sexe" : "Sexo"} *`}>
+                            <SelectInput
+                                value={form.sexoCodigo}
+                                onChange={(c, n) => update({ sexoCodigo: c, sexoNombre: n })}
+                                options={sexos}
+                                placeholder={lang === "ca" ? "Seleccionar sexe" : "Seleccionar sexo"}
+                            />
+                        </FormField>
+                    </div>
+                    <div className={isReadOnly ? "opacity-70 pointer-events-none" : ""}>
+                        <FormField label={`${lang === "ca" ? "Raça" : "Raza"} *`}>
+                            <SelectInput
+                                value={form.razaCodigo}
+                                onChange={(c, n) => update({ razaCodigo: c, razaNombre: n })}
+                                options={RAZAS_BOVINAS}
+                                placeholder={lang === "ca" ? "Seleccionar raça" : "Seleccionar raza"}
+                            />
+                        </FormField>
+                    </div>
+                    <div className={isReadOnly ? "opacity-70 pointer-events-none" : ""}>
+                        <FormField label="Aptitud *">
+                            <SelectInput
+                                value={form.aptitudCodigo}
+                                onChange={(c, n) => update({ aptitudCodigo: c, aptitudNombre: n })}
+                                options={aptitudes}
+                                placeholder="Seleccionar aptitud"
+                            />
+                        </FormField>
+                    </div>
                 </div>
             </div>
 
-            {/* Botón fijo */}
-            <div className="fixed bottom-0 left-0 right-0 px-4 py-4 bg-white border-t border-surface-variant">
-                <button
-                    onClick={handleEnviar}
-                    disabled={enviando || !esValido}
-                    className="w-full bg-main-green text-white rounded-xl py-3 text-sm font-semibold disabled:opacity-40 transition-opacity"
-                >
-                    {enviando ? t("common.loading") : t("gestion.nacimiento")}
-                </button>
-            </div>
+            {/* NUEVO: Botones fijos condicionales */}
+            {!isReadOnly && (
+                <div className="fixed bottom-0 left-0 right-0 px-4 py-4 bg-white border-t border-surface-variant flex gap-3 z-40">
+                    <button
+                        onClick={handleGuardarBorrador}
+                        title={lang === "ca" ? "Desar esborrany" : "Guardar borrador"}
+                        className="w-12 h-12 shrink-0 flex items-center justify-center border-2 border-main-green text-main-green rounded-xl hover:bg-main-green/10 transition-colors"
+                    >
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
+                        </svg>
+                    </button>
+                    <button
+                        onClick={handleEnviar}
+                        disabled={enviando || !esValido}
+                        className="flex-1 bg-main-green text-white rounded-xl py-3 text-sm font-semibold disabled:opacity-40 transition-opacity"
+                    >
+                        {enviando ? t("common.loading") : t("gestion.nacimiento")}
+                    </button>
+                </div>
+            )}
 
-            {/* Modal confirmación */}
+            {isReadOnly && (
+                <div className="fixed bottom-0 left-0 right-0 px-4 py-4 bg-white border-t border-surface-variant z-40">
+                    <button
+                        onClick={() => window.history.back()}
+                        className="w-full bg-surface-variant text-dark-blue-grey rounded-xl py-3 text-sm font-semibold"
+                    >
+                        {lang === "ca" ? "Tornar a l'historial" : "Volver al historial"}
+                    </button>
+                </div>
+            )}
+
+            {/* Modales... (quedan igual) */}
+            {/* ... Modal confirmación, Success, ErrorLocal, ErrorApi, LoadingOverlay ... */}
             {mostrarConfirm && (
                 <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center px-4">
                     <div className="bg-white rounded-2xl p-6 w-full max-w-sm">
@@ -223,7 +287,6 @@ export default function NacimientoPage() {
                 </div>
             )}
 
-            {/* Success modal */}
             {exito && (
                 <SuccessModal
                     titulo={lang === "ca" ? "Naixement registrat" : "Nacimiento registrado"}
@@ -235,7 +298,6 @@ export default function NacimientoPage() {
                 />
             )}
 
-            {/* Error local — validación de campos */}
             {errorLocal && (
                 <ErrorModal
                     mensaje={errorLocal}
@@ -244,7 +306,6 @@ export default function NacimientoPage() {
                 />
             )}
 
-            {/* Error API — descripcio del servidor o error de red */}
             {errorApiMsg && (
                 <ErrorModal
                     mensaje={errorApiMsg}

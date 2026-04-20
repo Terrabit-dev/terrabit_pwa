@@ -14,12 +14,15 @@ import { obtenerBorradores, eliminarBorrador, type Borrador } from "@/lib/storag
 function obtenerRutaFormulario(tipo: string): string {
     switch (tipo) {
         case "IDENTIFICACION":
-            return "/home/bovinos/gestion/identificacion_aplazada"; // <--- RUTA CORRECTA
+            return "/home/bovinos/gestion/identificacion_aplazada";
+        case "NACIMIENTO":  // <--- ¡AQUÍ ESTÁ LA CLAVE QUE FALTABA!
+            return "/home/bovinos/gestion/nacimiento";
+        case "CORRECCION_SEXO":
+            return "/home/bovinos/gestion/correccion_sexo";
         case "FALLECIMIENTO":
-            return "/home/bovinos/gestion/fallecimiento"; // <--- Ajusta esta también a su ruta real
-        // Añade aquí más rutas a medida que hagas más formularios (ALTA, BAJA...)
+            return "/home/bovinos/gestion/fallecimiento";
         default:
-            return "/home";
+            return "/home"; // <- Por esto te devolvía al inicio
     }
 }
 
