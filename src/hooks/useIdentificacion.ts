@@ -10,10 +10,16 @@ import {
 } from "@/lib/bovinos/identificacion";
 import { parseGtrResponse } from "@/lib/gtr/errorHandler";
 import { getCredentials } from "@/lib/storage/credentials";
-import {guardarEnHistorial, obtenerHistorialPorId} from "@/lib/storage/historial";
+import { guardarEnHistorial, obtenerHistorialPorId } from "@/lib/storage/historial";
 import { secureLog } from "@/lib/utils/secureLogger";
 import type { GtrBaseResponse } from "@/lib/api/endpoints";
-import {actualizarBorrador, eliminarBorrador, guardarBorrador, obtenerBorradorPorId} from "@/lib/storage/borradores";
+import {
+    actualizarBorrador,
+    eliminarBorrador,
+    guardarBorrador,
+    obtenerBorradorPorId,
+} from "@/lib/storage/borradores";
+import { parseDraft } from "@/lib/storage/parseDraft";
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
@@ -27,42 +33,41 @@ interface UseIdentificacionReturn {
     exito:           boolean;
     errorApi:        IdentificacionError | null;
     resetKey:        number;
+    isReadOnly:      boolean;
     update:          (field: Partial<IdentificacionForm>) => void;
     validar:         () => IdentificacionValidationError | null;
     enviar:          () => Promise<void>;
     cerrarExito:     () => void;
     limpiarErrorApi: () => void;
-    cargarBorrador: (id: number) => Promise<void>;
+    cargarBorrador:        (id: number) => Promise<void>;
     guardarBorradorActual: () => Promise<boolean>;
-    isReadOnly: boolean;
-    cargarDesdeHistorial: (id: number | string) => Promise<void>;
+    cargarDesdeHistorial:  (id: number | string) => Promise<void>;
 }
 
 // ─── Hook ─────────────────────────────────────────────────────────────────────
 
 export function useIdentificacion(): UseIdentificacionReturn {
-    const [form, setForm]         = useState<IdentificacionForm>(IDENTIFICACION_FORM_INICIAL);
-    const [draftId, setDraftId]   = useState<number | null>(null);
-    const [enviando, setEnviando] = useState(false);
-    const [exito, setExito]       = useState(false);
-    const [errorApi, setErrorApi] = useState<IdentificacionError | null>(null);
-    const [resetKey, setResetKey] = useState(0);
+    const [form, setForm]             = useState<IdentificacionForm>(IDENTIFICACION_FORM_INICIAL);
+    const [draftId, setDraftId]       = useState<number | null>(null);
+    const [enviando, setEnviando]     = useState(false);
+    const [exito, setExito]           = useState(false);
+    const [errorApi, setErrorApi]     = useState<IdentificacionError | null>(null);
+    const [resetKey, setResetKey]     = useState(0);
     const [isReadOnly, setIsReadOnly] = useState(false);
-
 
     const cargarDesdeHistorial = useCallback(async (id: number | string) => {
         const registro = await obtenerHistorialPorId(id);
         if (registro && registro.tipo === "IDENTIFICACION") {
-            setForm(registro.datos as IdentificacionForm);
-            setIsReadOnly(true); // ¡Bloqueamos el formulario!
+            setForm(parseDraft(registro.datos, IDENTIFICACION_FORM_INICIAL));
+            setIsReadOnly(true);
         }
     }, []);
 
     const cargarBorrador = useCallback(async (id: number) => {
         const borrador = await obtenerBorradorPorId(id);
         if (borrador && borrador.tipo === "IDENTIFICACION") {
-            setForm(borrador.datos as IdentificacionForm);
-            setDraftId(borrador.id!); // Guardamos el ID para saber que estamos editando
+            setForm(parseDraft(borrador.datos, IDENTIFICACION_FORM_INICIAL));
+            setDraftId(borrador.id!);
         }
     }, []);
 
@@ -72,15 +77,15 @@ export function useIdentificacion(): UseIdentificacionReturn {
                 await actualizarBorrador(draftId, form as unknown as Record<string, unknown>);
             } else {
                 const nuevoId = await guardarBorrador({
-                    tipo: "IDENTIFICACION",
+                    tipo:  "IDENTIFICACION",
                     datos: form as unknown as Record<string, unknown>,
                 });
                 setDraftId(nuevoId);
             }
-            return true; // (Todo fue bien)
+            return true;
         } catch (error) {
             console.error("Error al guardar el borrador", error);
-            return false; // (Hubo un error)
+            return false;
         }
     }, [form, draftId]);
 
@@ -115,9 +120,9 @@ export function useIdentificacion(): UseIdentificacionReturn {
             const response = await fetch(
                 "/api/gtr/proxy?endpoint=WSBovi/AppJava/Bovi/WSModificacioDataIdentificacioAnimal/",
                 {
-                    method: "PUT",
+                    method:  "PUT",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(body),
+                    body:    JSON.stringify(body),
                 }
             );
 
@@ -149,14 +154,11 @@ export function useIdentificacion(): UseIdentificacionReturn {
                 resumen: `Identificació registrada — ${form.identificador}`,
                 datos:   form as unknown as Record<string, unknown>,
             });
+
             if (draftId) {
                 await eliminarBorrador(draftId);
                 setDraftId(null);
             }
-
-            setForm(IDENTIFICACION_FORM_INICIAL);
-            setResetKey((k) => k + 1);
-            setExito(true);
 
             setForm(IDENTIFICACION_FORM_INICIAL);
             setResetKey((k) => k + 1);
@@ -169,7 +171,7 @@ export function useIdentificacion(): UseIdentificacionReturn {
         } finally {
             setEnviando(false);
         }
-    }, [form]);
+    }, [form, draftId]);
 
     const cerrarExito     = useCallback(() => setExito(false), []);
     const limpiarErrorApi = useCallback(() => setErrorApi(null), []);
@@ -177,6 +179,6 @@ export function useIdentificacion(): UseIdentificacionReturn {
     return {
         form, enviando, exito, errorApi, resetKey, isReadOnly,
         update, validar, enviar, cerrarExito, limpiarErrorApi,
-        cargarBorrador, guardarBorradorActual, cargarDesdeHistorial
+        cargarBorrador, guardarBorradorActual, cargarDesdeHistorial,
     };
 }
