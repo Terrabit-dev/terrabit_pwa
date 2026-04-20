@@ -9,9 +9,11 @@ import {
 } from "@/lib/bovinos/correccionSexo";
 import { parseGtrResponse } from "@/lib/gtr/errorHandler";
 import { getCredentials } from "@/lib/storage/credentials";
-import { guardarEnHistorial } from "@/lib/storage/historial";
+import { guardarEnHistorial, obtenerHistorialPorId } from "@/lib/storage/historial";
+import { actualizarBorrador, guardarBorrador, obtenerBorradorPorId, eliminarBorrador } from "@/lib/storage/borradores";
 import { secureLog } from "@/lib/utils/secureLogger";
 import type { GtrBaseResponse } from "@/lib/api/endpoints";
+import { parseDraft } from "@/lib/storage/parseDraft";
 
 interface CorreccionSexoApiError     { tipo: "api";  mensaje: string; }
 interface CorreccionSexoNetworkError { tipo: "red"; }
@@ -22,18 +24,59 @@ interface UseCorreccionSexoReturn {
     enviando:        boolean;
     exito:           boolean;
     errorApi:        CorreccionSexoError | null;
+    isReadOnly:      boolean;
     update:          (field: Partial<CorreccionSexoForm>) => void;
     validar:         () => CorreccionSexoValidationError | null;
     enviar:          () => Promise<void>;
     cerrarExito:     () => void;
     limpiarErrorApi: () => void;
+    cargarBorrador:  (id: number) => Promise<void>;
+    guardarBorradorActual: () => Promise<boolean>;
+    cargarDesdeHistorial: (id: number | string) => Promise<void>;
 }
 
 export function useCorreccionSexo(): UseCorreccionSexoReturn {
     const [form, setForm]         = useState<CorreccionSexoForm>(CORRECCION_SEXO_FORM_INICIAL);
+    const [draftId, setDraftId]   = useState<number | null>(null);
+    const [isReadOnly, setIsReadOnly] = useState(false);
     const [enviando, setEnviando] = useState(false);
     const [exito, setExito]       = useState(false);
     const [errorApi, setErrorApi] = useState<CorreccionSexoError | null>(null);
+
+    //Funciones de almacenamiento
+    const cargarBorrador = useCallback(async (id: number) => {
+        const borrador = await obtenerBorradorPorId(id);
+        if (borrador && borrador.tipo === "CORRECCION_SEXO") {
+            setForm(parseDraft(borrador.datos, CORRECCION_SEXO_FORM_INICIAL));
+            setDraftId(borrador.id!);
+        }
+    }, []);
+
+    const guardarBorradorActual = useCallback(async () => {
+        try {
+            if (draftId) {
+                await actualizarBorrador(draftId, form as unknown as Record<string, unknown>);
+            } else {
+                const nuevoId = await guardarBorrador({
+                    tipo: "CORRECCION_SEXO",
+                    datos: form as unknown as Record<string, unknown>,
+                });
+                setDraftId(nuevoId);
+            }
+            return true;
+        } catch (error) {
+            console.error("Error al guardar el borrador", error);
+            return false;
+        }
+    }, [form, draftId]);
+
+    const cargarDesdeHistorial = useCallback(async (id: number | string) => {
+        const registro = await obtenerHistorialPorId(id);
+        if (registro && registro.tipo === "CORRECCION_SEXO") {
+            setForm(parseDraft(registro.datos, CORRECCION_SEXO_FORM_INICIAL));
+            setIsReadOnly(true);
+        }
+    }, []);
 
     const update = useCallback((field: Partial<CorreccionSexoForm>) => {
         setForm((prev) => ({ ...prev, ...field }));
@@ -111,6 +154,12 @@ export function useCorreccionSexo(): UseCorreccionSexoReturn {
                 datos:   form as unknown as Record<string, unknown>,
             });
 
+            // Limpiamos el borrador si existía
+            if (draftId) {
+                await eliminarBorrador(draftId);
+                setDraftId(null);
+            }
+
             setForm(CORRECCION_SEXO_FORM_INICIAL);
             setExito(true);
 
@@ -121,10 +170,14 @@ export function useCorreccionSexo(): UseCorreccionSexoReturn {
         } finally {
             setEnviando(false);
         }
-    }, [form]);
+    }, [form, draftId]);
 
     const cerrarExito     = useCallback(() => setExito(false), []);
     const limpiarErrorApi = useCallback(() => setErrorApi(null), []);
 
-    return { form, enviando, exito, errorApi, update, validar, enviar, cerrarExito, limpiarErrorApi };
+    return {
+        form, enviando, exito, errorApi, isReadOnly,
+        update, validar, enviar, cerrarExito, limpiarErrorApi,
+        cargarBorrador, guardarBorradorActual, cargarDesdeHistorial
+    };
 }

@@ -1,23 +1,4 @@
-import { openDB, IDBPDatabase } from "idb";
-
-const DB_NAME = "terrabit_db";
-const DB_VERSION = 2;
-const STORE_BORRADORES = "borradores";
-
-async function getDB(): Promise<IDBPDatabase> {
-  return openDB(DB_NAME, DB_VERSION, {
-    upgrade(db) {
-      if (!db.objectStoreNames.contains(STORE_BORRADORES)) {
-        const store = db.createObjectStore(STORE_BORRADORES, {
-          keyPath: "id",
-          autoIncrement: true,
-        });
-        store.createIndex("tipo", "tipo");
-        store.createIndex("fecha", "fecha");
-      }
-    },
-  });
-}
+import { getDB, STORE_BORRADORES } from "./historial";
 
 export interface Borrador {
   id?: number;
@@ -28,7 +9,7 @@ export interface Borrador {
 
 export async function guardarBorrador(borrador: Omit<Borrador, "id" | "fecha">): Promise<number> {
   const db = await getDB();
-  return db.add(STORE_BORRADORES, {
+  return db.put(STORE_BORRADORES, {
     ...borrador,
     fecha: Date.now(),
   }) as Promise<number>;

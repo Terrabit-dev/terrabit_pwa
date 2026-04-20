@@ -1,13 +1,16 @@
 import { openDB, IDBPDatabase } from "idb";
 
 const DB_NAME = "terrabit_db";
-const DB_VERSION = 2;
-const STORE_HISTORIAL = "historial";
-const STORE_AUTOCOMPLETE = "autocomplete";
+const DB_VERSION = 3; // <-- Subimos a 3 para arreglar el conflicto
 
-async function getDB(): Promise<IDBPDatabase> {
+export const STORE_HISTORIAL = "historial";
+export const STORE_AUTOCOMPLETE = "autocomplete";
+export const STORE_BORRADORES = "borradores"; // <-- Añadimos los borradores aquí
+
+export async function getDB(): Promise<IDBPDatabase> {
   return openDB(DB_NAME, DB_VERSION, {
     upgrade(db) {
+      // 1. Tabla de Historial
       if (!db.objectStoreNames.contains(STORE_HISTORIAL)) {
         const store = db.createObjectStore(STORE_HISTORIAL, {
           keyPath: "id",
@@ -16,8 +19,20 @@ async function getDB(): Promise<IDBPDatabase> {
         store.createIndex("tipo", "tipo");
         store.createIndex("fecha", "fecha");
       }
+
+      // 2. Tabla de Autocomplete
       if (!db.objectStoreNames.contains(STORE_AUTOCOMPLETE)) {
         db.createObjectStore(STORE_AUTOCOMPLETE);
+      }
+
+      // 3. Tabla de Borradores (¡Todos juntos en el mismo sitio!)
+      if (!db.objectStoreNames.contains(STORE_BORRADORES)) {
+        const store = db.createObjectStore(STORE_BORRADORES, {
+          keyPath: "id",
+          autoIncrement: true,
+        });
+        store.createIndex("tipo", "tipo");
+        store.createIndex("fecha", "fecha");
       }
     },
   });
