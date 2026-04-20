@@ -9,6 +9,7 @@ import { guardarEnHistorial, obtenerHistorialPorId } from "@/lib/storage/histori
 import { actualizarBorrador, guardarBorrador, obtenerBorradorPorId, eliminarBorrador } from "@/lib/storage/borradores";
 import { secureLog } from "@/lib/utils/secureLogger";
 import type { GtrBaseResponse } from "@/lib/api/endpoints";
+import { parseDraft } from "@/lib/storage/parseDraft";
 
 interface NacimientoApiError     { tipo: "api";  mensaje: string; }
 interface NacimientoNetworkError { tipo: "red"; }
@@ -42,7 +43,7 @@ export function useNacimiento(): UseNacimientoReturn {
     const cargarBorrador = useCallback(async (id: number) => {
         const borrador = await obtenerBorradorPorId(id);
         if (borrador && borrador.tipo === "NACIMIENTO") {
-            setForm(borrador.datos as NacimientoForm);
+            setForm(parseDraft(borrador.datos, NACIMIENTO_FORM_INICIAL));
             setDraftId(borrador.id!);
         }
     }, []);
@@ -68,7 +69,7 @@ export function useNacimiento(): UseNacimientoReturn {
     const cargarDesdeHistorial = useCallback(async (id: number | string) => {
         const registro = await obtenerHistorialPorId(id);
         if (registro && registro.tipo === "NACIMIENTO") {
-            setForm(registro.datos as NacimientoForm);
+            setForm(parseDraft(registro.datos, NACIMIENTO_FORM_INICIAL));
             setIsReadOnly(true);
         }
     }, []);
