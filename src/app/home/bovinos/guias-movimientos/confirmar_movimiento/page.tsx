@@ -12,41 +12,23 @@ import AutoCompleteIdentificador from "@/components/forms/AutoCompleteIdentifica
 import ErrorModal from "@/components/common/ErrorModal";
 import SuccessModal from "@/components/common/SuccessModal";
 import LoadingOverlay from "@/components/common/LoadingOverlay";
-import { validarGuia, GUIA_SI_NO, GUIA_LIMITES } from "@/lib/bovinos/guias";
+import {
+    validarConfirmarMov,
+    CONFIRMAR_MOV_LIMITES,
+    ESTATS_ESCORXADOR,
+    getTransportes,
+    getEstatsArribada,
+    getTipusPresentacio,
+    type MovimentoPendiente,
+} from "@/lib/bovinos/confirmarMovimiento";
 import { getAppError } from "@/lib/errors/appErrors";
-import { useGuias } from "@/hooks/useGuias";
+import { useConfirmarMovimiento } from "@/hooks/useConfirmarMovimiento";
 import { useListarBovinos } from "@/hooks/useListarBovinos";
 import { useAutoCompleteBovinos } from "@/hooks/useAutoCompleteBovinos";
 
-// Sí/No — PDF §5.4.3: valores "True" / "False"
-const OPCIONES_SI_NO = [
-    { codigo: GUIA_SI_NO.SI, nombre: "Sí" },
-    { codigo: GUIA_SI_NO.NO, nombre: "No" },
-];
-const OPCIONES_SI_NO_CA = [
-    { codigo: GUIA_SI_NO.SI, nombre: "Sí" },
-    { codigo: GUIA_SI_NO.NO, nombre: "No" },
-];
+const SESSION_KEY_MOVIMIENTO = "movimientoSeleccionado";
 
-// Medios de transporte — PDF 5.4.3
-const TRANSPORTES = [
-    { codigo: "04", nombre: "Camión" },
-    { codigo: "05", nombre: "Barco" },
-    { codigo: "06", nombre: "Avión" },
-    { codigo: "07", nombre: "Tren" },
-    { codigo: "08", nombre: "A pie" },
-    { codigo: "99", nombre: "Otros" },
-];
-const TRANSPORTES_CA = [
-    { codigo: "04", nombre: "Camió" },
-    { codigo: "05", nombre: "Vaixell" },
-    { codigo: "06", nombre: "Avió" },
-    { codigo: "07", nombre: "Tren" },
-    { codigo: "08", nombre: "Conducció a peu" },
-    { codigo: "99", nombre: "Altres" },
-];
-
-export default function AltaGuiaPage() {
+export default function ConfirmarMovimientoPage() {
     const { toggle }   = useDrawer();
     const { t, lang }  = useI18n();
     const searchParams = useSearchParams();
@@ -54,10 +36,11 @@ export default function AltaGuiaPage() {
     const {
         form, enviando, exito, errorApi, isReadOnly,
         update,
-        agregarIdentificador, eliminarIdentificador, actualizarIdentificador,
+        agregarAnimal, eliminarAnimal, actualizarAnimal, seleccionarEstatAnimal,
+        precargarMovimiento,
         enviar, cerrarExito, limpiarErrorApi,
         cargarBorrador, guardarBorradorActual, cargarDesdeHistorial,
-    } = useGuias();
+    } = useConfirmarMovimiento();
 
     const [errorLocal, setErrorLocal]         = useState<string | null>(null);
     const [mostrarConfirm, setMostrarConfirm] = useState(false);
@@ -68,8 +51,9 @@ export default function AltaGuiaPage() {
     const { suggestions, activeField, isLoading, buscar, limpiarSugerencias } =
         useAutoCompleteBovinos(listaBovinos);
 
-    const opcionesSiNo = lang === "ca" ? OPCIONES_SI_NO_CA : OPCIONES_SI_NO;
-    const transportes  = lang === "ca" ? TRANSPORTES_CA    : TRANSPORTES;
+    const transportes      = getTransportes(lang);
+    const estatsArribada   = getEstatsArribada(lang);
+    const tipusPresentacio = getTipusPresentacio(lang);
 
     const errorApiMsg = errorApi
         ? errorApi.tipo === "api" ? errorApi.mensaje : t("errors.network")
@@ -78,9 +62,27 @@ export default function AltaGuiaPage() {
     useEffect(() => {
         const draftId   = searchParams.get("draftId");
         const historyId = searchParams.get("historyId");
-        if (draftId)        void cargarBorrador(Number(draftId));
-        else if (historyId) void cargarDesdeHistorial(Number(historyId));
-    }, [searchParams, cargarBorrador, cargarDesdeHistorial]);
+        if (draftId) {
+            void cargarBorrador(Number(draftId));
+            return;
+        }
+        if (historyId) {
+            void cargarDesdeHistorial(Number(historyId));
+            return;
+        }
+        if (typeof window !== "undefined") {
+            const raw = sessionStorage.getItem(SESSION_KEY_MOVIMIENTO);
+            if (raw) {
+                try {
+                    const mov = JSON.parse(raw) as MovimentoPendiente;
+                    precargarMovimiento(mov);
+                    sessionStorage.removeItem(SESSION_KEY_MOVIMIENTO);
+                } catch (err) {
+                    console.error("Error parseando movimiento seleccionado", err);
+                }
+            }
+        }
+    }, [searchParams, cargarBorrador, cargarDesdeHistorial, precargarMovimiento]);
 
     const handleGuardarBorrador = async () => {
         const ok = await guardarBorradorActual();
@@ -91,7 +93,7 @@ export default function AltaGuiaPage() {
 
     const handleEnviar = () => {
         setErrorLocal(null);
-        const err = validarGuia(form);
+        const err = validarConfirmarMov(form);
         if (err) {
             setErrorLocal(getAppError(err.codigo, t));
             return;
@@ -104,13 +106,13 @@ export default function AltaGuiaPage() {
         await enviar();
     };
 
-    const esValido    = !validarGuia(form);
+    const esValido    = !validarConfirmarMov(form);
     const readOnlyCls = isReadOnly ? "opacity-70 pointer-events-none" : "";
 
     return (
         <div className="min-h-screen bg-surface pointer-events-auto">
             <TopBar
-                title={lang === "ca" ? "Alta de Guia" : "Alta de Guía"}
+                title={lang === "ca" ? "Confirmar Moviment" : "Confirmar Movimiento"}
                 onMenuClick={toggle}
                 accentColor="orange"
                 showBack
@@ -118,68 +120,22 @@ export default function AltaGuiaPage() {
 
             <div className="px-4 py-5 flex flex-col gap-4 pb-28">
 
-                {/* ── Campos obligatorios ─────────────────────────────── */}
+                {/* ── Card: Cabecera (obligatorios) ───────────────────── */}
                 <div className="bg-white rounded-2xl shadow-sm p-4 flex flex-col gap-4">
                     <h2 className="text-sm font-bold text-dark-blue-grey">
-                        {lang === "ca" ? "Camps obligatoris" : "Campos obligatorios"}
+                        {lang === "ca" ? "Dades del moviment" : "Datos del movimiento"}
                     </h2>
 
                     <div className={readOnlyCls}>
-                        <FormField label={`${lang === "ca" ? "Explotació origen" : "Explotación origen"} *`}>
+                        <FormField label={`${lang === "ca" ? "Codi REMO" : "Código REMO"} *`}>
                             <input
                                 type="text"
-                                value={form.explotacioOrigen}
-                                maxLength={GUIA_LIMITES.EXPLOTACIO}
-                                onChange={(e) => update({ explotacioOrigen: e.target.value })}
-                                placeholder="12345"
-                                className="w-full border border-surface-variant rounded-xl px-3 py-2.5 text-sm bg-surface outline-none text-dark-blue-grey focus:border-main-green"
+                                value={form.codiRemo}
+                                maxLength={CONFIRMAR_MOV_LIMITES.CODI_REMO}
+                                onChange={(e) => update({ codiRemo: e.target.value })}
+                                className="w-full border border-surface-variant rounded-xl px-3 py-2.5 text-sm bg-surface outline-none text-dark-blue-grey focus:border-main-orange"
                             />
                         </FormField>
-                    </div>
-
-                    <div className={readOnlyCls}>
-                        <FormField label={`${lang === "ca" ? "Explotació destinació" : "Explotación destino"} *`}>
-                            <input
-                                type="text"
-                                value={form.explotacioDestinacio}
-                                maxLength={GUIA_LIMITES.EXPLOTACIO}
-                                onChange={(e) => update({ explotacioDestinacio: e.target.value })}
-                                placeholder="12354"
-                                className="w-full border border-surface-variant rounded-xl px-3 py-2.5 text-sm bg-surface outline-none text-dark-blue-grey focus:border-main-green"
-                            />
-                        </FormField>
-                    </div>
-
-                    <div className={readOnlyCls}>
-                        <FormField label={`${lang === "ca" ? "Temporal" : "Temporal"} *`}>
-                            <SelectInput
-                                value={form.temporal}
-                                onChange={(c, n) => update({ temporal: c, temporalNombre: n })}
-                                options={opcionesSiNo}
-                            />
-                        </FormField>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-3">
-                        <div className={readOnlyCls}>
-                            <FormField label={`${lang === "ca" ? "Data sortida" : "Fecha salida"} *`}>
-                                <DateInputDMY
-                                    key={`dataSortida-${form.dataSortida || 'empty'}`}
-                                    value={form.dataSortida}
-                                    onChange={(v) => update({ dataSortida: v })}
-                                />
-                            </FormField>
-                        </div>
-                        <div className={readOnlyCls}>
-                            <FormField label={`${lang === "ca" ? "Hora sortida" : "Hora salida"} *`}>
-                                <input
-                                    type="time"
-                                    value={form.horaSortida}
-                                    onChange={(e) => update({ horaSortida: e.target.value })}
-                                    className="w-full border border-surface-variant rounded-xl px-3 py-2.5 text-sm bg-surface outline-none text-dark-blue-grey focus:border-main-green"
-                                />
-                            </FormField>
-                        </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-3">
@@ -198,95 +154,42 @@ export default function AltaGuiaPage() {
                                     type="time"
                                     value={form.horaArribada}
                                     onChange={(e) => update({ horaArribada: e.target.value })}
-                                    className="w-full border border-surface-variant rounded-xl px-3 py-2.5 text-sm bg-surface outline-none text-dark-blue-grey focus:border-main-green"
+                                    className="w-full border border-surface-variant rounded-xl px-3 py-2.5 text-sm bg-surface outline-none text-dark-blue-grey focus:border-main-orange"
                                 />
                             </FormField>
                         </div>
                     </div>
 
                     <div className={readOnlyCls}>
-                        <FormField label={`${lang === "ca" ? "Guia de mobilitat" : "Guía de movilidad"} *`}>
-                            <SelectInput
-                                value={form.mobilitat}
-                                onChange={(c, n) => update({ mobilitat: c, mobilitatNombre: n })}
-                                options={opcionesSiNo}
-                            />
-                        </FormField>
-                    </div>
-
-                    {/* Centro de inspección */}
-                    <div className={`flex items-center gap-2 pt-2 ${readOnlyCls}`}>
-                        <input
-                            id="centroInspeccion"
-                            type="checkbox"
-                            checked={form.esCentroInspeccion}
-                            onChange={(e) => update({ esCentroInspeccion: e.target.checked })}
-                            className="w-4 h-4 accent-main-green"
-                        />
-                        <label htmlFor="centroInspeccion" className="text-sm font-semibold text-dark-blue-grey">
-                            {lang === "ca"
-                                ? "El destí és centre d'inspecció?"
-                                : "¿El destino es centro de inspección?"}
-                        </label>
-                    </div>
-
-                    {form.esCentroInspeccion && (
-                        <>
-                            <div className={readOnlyCls}>
-                                <FormField label={lang === "ca" ? "País (PIF)" : "País (PIF)"}>
-                                    <input
-                                        type="text"
-                                        value={form.pais}
-                                        maxLength={GUIA_LIMITES.PAIS}
-                                        onChange={(e) => update({ pais: e.target.value })}
-                                        className="w-full border border-surface-variant rounded-xl px-3 py-2.5 text-sm bg-surface outline-none text-dark-blue-grey focus:border-main-green"
-                                    />
-                                </FormField>
-                            </div>
-                            <div className={readOnlyCls}>
-                                <FormField label={lang === "ca" ? "Codi explotació (PIF)" : "Código explotación (PIF)"}>
-                                    <input
-                                        type="text"
-                                        value={form.codiExplotacio}
-                                        maxLength={GUIA_LIMITES.CODI_EXPLOTACIO}
-                                        onChange={(e) => update({ codiExplotacio: e.target.value })}
-                                        className="w-full border border-surface-variant rounded-xl px-3 py-2.5 text-sm bg-surface outline-none text-dark-blue-grey focus:border-main-green"
-                                    />
-                                </FormField>
-                            </div>
-                        </>
-                    )}
-                </div>
-
-                {/* ── Campos opcionales ───────────────────────────────── */}
-                <div className="bg-white rounded-2xl shadow-sm p-4 flex flex-col gap-4">
-                    <h2 className="text-sm font-bold text-dark-blue-grey">
-                        {lang === "ca" ? "Camps opcionals" : "Campos opcionales"}
-                    </h2>
-
-                    <div className={readOnlyCls}>
-                        <FormField label={lang === "ca" ? "Codi ATES" : "Código ATES"}>
+                        <FormField label={`${lang === "ca" ? "Codi ATES" : "Código ATES"} *`}>
                             <input
                                 type="text"
                                 value={form.codiAtes}
-                                maxLength={GUIA_LIMITES.CODI_ATES}
+                                maxLength={CONFIRMAR_MOV_LIMITES.CODI_ATES}
                                 onChange={(e) => update({ codiAtes: e.target.value })}
-                                className="w-full border border-surface-variant rounded-xl px-3 py-2.5 text-sm bg-surface outline-none text-dark-blue-grey focus:border-main-green"
+                                className="w-full border border-surface-variant rounded-xl px-3 py-2.5 text-sm bg-surface outline-none text-dark-blue-grey focus:border-main-orange"
                             />
                         </FormField>
                     </div>
 
                     <div className={readOnlyCls}>
-                        <FormField label={lang === "ca" ? "Nom transportista" : "Nombre transportista"}>
+                        <FormField label={`${lang === "ca" ? "Explotació destinació" : "Explotación destino"} *`}>
                             <input
                                 type="text"
-                                value={form.nomTransportista}
-                                maxLength={GUIA_LIMITES.NOM_TRANSPORTISTA}
-                                onChange={(e) => update({ nomTransportista: e.target.value })}
-                                className="w-full border border-surface-variant rounded-xl px-3 py-2.5 text-sm bg-surface outline-none text-dark-blue-grey focus:border-main-green"
+                                value={form.explotacioDestinacio}
+                                maxLength={CONFIRMAR_MOV_LIMITES.EXPLOTACIO}
+                                onChange={(e) => update({ explotacioDestinacio: e.target.value })}
+                                className="w-full border border-surface-variant rounded-xl px-3 py-2.5 text-sm bg-surface outline-none text-dark-blue-grey focus:border-main-orange"
                             />
                         </FormField>
                     </div>
+                </div>
+
+                {/* ── Card: Transporte (opcional) ─────────────────────── */}
+                <div className="bg-white rounded-2xl shadow-sm p-4 flex flex-col gap-4">
+                    <h2 className="text-sm font-bold text-dark-blue-grey">
+                        {lang === "ca" ? "Transport" : "Transporte"}
+                    </h2>
 
                     <div className={readOnlyCls}>
                         <FormField label={lang === "ca" ? "Mitjà de transport" : "Medio de transporte"}>
@@ -304,9 +207,21 @@ export default function AltaGuiaPage() {
                             <input
                                 type="text"
                                 value={form.matricula}
-                                maxLength={GUIA_LIMITES.MATRICULA}
+                                maxLength={CONFIRMAR_MOV_LIMITES.MATRICULA}
                                 onChange={(e) => update({ matricula: e.target.value })}
-                                className="w-full border border-surface-variant rounded-xl px-3 py-2.5 text-sm bg-surface outline-none text-dark-blue-grey focus:border-main-green"
+                                className="w-full border border-surface-variant rounded-xl px-3 py-2.5 text-sm bg-surface outline-none text-dark-blue-grey focus:border-main-orange"
+                            />
+                        </FormField>
+                    </div>
+
+                    <div className={readOnlyCls}>
+                        <FormField label={lang === "ca" ? "Nom transportista" : "Nombre transportista"}>
+                            <input
+                                type="text"
+                                value={form.nomTransportista}
+                                maxLength={CONFIRMAR_MOV_LIMITES.NOM_TRANSPORTISTA}
+                                onChange={(e) => update({ nomTransportista: e.target.value })}
+                                className="w-full border border-surface-variant rounded-xl px-3 py-2.5 text-sm bg-surface outline-none text-dark-blue-grey focus:border-main-orange"
                             />
                         </FormField>
                     </div>
@@ -316,9 +231,9 @@ export default function AltaGuiaPage() {
                             <input
                                 type="text"
                                 value={form.nifConductor}
-                                maxLength={GUIA_LIMITES.NIF_CONDUCTOR}
+                                maxLength={CONFIRMAR_MOV_LIMITES.NIF_CONDUCTOR}
                                 onChange={(e) => update({ nifConductor: e.target.value })}
-                                className="w-full border border-surface-variant rounded-xl px-3 py-2.5 text-sm bg-surface outline-none text-dark-blue-grey focus:border-main-green"
+                                className="w-full border border-surface-variant rounded-xl px-3 py-2.5 text-sm bg-surface outline-none text-dark-blue-grey focus:border-main-orange"
                             />
                         </FormField>
                     </div>
@@ -328,43 +243,46 @@ export default function AltaGuiaPage() {
                             <input
                                 type="text"
                                 value={form.nomConductor}
-                                maxLength={GUIA_LIMITES.NOM_CONDUCTOR}
+                                maxLength={CONFIRMAR_MOV_LIMITES.NOM_CONDUCTOR}
                                 onChange={(e) => update({ nomConductor: e.target.value })}
-                                className="w-full border border-surface-variant rounded-xl px-3 py-2.5 text-sm bg-surface outline-none text-dark-blue-grey focus:border-main-green"
+                                className="w-full border border-surface-variant rounded-xl px-3 py-2.5 text-sm bg-surface outline-none text-dark-blue-grey focus:border-main-orange"
                             />
                         </FormField>
                     </div>
+                </div>
 
-                    {/* Lista dinámica de identificadores */}
-                    <div className="flex flex-col gap-3 pt-2">
-                        <div className="flex items-center justify-between">
-                            <span className="text-sm font-semibold text-dark-blue-grey">
-                                {lang === "ca" ? "Identificadors dels animals" : "Identificadores de los animales"}
-                            </span>
-                            {!isReadOnly && (
-                                <button
-                                    type="button"
-                                    onClick={agregarIdentificador}
-                                    className="w-9 h-9 rounded-lg bg-main-orange text-white flex items-center justify-center"
-                                    aria-label={lang === "ca" ? "Afegir" : "Añadir"}
-                                >
-                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4"/>
-                                    </svg>
-                                </button>
-                            )}
-                        </div>
+                {/* ── Card: Animales ─────────────────────────────────── */}
+                <div className="bg-white rounded-2xl shadow-sm p-4 flex flex-col gap-4">
+                    <div className="flex items-center justify-between">
+                        <h2 className="text-sm font-bold text-dark-blue-grey">
+                            {lang === "ca" ? "Animals" : "Animales"}
+                        </h2>
+                        {!isReadOnly && (
+                            <button
+                                type="button"
+                                onClick={agregarAnimal}
+                                className="w-9 h-9 rounded-lg bg-main-orange text-white flex items-center justify-center"
+                                aria-label={lang === "ca" ? "Afegir" : "Añadir"}
+                            >
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4"/>
+                                </svg>
+                            </button>
+                        )}
+                    </div>
 
-                        {form.identificadors.map((identificador, index) => (
+                    {form.animales.map((animal, index) => {
+                        const esSacrificio = animal.estatArribada === ESTATS_ESCORXADOR.SACRIFICI;
+                        return (
                             <div key={index} className="bg-surface rounded-xl p-3 flex flex-col gap-3">
                                 <div className="flex items-center justify-between">
                                     <span className="text-xs font-bold text-main-orange">
                                         Animal {index + 1}
                                     </span>
-                                    {!isReadOnly && form.identificadors.length > 1 && (
+                                    {!isReadOnly && form.animales.length > 1 && (
                                         <button
                                             type="button"
-                                            onClick={() => eliminarIdentificador(index)}
+                                            onClick={() => eliminarAnimal(index)}
                                             className="w-8 h-8 flex items-center justify-center text-error-red"
                                             aria-label={lang === "ca" ? "Eliminar" : "Eliminar"}
                                         >
@@ -375,21 +293,89 @@ export default function AltaGuiaPage() {
                                         </button>
                                     )}
                                 </div>
+
                                 <div className={readOnlyCls}>
                                     <AutoCompleteIdentificador
                                         label={lang === "ca" ? "Identificador" : "Identificador"}
-                                        value={identificador}
-                                        onChange={(v) => { actualizarIdentificador(index, v); buscar(v, index); }}
-                                        onAnimalSelected={(a) => { actualizarIdentificador(index, a.identificador); limpiarSugerencias(); }}
+                                        value={animal.identificador}
+                                        onChange={(v) => { actualizarAnimal(index, { identificador: v }); buscar(v, index); }}
+                                        onAnimalSelected={(a) => { actualizarAnimal(index, { identificador: a.identificador }); limpiarSugerencias(); }}
                                         suggestions={activeField === index ? suggestions : []}
                                         isLoading={isLoading && activeField === index}
                                         placeholder="ES724100041234"
                                         lang={lang}
                                     />
                                 </div>
+
+                                <div className={readOnlyCls}>
+                                    <FormField label={`${lang === "ca" ? "Estat arribada" : "Estado llegada"} *`}>
+                                        <SelectInput
+                                            value={animal.estatArribada}
+                                            onChange={(c) => seleccionarEstatAnimal(index, c)}
+                                            options={estatsArribada}
+                                            placeholder={lang === "ca" ? "Seleccionar" : "Seleccionar"}
+                                        />
+                                    </FormField>
+                                </div>
+
+                                {esSacrificio && (
+                                    <div className="flex flex-col gap-3 border-t border-surface-variant pt-3">
+                                        <span className="text-xs font-bold text-main-orange">
+                                            {lang === "ca" ? "Dades de sacrifici" : "Datos de sacrificio"}
+                                        </span>
+
+                                        <div className={readOnlyCls}>
+                                            <FormField label={`${lang === "ca" ? "Data sacrifici" : "Fecha sacrificio"} *`}>
+                                                <DateInputDMY
+                                                    key={`dataSacr-${index}-${animal.dataSacrMort || 'empty'}`}
+                                                    value={animal.dataSacrMort}
+                                                    onChange={(v) => actualizarAnimal(index, { dataSacrMort: v })}
+                                                />
+                                            </FormField>
+                                        </div>
+
+                                        <div className={readOnlyCls}>
+                                            <FormField label={`${lang === "ca" ? "Pes canal (sssdd)" : "Peso canal (sssdd)"} *`}>
+                                                <input
+                                                    type="text"
+                                                    inputMode="numeric"
+                                                    value={animal.pesCanal}
+                                                    maxLength={CONFIRMAR_MOV_LIMITES.PES_CANAL}
+                                                    onChange={(e) => actualizarAnimal(index, { pesCanal: e.target.value.replace(/\D/g, "") })}
+                                                    placeholder="35025"
+                                                    className="w-full border border-surface-variant rounded-xl px-3 py-2.5 text-sm bg-surface outline-none text-dark-blue-grey focus:border-main-orange"
+                                                />
+                                            </FormField>
+                                        </div>
+
+                                        <div className={readOnlyCls}>
+                                            <FormField label={`${lang === "ca" ? "Classificació canal" : "Clasificación canal"} *`}>
+                                                <input
+                                                    type="text"
+                                                    value={animal.classCanal}
+                                                    maxLength={CONFIRMAR_MOV_LIMITES.CLASS_CANAL}
+                                                    onChange={(e) => actualizarAnimal(index, { classCanal: e.target.value.toUpperCase() })}
+                                                    placeholder="ZS+11"
+                                                    className="w-full border border-surface-variant rounded-xl px-3 py-2.5 text-sm bg-surface outline-none text-dark-blue-grey focus:border-main-orange"
+                                                />
+                                            </FormField>
+                                        </div>
+
+                                        <div className={readOnlyCls}>
+                                            <FormField label={`${lang === "ca" ? "Tipus presentació" : "Tipo presentación"} *`}>
+                                                <SelectInput
+                                                    value={animal.tipusPresentacio}
+                                                    onChange={(c) => actualizarAnimal(index, { tipusPresentacio: c })}
+                                                    options={tipusPresentacio}
+                                                    placeholder={lang === "ca" ? "Seleccionar" : "Seleccionar"}
+                                                />
+                                            </FormField>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
-                        ))}
-                    </div>
+                        );
+                    })}
                 </div>
             </div>
 
@@ -399,7 +385,7 @@ export default function AltaGuiaPage() {
                     <button
                         onClick={handleGuardarBorrador}
                         title={lang === "ca" ? "Desar esborrany" : "Guardar borrador"}
-                        className="w-12 h-12 shrink-0 flex items-center justify-center border-2 border-main-green text-main-green rounded-xl hover:bg-main-green/10 transition-colors"
+                        className="w-12 h-12 shrink-0 flex items-center justify-center border-2 border-main-orange text-main-orange rounded-xl hover:bg-main-orange/10 transition-colors"
                     >
                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
@@ -411,7 +397,7 @@ export default function AltaGuiaPage() {
                         disabled={enviando || !esValido}
                         className="flex-1 bg-main-orange text-white rounded-xl py-3 text-sm font-semibold disabled:opacity-40 transition-opacity"
                     >
-                        {enviando ? t("common.loading") : (lang === "ca" ? "Crear guia" : "Crear guía")}
+                        {enviando ? t("common.loading") : (lang === "ca" ? "Confirmar moviment" : "Confirmar movimiento")}
                     </button>
                 </div>
             )}
@@ -432,23 +418,18 @@ export default function AltaGuiaPage() {
                 <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center px-4">
                     <div className="bg-white rounded-2xl p-6 w-full max-w-sm">
                         <h3 className="text-base font-bold text-dark-blue-grey mb-2">
-                            {lang === "ca" ? "Confirmar creació" : "Confirmar creación"}
+                            {lang === "ca" ? "Confirmar" : "Confirmar"}
                         </h3>
                         <p className="text-sm text-blue-grey mb-4">
-                            {lang === "ca" ? "Confirmes l'alta de la guia?" : "¿Confirmas el alta de la guía?"}
+                            {lang === "ca" ? "Confirmes el moviment?" : "¿Confirmas el movimiento?"}
                         </p>
                         <div className="bg-surface rounded-xl p-3 mb-5 flex flex-col gap-1.5">
                             <p className="text-xs text-blue-grey">
-                                {lang === "ca" ? "Origen" : "Origen"}:{" "}
-                                <span className="text-dark-blue-grey font-medium">{form.explotacioOrigen}</span>
+                                REMO: <span className="text-dark-blue-grey font-medium">{form.codiRemo}</span>
                             </p>
                             <p className="text-xs text-blue-grey">
                                 {lang === "ca" ? "Destí" : "Destino"}:{" "}
                                 <span className="text-dark-blue-grey font-medium">{form.explotacioDestinacio}</span>
-                            </p>
-                            <p className="text-xs text-blue-grey">
-                                {lang === "ca" ? "Sortida" : "Salida"}:{" "}
-                                <span className="text-dark-blue-grey font-medium">{form.dataSortida} {form.horaSortida}</span>
                             </p>
                             <p className="text-xs text-blue-grey">
                                 {lang === "ca" ? "Arribada" : "Llegada"}:{" "}
@@ -457,7 +438,7 @@ export default function AltaGuiaPage() {
                             <p className="text-xs text-blue-grey">
                                 {lang === "ca" ? "Animals" : "Animales"}:{" "}
                                 <span className="text-dark-blue-grey font-medium">
-                                    {form.identificadors.filter((id) => id.trim()).length}
+                                    {form.animales.filter((a) => a.identificador.trim()).length}
                                 </span>
                             </p>
                         </div>
@@ -481,10 +462,10 @@ export default function AltaGuiaPage() {
 
             {exito && (
                 <SuccessModal
-                    titulo={lang === "ca" ? "Guia creada" : "Guía creada"}
+                    titulo={lang === "ca" ? "Moviment confirmat" : "Movimiento confirmado"}
                     mensaje={lang === "ca"
-                        ? "La guia s'ha registrat correctament al sistema GTR."
-                        : "La guía se ha registrado correctamente en el sistema GTR."}
+                        ? "El moviment s'ha confirmat correctament al sistema GTR."
+                        : "El movimiento se ha confirmado correctamente en el sistema GTR."}
                     boton={lang === "ca" ? "Acceptar" : "Aceptar"}
                     onClose={cerrarExito}
                 />
