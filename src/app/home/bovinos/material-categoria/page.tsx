@@ -22,13 +22,13 @@ export default function MaterialPage() {
   const actions: SubMenuAction[] = [
     {
       label: t("material.solicitar"),
-      path: "/home/bovinos/material/solicitar",
+      path: "/home/bovinos/material-categoria/solicitar",
       icon: <IconCart />,
       variant: "primary",
     },
     {
       label: t("material.duplicado"),
-      path: "/home/bovinos/material/duplicado",
+      path: "/home/bovinos/material-categoria/duplicado",
       icon: <IconDuplicate />,
       variant: "primary",
     },

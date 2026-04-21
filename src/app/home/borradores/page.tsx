@@ -21,6 +21,8 @@ function obtenerRutaFormulario(tipo: string): string {
             return "/home/bovinos/gestion/correccion_sexo";
         case "FALLECIMIENTO":
             return "/home/bovinos/gestion/fallecimiento";
+        case "SOLICITUD_MATERIAL":
+            return "/home/bovinos/material-categoria/solicitar";
         default:
             return "/home"; // <- Por esto te devolvía al inicio
     }
