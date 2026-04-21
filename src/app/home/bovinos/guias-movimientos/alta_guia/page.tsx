@@ -12,32 +12,38 @@ import AutoCompleteIdentificador from "@/components/forms/AutoCompleteIdentifica
 import ErrorModal from "@/components/common/ErrorModal";
 import SuccessModal from "@/components/common/SuccessModal";
 import LoadingOverlay from "@/components/common/LoadingOverlay";
-import { validarGuia } from "@/lib/bovinos/guias";
+import { validarGuia, GUIA_SI_NO, GUIA_LIMITES } from "@/lib/bovinos/guias";
 import { getAppError } from "@/lib/errors/appErrors";
 import { useGuias } from "@/hooks/useGuias";
 import { useListarBovinos } from "@/hooks/useListarBovinos";
 import { useAutoCompleteBovinos } from "@/hooks/useAutoCompleteBovinos";
 
-// Opciones Sí/No (equivalente a ElementosConCodigos().getOpcionesSiNo())
+// Sí/No — PDF §5.4.3: valores "True" / "False"
 const OPCIONES_SI_NO = [
-    { codigo: "1", nombre: "Sí" },
-    { codigo: "2", nombre: "No" },
+    { codigo: GUIA_SI_NO.SI, nombre: "Sí" },
+    { codigo: GUIA_SI_NO.NO, nombre: "No" },
 ];
 const OPCIONES_SI_NO_CA = [
-    { codigo: "1", nombre: "Sí" },
-    { codigo: "2", nombre: "No" },
+    { codigo: GUIA_SI_NO.SI, nombre: "Sí" },
+    { codigo: GUIA_SI_NO.NO, nombre: "No" },
 ];
 
-// Medios de transporte (equivalente a ElementosConCodigos().getTransportes())
+// Medios de transporte — PDF §5.4.3
 const TRANSPORTES = [
-    { codigo: "01", nombre: "Vehículo de transporte" },
-    { codigo: "02", nombre: "A pie" },
-    { codigo: "03", nombre: "Otros" },
+    { codigo: "04", nombre: "Camión" },
+    { codigo: "05", nombre: "Barco" },
+    { codigo: "06", nombre: "Avión" },
+    { codigo: "07", nombre: "Tren" },
+    { codigo: "08", nombre: "A pie" },
+    { codigo: "99", nombre: "Otros" },
 ];
 const TRANSPORTES_CA = [
-    { codigo: "01", nombre: "Vehicle de transport" },
-    { codigo: "02", nombre: "A peu" },
-    { codigo: "03", nombre: "Altres" },
+    { codigo: "04", nombre: "Camió" },
+    { codigo: "05", nombre: "Vaixell" },
+    { codigo: "06", nombre: "Avió" },
+    { codigo: "07", nombre: "Tren" },
+    { codigo: "08", nombre: "Conducció a peu" },
+    { codigo: "99", nombre: "Altres" },
 ];
 
 export default function AltaGuiaPage() {
@@ -98,7 +104,7 @@ export default function AltaGuiaPage() {
         await enviar();
     };
 
-    const esValido = !validarGuia(form);
+    const esValido    = !validarGuia(form);
     const readOnlyCls = isReadOnly ? "opacity-70 pointer-events-none" : "";
 
     return (
@@ -123,8 +129,9 @@ export default function AltaGuiaPage() {
                             <input
                                 type="text"
                                 value={form.explotacioOrigen}
+                                maxLength={GUIA_LIMITES.EXPLOTACIO}
                                 onChange={(e) => update({ explotacioOrigen: e.target.value })}
-                                placeholder="ES07040001AA"
+                                placeholder="12345"
                                 className="w-full border border-surface-variant rounded-xl px-3 py-2.5 text-sm bg-surface outline-none text-dark-blue-grey focus:border-main-green"
                             />
                         </FormField>
@@ -135,8 +142,9 @@ export default function AltaGuiaPage() {
                             <input
                                 type="text"
                                 value={form.explotacioDestinacio}
+                                maxLength={GUIA_LIMITES.EXPLOTACIO}
                                 onChange={(e) => update({ explotacioDestinacio: e.target.value })}
-                                placeholder="ES07040002BB"
+                                placeholder="12354"
                                 className="w-full border border-surface-variant rounded-xl px-3 py-2.5 text-sm bg-surface outline-none text-dark-blue-grey focus:border-main-green"
                             />
                         </FormField>
@@ -148,7 +156,6 @@ export default function AltaGuiaPage() {
                                 value={form.temporal}
                                 onChange={(c, n) => update({ temporal: c, temporalNombre: n })}
                                 options={opcionesSiNo}
-                                placeholder={lang === "ca" ? "Sí/No" : "Sí/No"}
                             />
                         </FormField>
                     </div>
@@ -203,7 +210,6 @@ export default function AltaGuiaPage() {
                                 value={form.mobilitat}
                                 onChange={(c, n) => update({ mobilitat: c, mobilitatNombre: n })}
                                 options={opcionesSiNo}
-                                placeholder={lang === "ca" ? "Sí/No" : "Sí/No"}
                             />
                         </FormField>
                     </div>
@@ -231,6 +237,7 @@ export default function AltaGuiaPage() {
                                     <input
                                         type="text"
                                         value={form.pais}
+                                        maxLength={GUIA_LIMITES.PAIS}
                                         onChange={(e) => update({ pais: e.target.value })}
                                         className="w-full border border-surface-variant rounded-xl px-3 py-2.5 text-sm bg-surface outline-none text-dark-blue-grey focus:border-main-green"
                                     />
@@ -241,6 +248,7 @@ export default function AltaGuiaPage() {
                                     <input
                                         type="text"
                                         value={form.codiExplotacio}
+                                        maxLength={GUIA_LIMITES.CODI_EXPLOTACIO}
                                         onChange={(e) => update({ codiExplotacio: e.target.value })}
                                         className="w-full border border-surface-variant rounded-xl px-3 py-2.5 text-sm bg-surface outline-none text-dark-blue-grey focus:border-main-green"
                                     />
@@ -261,7 +269,7 @@ export default function AltaGuiaPage() {
                             <input
                                 type="text"
                                 value={form.codiAtes}
-                                maxLength={15}
+                                maxLength={GUIA_LIMITES.CODI_ATES}
                                 onChange={(e) => update({ codiAtes: e.target.value })}
                                 className="w-full border border-surface-variant rounded-xl px-3 py-2.5 text-sm bg-surface outline-none text-dark-blue-grey focus:border-main-green"
                             />
@@ -273,6 +281,7 @@ export default function AltaGuiaPage() {
                             <input
                                 type="text"
                                 value={form.nomTransportista}
+                                maxLength={GUIA_LIMITES.NOM_TRANSPORTISTA}
                                 onChange={(e) => update({ nomTransportista: e.target.value })}
                                 className="w-full border border-surface-variant rounded-xl px-3 py-2.5 text-sm bg-surface outline-none text-dark-blue-grey focus:border-main-green"
                             />
@@ -295,6 +304,7 @@ export default function AltaGuiaPage() {
                             <input
                                 type="text"
                                 value={form.matricula}
+                                maxLength={GUIA_LIMITES.MATRICULA}
                                 onChange={(e) => update({ matricula: e.target.value })}
                                 className="w-full border border-surface-variant rounded-xl px-3 py-2.5 text-sm bg-surface outline-none text-dark-blue-grey focus:border-main-green"
                             />
@@ -306,7 +316,7 @@ export default function AltaGuiaPage() {
                             <input
                                 type="text"
                                 value={form.nifConductor}
-                                maxLength={9}
+                                maxLength={GUIA_LIMITES.NIF_CONDUCTOR}
                                 onChange={(e) => update({ nifConductor: e.target.value })}
                                 className="w-full border border-surface-variant rounded-xl px-3 py-2.5 text-sm bg-surface outline-none text-dark-blue-grey focus:border-main-green"
                             />
@@ -318,6 +328,7 @@ export default function AltaGuiaPage() {
                             <input
                                 type="text"
                                 value={form.nomConductor}
+                                maxLength={GUIA_LIMITES.NOM_CONDUCTOR}
                                 onChange={(e) => update({ nomConductor: e.target.value })}
                                 className="w-full border border-surface-variant rounded-xl px-3 py-2.5 text-sm bg-surface outline-none text-dark-blue-grey focus:border-main-green"
                             />
@@ -334,7 +345,7 @@ export default function AltaGuiaPage() {
                                 <button
                                     type="button"
                                     onClick={agregarIdentificador}
-                                    className="w-9 h-9 rounded-lg bg-main-green text-white flex items-center justify-center"
+                                    className="w-9 h-9 rounded-lg bg-main-orange text-white flex items-center justify-center"
                                     aria-label={lang === "ca" ? "Afegir" : "Añadir"}
                                 >
                                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -347,7 +358,7 @@ export default function AltaGuiaPage() {
                         {form.identificadors.map((identificador, index) => (
                             <div key={index} className="bg-surface rounded-xl p-3 flex flex-col gap-3">
                                 <div className="flex items-center justify-between">
-                                    <span className="text-xs font-bold text-main-green">
+                                    <span className="text-xs font-bold text-main-orange">
                                         Animal {index + 1}
                                     </span>
                                     {!isReadOnly && form.identificadors.length > 1 && (
@@ -398,7 +409,7 @@ export default function AltaGuiaPage() {
                     <button
                         onClick={handleEnviar}
                         disabled={enviando || !esValido}
-                        className="flex-1 bg-main-green text-white rounded-xl py-3 text-sm font-semibold disabled:opacity-40 transition-opacity"
+                        className="flex-1 bg-main-orange text-white rounded-xl py-3 text-sm font-semibold disabled:opacity-40 transition-opacity"
                     >
                         {enviando ? t("common.loading") : (lang === "ca" ? "Crear guia" : "Crear guía")}
                     </button>
@@ -459,7 +470,7 @@ export default function AltaGuiaPage() {
                             </button>
                             <button
                                 onClick={confirmarEnvio}
-                                className="flex-1 bg-main-green text-white rounded-xl py-2.5 text-sm font-semibold"
+                                className="flex-1 bg-main-orange text-white rounded-xl py-2.5 text-sm font-semibold"
                             >
                                 {t("common.btn_send")}
                             </button>

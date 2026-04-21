@@ -33,13 +33,13 @@ export default function GuiasMovimientosPage() {
   const actions: SubMenuAction[] = [
     {
       label: t("guias.alta"),
-      path: "/home/bovinos/guias-movimientos/alta-guia",
+      path: "/home/bovinos/guias-movimientos/alta_guia",
       icon: <IconAltaGuia />,
       variant: "primary",
     },
     {
       label: t("guias.confirmar_movimiento"),
-      path: "/home/bovinos/guias-movimientos/confirmar-movimiento",
+      path: "/home/bovinos/guias-movimientos/confirmar_movimiento",
       icon: <IconConfirmar />,
       variant: "primary",
     },
