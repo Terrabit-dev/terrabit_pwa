@@ -75,7 +75,6 @@ export default function ListaGuiasPage() {
                 onMenuClick={toggle}
                 accentColor="orange"
                 showBack
-                onBackClick={handleBack}
             />
 
             {!consultaIniciada && (
