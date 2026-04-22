@@ -12,9 +12,19 @@ import SuccessModal from "@/components/common/SuccessModal";
 import LoadingOverlay from "@/components/common/LoadingOverlay";
 import { getAppError } from "@/lib/errors/appErrors";
 import { useSolicitudMaterial } from "@/hooks/useSolicitudMaterial";
+// ─── MAGIA DRY: Importamos los mapas compartidos ───
 import {
-    EMPRESAS_SUBMINISTRADORAS, TIPOS_ENVIO, TIPOS_DIRECCION,
-    TIPOS_MATERIAL, OFICINAS_COMARCALES, requiereCodiExplotacio, validarSolicitudMaterial
+    EMPRESAS_SUBMINISTRADORAS,
+    TIPOS_ENVIO,
+    TIPOS_DIRECCION,
+    OFICINAS_COMARCALES
+} from "@/lib/bovinos/constants";
+
+// ─── Importamos lo específico de este formulario ───
+import {
+    TIPOS_MATERIAL,
+    requiereCodiExplotacio,
+    validarSolicitudMaterial
 } from "@/lib/bovinos/solicitudMaterial";
 
 export default function SolicitudMaterialPage() {
@@ -95,6 +105,23 @@ export default function SolicitudMaterialPage() {
             <TopBar title={lang === "ca" ? "Sol·licitar Material" : "Solicitar Material"} onMenuClick={toggle} accentColor="green" showBack />
 
             <div className="px-4 py-5 flex flex-col gap-4 pb-24">
+                {isReadOnly && form.codigoSeguimiento && (
+                    <div className="bg-main-green/10 border-2 border-main-green/20 rounded-2xl p-4 flex items-center justify-between">
+                        <div>
+                            <p className="text-[10px] uppercase font-bold text-main-green tracking-wider">
+                                {lang === "ca" ? "Codi de seguiment" : "Código de seguimiento"}
+                            </p>
+                            <p className="text-lg font-mono font-bold text-dark-blue-grey leading-none mt-1">
+                                {form.codigoSeguimiento}
+                            </p>
+                        </div>
+                        <div className="bg-main-green text-white p-2 rounded-xl">
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                            </svg>
+                        </div>
+                    </div>
+                )}
 
                 {/* 1. Datos del Material */}
                 <div className="bg-white rounded-2xl shadow-sm p-4 flex flex-col gap-4">

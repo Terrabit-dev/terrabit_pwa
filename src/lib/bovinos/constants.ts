@@ -88,17 +88,18 @@ export const TIPOS_PRESENTACION: OpcionSelect[] = [
 ];
 
 // ── Tipo envío — mapaTiposEnvios ─────────────────────────────────────────────
-export const TIPOS_ENVIO: OpcionSelect[] = [
-    { codigo: "01", nombre: "Correo ordinario" },
-    { codigo: "04", nombre: "Correo certificado" },
+export const TIPOS_ENVIO = [
+    { codigo: "01", nombre: "Correu ordinari", nombreEs: "Correo ordinario" },
+    { codigo: "04", nombre: "Correu certificat", nombreEs: "Correo certificado" }
 ];
 
 // ── Dirección envío — mapaTiposDireccionEnvio ────────────────────────────────
-export const TIPOS_DIRECCION_ENVIO: OpcionSelect[] = [
-    { codigo: "01", nombre: "OC" },
-    { codigo: "02", nombre: "Ganadero / Explotación ganadera" },
-    { codigo: "03", nombre: "Dirección alternativa" },
+export const TIPOS_DIRECCION = [
+    { codigo: "01", nombre: "Oficina Comarcal", nombreEs: "Oficina Comarcal" },
+    { codigo: "02", nombre: "Titular / Ramader", nombreEs: "Titular / Ganadero" },
+    { codigo: "03", nombre: "Adreça alternativa", nombreEs: "Dirección alternativa" }
 ];
+
 
 // ── Material duplicados — mapaTiposMaterialDuplicados ────────────────────────
 export const TIPOS_MATERIAL_DUPLICADO: OpcionSelect[] = [
@@ -109,66 +110,45 @@ export const TIPOS_MATERIAL_DUPLICADO: OpcionSelect[] = [
 ];
 
 // ── Material — mapaTiposMaterial ─────────────────────────────────────────────
-export const TIPOS_MATERIAL: OpcionSelect[] = [
-    { codigo: "21", nombre: "Inyectable electrónico" },
-    { codigo: "22", nombre: "Bolo ruminal" },
-    { codigo: "23", nombre: "Crotal tisular simple" },
-    { codigo: "24", nombre: "Crotal tisular doble" },
-    { codigo: "26", nombre: "Crotal + Bol ruminal" },
-    { codigo: "27", nombre: "Crotal + Crotal electrónico" },
-    { codigo: "25", nombre: "Reidentificación" },
+export const TIPOS_MATERIAL = [
+    { codigo: "21", nombre: "Injectable electrònic", nombreEs: "Inyectable electrónico" },
+    { codigo: "22", nombre: "Bol ruminal", nombreEs: "Bolo ruminal" },
+    { codigo: "23", nombre: "Cròtal simple tissular", nombreEs: "Crotal simple tisular" },
+    { codigo: "24", nombre: "Cròtal doble tissular", nombreEs: "Crotal doble tisular" },
+    { codigo: "26", nombre: "Cròtal + Bol ruminal", nombreEs: "Crotal + Bolo ruminal" },
+    { codigo: "27", nombre: "Cròtal + Cròtal electrònic", nombreEs: "Crotal + Crotal electrónico" },
+    { codigo: "25", nombre: "Reidentificació", nombreEs: "Reidentificación" }
 ];
 
 // ── Oficinas comarcales — mapaOficinasComarcales ─────────────────────────────
-export const OFICINAS_COMARCALES: OpcionSelect[] = [
-    { codigo: "OC001", nombre: "Alt Camp" },
-    { codigo: "OC002", nombre: "Alt Empordà" },
-    { codigo: "OC003", nombre: "Alt Penedès" },
-    { codigo: "OC004", nombre: "Alt Urgell" },
-    { codigo: "OC005", nombre: "Alta Ribagorça" },
-    { codigo: "OC006", nombre: "Anoia" },
-    { codigo: "OC007", nombre: "Bages" },
-    { codigo: "OC008", nombre: "Baix Camp" },
-    { codigo: "OC009", nombre: "Baix Ebre" },
-    { codigo: "OC010", nombre: "Baix Empordà" },
-    { codigo: "OC011", nombre: "Baix Llobregat" },
-    { codigo: "OC012", nombre: "Baix Penedès" },
-    { codigo: "OC013", nombre: "Barcelonès" },
-    { codigo: "OC014", nombre: "Berguedà" },
-    { codigo: "OC015", nombre: "Cerdanya" },
-    { codigo: "OC016", nombre: "Conca de Barberà" },
-    { codigo: "OC017", nombre: "Garraf" },
-    { codigo: "OC018", nombre: "Garrigues" },
-    { codigo: "OC019", nombre: "Garrotxa" },
-    { codigo: "OC020", nombre: "Gironès" },
-    { codigo: "OC021", nombre: "Maresme" },
-    { codigo: "OC022", nombre: "Montsià" },
-    { codigo: "OC023", nombre: "Noguera" },
-    { codigo: "OC024", nombre: "Osona" },
-    { codigo: "OC025", nombre: "Pallars Jussà" },
-    { codigo: "OC026", nombre: "Pallars Sobirà" },
-    { codigo: "OC027", nombre: "Pla d'Urgell" },
-    { codigo: "OC028", nombre: "Pla de l'Estany" },
-    { codigo: "OC029", nombre: "Priorat" },
-    { codigo: "OC030", nombre: "Ribera d'Ebre" },
-    { codigo: "OC031", nombre: "Ripollès" },
-    { codigo: "OC032", nombre: "Segarra" },
-    { codigo: "OC033", nombre: "Segrià" },
-    { codigo: "OC034", nombre: "La Selva" },
-    { codigo: "OC035", nombre: "Solsonès" },
-    { codigo: "OC036", nombre: "Tarragonès" },
-    { codigo: "OC037", nombre: "Terra Alta" },
-    { codigo: "OC038", nombre: "Urgell" },
-    { codigo: "OC039", nombre: "Vall d'Aran" },
-    { codigo: "OC040", nombre: "Vallès Occidental" },
-    { codigo: "OC041", nombre: "Vallès Oriental" },
-    { codigo: "OC042", nombre: "Moianès" },
+export const OFICINAS_COMARCALES = [
+    { codigo: "OC001", nombre: "Alt Camp" }, { codigo: "OC002", nombre: "Alt Empordà" },
+    { codigo: "OC003", nombre: "Alt Penedès" }, { codigo: "OC004", nombre: "Alt Urgell" },
+    { codigo: "OC005", nombre: "Alta Ribagorça" }, { codigo: "OC006", nombre: "Anoia" },
+    { codigo: "OC007", nombre: "Bages" }, { codigo: "OC008", nombre: "Baix Camp" },
+    { codigo: "OC009", nombre: "Baix Ebre" }, { codigo: "OC010", nombre: "Baix Empordà" },
+    { codigo: "OC011", nombre: "Baix Llobregat" }, { codigo: "OC012", nombre: "Baix Penedès" },
+    { codigo: "OC013", nombre: "Barcelonès" }, { codigo: "OC014", nombre: "Berguedà" },
+    { codigo: "OC015", nombre: "Cerdanya" }, { codigo: "OC016", nombre: "Conca de Barberà" },
+    { codigo: "OC017", nombre: "Garraf" }, { codigo: "OC018", nombre: "Garrigues" },
+    { codigo: "OC019", nombre: "Garrotxa" }, { codigo: "OC020", nombre: "Gironès" },
+    { codigo: "OC021", nombre: "Maresme" }, { codigo: "OC022", nombre: "Montsià" },
+    { codigo: "OC023", nombre: "Noguera" }, { codigo: "OC024", nombre: "Osona" },
+    { codigo: "OC025", nombre: "Pallars Jussà" }, { codigo: "OC026", nombre: "Pallars Sobirà" },
+    { codigo: "OC027", nombre: "Pla d'Urgell" }, { codigo: "OC028", nombre: "Pla de l'Estany" },
+    { codigo: "OC029", nombre: "Priorat" }, { codigo: "OC030", nombre: "Ribera d'Ebre" },
+    { codigo: "OC031", nombre: "Ripollès" }, { codigo: "OC032", nombre: "Segarra" },
+    { codigo: "OC033", nombre: "Segrià" }, { codigo: "OC034", nombre: "La Selva" },
+    { codigo: "OC035", nombre: "Solsonès" }, { codigo: "OC036", nombre: "Tarragonès" },
+    { codigo: "OC037", nombre: "Terra Alta" }, { codigo: "OC038", nombre: "Urgell" },
+    { codigo: "OC039", nombre: "Vall d'Aran" }, { codigo: "OC040", nombre: "Vallès Occidental" },
+    { codigo: "OC041", nombre: "Vallès Oriental" }, { codigo: "OC042", nombre: "Moianès" },
 ];
 
 // ── Empresas suministradoras — mapaEmpresaSubministradora ────────────────────
-export const EMPRESAS_SUBMINISTRADORAS: OpcionSelect[] = [
+export const EMPRESAS_SUBMINISTRADORAS = [
     { codigo: "B02164317", nombre: "DATAMARS IBERICA SLU" },
-    { codigo: "A78100609", nombre: "AZASA" },
+    { codigo: "A78100609", nombre: "AZASA" }
 ];
 
 // ── Razas — mapaRazas (completo del PDF annex) ───────────────────────────────
@@ -389,4 +369,32 @@ const PAISES: Record<string, string> = {
 export function getNombrePais(codigo: string | undefined): string {
     if (!codigo) return "-";
     return PAISES[codigo] ?? codigo;
+}
+
+// ─── VALIDACIÓN COMPARTIDA DE DIRECCIONES ────────────────────────────────────
+
+// Interfaz base para asegurar que cualquier formulario que envíe material tenga estos campos
+export interface DireccionEnvioBase {
+    adrecaLliurament: string;
+    oc: string;
+    ocNombre: string;
+    adreca: string;
+    poblacio: string;
+    cp: string;
+    municipi: string;
+    telefonContacte: string;
+}
+
+// Función compartida: la llamaremos desde Materiales y desde Duplicados
+export function validarDireccionEnvio(form: DireccionEnvioBase): { tipo: "validacion", codigo: number } | null {
+    if (!form.adrecaLliurament) return { tipo: "validacion", codigo: 5 };
+
+    if (form.adrecaLliurament === "01") {
+        if (!form.oc) return { tipo: "validacion", codigo: 7 };
+    } else if (form.adrecaLliurament === "02" || form.adrecaLliurament === "03") {
+        if (!form.adreca.trim() || !form.poblacio.trim() || !form.cp.trim() || !form.municipi.trim() || !form.telefonContacte.trim()) {
+            return { tipo: "validacion", codigo: 8 };
+        }
+    }
+    return null;
 }

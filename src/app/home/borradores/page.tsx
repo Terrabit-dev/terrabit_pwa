@@ -23,6 +23,8 @@ function obtenerRutaFormulario(tipo: string): string {
             return "/home/bovinos/gestion/fallecimiento";
         case "SOLICITUD_MATERIAL":
             return "/home/bovinos/material-categoria/solicitar";
+        case "SOLICITUD_DUPLICADO":
+            return "/home/bovinos/material-categoria/duplicado";
         default:
             return "/home"; // <- Por esto te devolvía al inicio
     }
