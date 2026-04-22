@@ -8,6 +8,18 @@ import { useI18n } from "@/hooks/useI18n";
 import { obtenerBorradores, eliminarBorrador, type Borrador } from "@/lib/storage/borradores";
 import { TIPOS_MATERIAL } from "@/lib/bovinos/solicitudMaterial";
 
+
+// Molde con todas las propiedades posibles que podríamos buscar en los distintos borradores
+interface DatosBorrador {
+    identificador?: string;
+    identificadorMadre?: string;
+    madre?: string;
+    tipusMaterial?: string;
+    tipusMaterialNombre?: string;
+    identificadors?: Array<{ identificador: string; tipusMaterial?: string }>;
+    // Permite que haya otras propiedades desconocidas sin quejarse:
+    [key: string]: unknown;
+}
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function obtenerRutaFormulario(tipo: string): string {
@@ -23,7 +35,7 @@ function obtenerRutaFormulario(tipo: string): string {
 }
 
 // NUEVO HELPER: Decide qué mostrar en función del tipo de trámite
-function obtenerResumenBorrador(tipo: string, datos: Record<string, any>, lang: string): string {
+function obtenerResumenBorrador(tipo: string, datos: DatosBorrador, lang: string): string {
     const sinInfo = lang === "ca" ? "Sense informació" : "Sin información";
 
     switch (tipo) {
@@ -67,9 +79,10 @@ function filtrar(lista: Borrador[], busqueda: string, lang: string): Borrador[] 
 
     return lista.filter((r) => {
         const matchTipo = r.tipo.toLowerCase().includes(q);
-        const datos = r.datos as Record<string, any>;
+        // ANTES: const datos = r.datos as Record<string, any>;
+        // AHORA:
+        const datos = r.datos as DatosBorrador;
 
-        // Ahora el buscador busca en el resumen real que ve el usuario, no solo en "identificador"
         const resumenVisual = obtenerResumenBorrador(r.tipo, datos, lang).toLowerCase();
 
         return matchTipo || resumenVisual.includes(q);
@@ -203,7 +216,7 @@ export default function HistorialPage() {
                         </div>
                     ) : (
                         listaFiltrada.map((registro) => {
-                            const datos = registro.datos as Record<string, any>;
+                            const datos = registro.datos as DatosBorrador;
                             return (
                                 <div key={registro.id} className="bg-white rounded-2xl p-4 shadow-sm border border-surface-variant flex flex-col gap-3">
                                     <div className="flex justify-between items-start">
