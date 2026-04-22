@@ -15,10 +15,16 @@ const IconConfirmar = () => (
   </svg>
 );
 
+
 const IconListaGuias = () => (
-  <svg className="w-7 h-7" viewBox="0 0 24 24" fill="currentColor">
-    <path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
-  </svg>
+    <svg className="w-7 h-7" viewBox="0 0 24 24" fill="currentColor">
+      {/* Dos checks a la izquierda */}
+      <path d="M3 6l1.5-1.5L6 6l3-3L10.5 4.5 6 9 3 6z"/>
+      <path d="M3 14l1.5-1.5L6 14l3-3 1.5 1.5L6 17l-3-3z"/>
+      {/* Líneas a la derecha */}
+      <path d="M12 5h10v2H12V5zm0 8h10v2H12v-2z"/>
+      <path d="M12 9h8v1.5h-8V9zm0 8h8v1.5h-8V17z"/>
+    </svg>
 );
 
 const IconListaMovimientos = () => (
@@ -45,13 +51,13 @@ export default function GuiasMovimientosPage() {
     },
     {
       label: t("guias.lista_guias"),
-      path: "/home/bovinos/guias-movimientos/lista-guias",
+      path: "/home/bovinos/guias-movimientos/lista_guias",
       icon: <IconListaGuias />,
       variant: "primary",
     },
     {
       label: t("guias.lista_movimientos"),
-      path: "/home/bovinos/guias-movimientos/lista-movimientos",
+      path: "/home/bovinos/guias-movimientos/lista_movimientos",
       icon: <IconListaMovimientos />,
       variant: "primary",
     },
