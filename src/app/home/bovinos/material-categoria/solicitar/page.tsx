@@ -12,7 +12,7 @@ import SuccessModal from "@/components/common/SuccessModal";
 import LoadingOverlay from "@/components/common/LoadingOverlay";
 import { getAppError } from "@/lib/errors/appErrors";
 import { useSolicitudMaterial } from "@/hooks/useSolicitudMaterial";
-// ─── MAGIA DRY: Importamos los mapas compartidos ───
+
 import {
     EMPRESAS_SUBMINISTRADORAS,
     TIPOS_ENVIO,
@@ -27,6 +27,11 @@ import {
     validarSolicitudMaterial
 } from "@/lib/bovinos/solicitudMaterial";
 
+interface OpcionMapa {
+    codigo: string;
+    nombre: string;
+    nombreEs?: string;
+}
 export default function SolicitudMaterialPage() {
     const { toggle }  = useDrawer();
     const { t, lang } = useI18n();
@@ -68,7 +73,7 @@ export default function SolicitudMaterialPage() {
 
     const mostrarCodiGlobal = form.unitats.length > 1 || requiereCodiExplotacio(form.tipusMaterial);
 
-    const mapIdiomas = (arr: any[]) => arr.map(item => ({
+    const mapIdiomas = (arr: OpcionMapa[]) => arr.map(item => ({
         codigo: item.codigo,
         nombre: lang === "ca" ? item.nombre : (item.nombreEs || item.nombre)
     }));

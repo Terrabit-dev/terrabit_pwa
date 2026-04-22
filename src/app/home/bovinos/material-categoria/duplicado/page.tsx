@@ -26,6 +26,12 @@ import {
     TIPOS_MATERIAL_DUPLICAT, validarSolicitudDuplicado
 } from "@/lib/bovinos/solicitudDuplicado";
 
+interface OpcionMapa {
+    codigo: string;
+    nombre: string;
+    nombreEs?: string;
+}
+
 export default function SolicitudDuplicadoPage() {
     const { toggle }  = useDrawer();
     const { t, lang } = useI18n();
@@ -60,7 +66,7 @@ export default function SolicitudDuplicadoPage() {
     const addAnimal = () => update({ identificadors: [...form.identificadors, { identificador: "", tipusMaterial: "", tipusMaterialNombre: "" }] });
     const removeAnimal = (index: number) => update({ identificadors: form.identificadors.filter((_, i) => i !== index) });
 
-    const mapIdiomas = (arr: any[]) => arr.map(item => ({
+    const mapIdiomas = (arr: OpcionMapa[]) => arr.map(item => ({
         codigo: item.codigo,
         nombre: lang === "ca" ? item.nombre : (item.nombreEs || item.nombre)
     }));
