@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
     const url = new URL(endpoint, GTR_BASE);
 
     const response = await fetch(url.toString(), {
-      method: "PUT", // <-- Método POST, el que probablemente espera la Generalitat
+      method: "POST",
       headers: { "Accept": "application/json", "Content-Type": "application/json" },
       body: JSON.stringify(body),
     });

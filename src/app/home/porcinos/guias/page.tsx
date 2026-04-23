@@ -22,7 +22,7 @@ export default function GuiasPorcinosPage() {
     const actions: SubMenuAction[] = [
         {
             label: t("guias_porcinos.crear_guia"),
-            path: "/home/porcinos/guias/crear",
+            path: "/home/porcinos/guias/creacion",
             icon: <IconPlus />,
             variant: "primary",
         },
