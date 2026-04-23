@@ -55,7 +55,10 @@
   },
   "porcinos": {
     "title": "Porcinos",
-    "guias": "Gestión de guías",
+    "guias_title": "Gestión de guías",
+    "guias_subtitle": "Registrar salidas de porcinos",
+    "movimientos_title": "Gestión de movimientos",
+    "movimientos_subtitle": "Confirmar entradas de porcinos",
     "listar": "Listar guías"
   },
   "material": {
