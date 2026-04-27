@@ -308,18 +308,35 @@ export async function enviarConfirmarMov(form: ConfirmarMovimientoForm): Promise
     }
 }
 
+
+export interface IdenBovi {
+    dataNaixement:            string;
+    explotacioNaixement:      string;
+    identificador:            string;
+    identificadorElectronico: string;
+    identificadorMare:        string;
+    paisNaixement:            string;
+    raca:                     string;
+    sexe:                     string;
+}
+
 // ─── Precarga desde un movimiento pendiente ───────────────────────────────────
 export interface MovimentoPendiente {
-    codiRemo:             string;
-    codiAtes:             string;
-    dataArribada:         string;   // "yyyymmddHHmm" — formato GTR
-    moDestinacio:         string;
-    mitjaTransport?:      string;
-    matricula?:           string | null;
-    nomTransportista?:    string | null;
-    nifConductor?:        string | null;
-    nomConductor?:        string | null;
-    identificadors:       Array<{ identificador: string }>;
+    codiAtes:         string;
+    codiRemo:         string;
+    dataArribada:     string;
+    dataSortida:      string;
+    especie:          string;
+    identificadors:   IdenBovi[];
+    matricula:        string | null;
+    mitjaTransport:   string | null;
+    moDestinacio:     string;
+    moOrigen:         string | null;
+    nifConductor:     string | null;
+    nomConductor:     string | null;
+    nomTransportista: string | null;
+    regaDestinacio:   string;
+    regaOrigen:       string;
 }
 
 function parsearFechaHoraAPI(fechaHora: string): { fecha: string; hora: string } {
@@ -347,7 +364,10 @@ export function precargarDesdeMovimiento(mov: MovimentoPendiente): ConfirmarMovi
         nifConductor:         mov.nifConductor ?? "",
         nomConductor:         mov.nomConductor ?? "",
         animales: mov.identificadors.length > 0
-            ? mov.identificadors.map((it) => ({ ...ANIMAL_MOV_INICIAL, identificador: it.identificador }))
+            ? mov.identificadors.map((it) => ({
+                ...ANIMAL_MOV_INICIAL,
+                identificador: it.identificador,
+            }))
             : [{ ...ANIMAL_MOV_INICIAL }],
     };
 }
