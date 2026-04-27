@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import TopBar from "@/components/layout/TopBar";
 import { useDrawer } from "@/context/DrawerContext";
@@ -31,6 +31,14 @@ export default function ListaGuiasPage() {
     const [fechaISO, setFechaISO] = useState("");
     const [horaStr, setHoraStr]   = useState("");
 
+    useEffect(() => {
+        if (!consultaIniciada) return;
+        window.history.pushState({ consultaIniciada: true }, "");
+        const handlePopState = () => resetearConsulta();
+        window.addEventListener("popstate", handlePopState);
+        return () => window.removeEventListener("popstate", handlePopState);
+    }, [consultaIniciada, resetearConsulta]);
+
     const actualizarFecha = (fISO: string, h: string) => {
         if (fISO && h) {
             const [y, m, d] = fISO.split("-");
@@ -52,20 +60,12 @@ export default function ListaGuiasPage() {
 
     const handleConsultar = () => validarPeticion(lang);
 
-    const handleBack = () => {
-        if (consultaIniciada) {
-            resetearConsulta();
-        } else {
-            router.back();
-        }
-    };
-
     const handleEditar = (guia: Guia) => {
         seleccionarGuia(guia);
         if (typeof window !== "undefined") {
             sessionStorage.setItem(SESSION_KEY_GUIA, JSON.stringify(guia));
         }
-        router.push("/home/bovinos/guias-movimientos/editar_guia");
+        router.push("/home/bovinos/guias-movimientos/confirmar_guia");
     };
 
     return (
@@ -120,12 +120,20 @@ export default function ListaGuiasPage() {
 
             {consultaIniciada && !cargando && lista.length > 0 && (
                 <div className="px-4 py-4 flex flex-col gap-3 pb-8">
-                    <p className="text-xs text-blue-grey pl-1">
-                        {lista.length}{" "}
-                        {lang === "ca"
-                            ? (lista.length === 1 ? "guia trobada" : "guies trobades")
-                            : (lista.length === 1 ? "guía encontrada" : "guías encontradas")}
-                    </p>
+                    <div className="flex items-center justify-between pl-1">
+                        <p className="text-xs text-blue-grey">
+                            {lista.length}{" "}
+                            {lang === "ca"
+                                ? (lista.length === 1 ? "guia trobada" : "guies trobades")
+                                : (lista.length === 1 ? "guía encontrada" : "guías encontradas")}
+                        </p>
+                        <button
+                            onClick={resetearConsulta}
+                            className="text-main-orange text-xs font-semibold"
+                        >
+                            {lang === "ca" ? "Nova consulta" : "Nueva consulta"}
+                        </button>
+                    </div>
                     {lista.map((guia, idx) => (
                         <GuiaCard
                             key={`${guia.remo}-${idx}`}
@@ -308,9 +316,7 @@ function InfoChip({ label, iconPath }: { label: string; iconPath: string }) {
             <svg className="w-3 h-3 text-main-orange shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={iconPath}/>
             </svg>
-            <span className="text-[11px] text-blue-grey font-medium truncate max-w-[140px]">{label}</span>
+            <span className="text-[11px] text-blue-grey font-medium truncate max-w-36">{label}</span>
         </div>
     );
 }
-
-

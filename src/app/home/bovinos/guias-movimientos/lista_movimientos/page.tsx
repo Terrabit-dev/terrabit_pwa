@@ -68,7 +68,7 @@ export default function ListaMovimientosPage() {
         if (typeof window !== "undefined") {
             sessionStorage.setItem(SESSION_KEY_MOVIMIENTO, JSON.stringify(mov));
         }
-        router.push("/home/bovinos/guias-movimientos/confirmar_moviment");
+        router.push("/home/bovinos/guias-movimientos/confirmar_movimiento");
     };
 
     return (
