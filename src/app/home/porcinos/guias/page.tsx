@@ -28,7 +28,7 @@ export default function GuiasPorcinosPage() {
         },
         {
             label: t("guias_porcinos.editar_guia"),
-            path: "/home/porcinos/guias/editar",
+            path: "/home/porcinos/guias/lista_guias",
             icon: <IconPencil />,
             variant: "primary",
         },
