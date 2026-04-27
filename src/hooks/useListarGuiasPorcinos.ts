@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import {
     LISTAR_GUIAS_PORCINOS_FILTROS_INICIAL,
     type ListarGuiasPorcinosFiltros,
@@ -17,6 +17,23 @@ export function useListarGuiasPorcinos() {
     const [error, setError] = useState<string | null>(null);
     const [guiaSeleccionada, setGuiaSeleccionada] = useState<GuiaPorcino | null>(null);
 
+    // Recuperar de la caché al entrar a la página
+    useEffect(() => {
+        const guardado = sessionStorage.getItem("cacheListaGuiasPorcinos");
+        if (guardado) {
+            try {
+                const parsed = JSON.parse(guardado);
+
+                /* eslint-disable react-hooks/set-state-in-effect */
+                setFiltros(parsed.filtros);
+                setLista(parsed.lista);
+                setConsultaIniciada(parsed.consultaIniciada);
+                /* eslint-enable react-hooks/set-state-in-effect */
+
+            } catch (e) {}
+        }
+    }, []);
+
     const onRegaChange = useCallback((valor: string) => {
         setFiltros((prev) => ({ ...prev, codiRega: valor }));
     }, []);
@@ -32,6 +49,13 @@ export function useListarGuiasPorcinos() {
         if (result.exito) {
             setLista(result.guias ?? []);
             setError(null);
+
+            // NUEVO: Guardar en caché cuando hay éxito
+            sessionStorage.setItem("cacheListaGuiasPorcinos", JSON.stringify({
+                filtros,
+                lista: result.guias,
+                consultaIniciada: true
+            }));
         } else {
             setError(result.error ?? "Error desconegut");
             setConsultaIniciada(false);
@@ -54,6 +78,8 @@ export function useListarGuiasPorcinos() {
         setConsultaIniciada(false);
         setError(null);
         setLista([]);
+        setFiltros(LISTAR_GUIAS_PORCINOS_FILTROS_INICIAL);
+        sessionStorage.removeItem("cacheListaGuiasPorcinos"); // Limpiar caché
     }, []);
 
     const seleccionarGuia = useCallback((guia: GuiaPorcino) => {

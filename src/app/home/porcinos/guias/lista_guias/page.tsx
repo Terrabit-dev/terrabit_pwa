@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import {useEffect, useState} from "react";
 import { useRouter } from "next/navigation";
 import TopBar from "@/components/layout/TopBar";
 import { useDrawer } from "@/context/DrawerContext";
@@ -25,6 +25,17 @@ export default function ListaGuiasPorcinosPage() {
 
     const [fechaISO, setFechaISO] = useState("");
     const [horaStr, setHoraStr]   = useState("");
+    // Sincroniza los inputs de fecha visuales si venimos con datos de la caché
+    useEffect(() => {
+        if (filtros.fechaDisplay) {
+            const parts = filtros.fechaDisplay.split(" ");
+            if (parts.length === 2) {
+                const [d, m, y] = parts[0].split("/");
+                setFechaISO(`${y}-${m}-${d}`);
+                setHoraStr(parts[1]);
+            }
+        }
+    }, [filtros.fechaDisplay]);
 
     const actualizarFecha = (fISO: string, h: string) => {
         if (fISO && h) {
@@ -60,8 +71,8 @@ export default function ListaGuiasPorcinosPage() {
         if (typeof window !== "undefined") {
             sessionStorage.setItem(SESSION_KEY_GUIA_PORCINO, JSON.stringify(guia));
         }
-        // Este path lo implementaremos más adelante
-        router.push("/home/porcinos/guias/editar_guia");
+
+        router.push("/home/porcinos/guias/lista_guias/editar");
     };
 
     return (
