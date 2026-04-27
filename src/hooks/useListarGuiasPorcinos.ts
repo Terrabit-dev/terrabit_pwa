@@ -17,20 +17,26 @@ export function useListarGuiasPorcinos() {
     const [error, setError] = useState<string | null>(null);
     const [guiaSeleccionada, setGuiaSeleccionada] = useState<GuiaPorcino | null>(null);
 
-    // Recuperar de la caché al entrar a la página
+    //  Recuperar de la caché SOLO si venimos de editar
     useEffect(() => {
+        const volver = sessionStorage.getItem("volverAListaPorcinos");
         const guardado = sessionStorage.getItem("cacheListaGuiasPorcinos");
-        if (guardado) {
+
+        if (volver && guardado) {
+            // Bajamos la bandera para la próxima vez
+            sessionStorage.removeItem("volverAListaPorcinos");
             try {
                 const parsed = JSON.parse(guardado);
-
                 /* eslint-disable react-hooks/set-state-in-effect */
                 setFiltros(parsed.filtros);
                 setLista(parsed.lista);
                 setConsultaIniciada(parsed.consultaIniciada);
                 /* eslint-enable react-hooks/set-state-in-effect */
-
             } catch (e) {}
+        } else {
+            // Entramos desde el menú principal: Limpiamos todo para empezar de cero
+            sessionStorage.removeItem("cacheListaGuiasPorcinos");
+            sessionStorage.removeItem("volverAListaPorcinos");
         }
     }, []);
 

@@ -2,12 +2,13 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { useI18n } from "@/hooks/useI18n";
-import { ALTA_GUIA_FORM_INICIAL, type AltaGuiaForm } from "@/lib/porcinos/altaGuias";
+import { ALTA_GUIA_FORM_INICIAL, type AltaGuiaForm, CATEGORIAS_PORCINOS } from "@/lib/porcinos/altaGuias";
 import { getCredentials } from "@/lib/storage/credentials";
 import { guardarEnHistorial, obtenerHistorialPorId } from "@/lib/storage/historial";
 import { actualizarBorrador, guardarBorrador, obtenerBorradorPorId, eliminarBorrador } from "@/lib/storage/borradores";
 import { secureLog } from "@/lib/utils/secureLogger";
 import { parseDraft } from "@/lib/storage/parseDraft";
+
 
 // Interfaz estricta para el Payload de la API
 interface ApiPayloadGuia {
@@ -143,7 +144,10 @@ export function useAltaGuias() {
                 return;
             }
 
-            let data: any;
+            let data: {
+                Resultat?: Array<{ descripcio?: string }>;
+                descripcio?: string[];
+            };
             try {
                 data = await response.json();
             } catch {
@@ -173,9 +177,12 @@ export function useAltaGuias() {
                 const trackingCode = data.descripcio[1] ? data.descripcio[1] : "OK";
                 setCodigoSeguimiento(trackingCode);
 
+                const catObj = CATEGORIAS_PORCINOS.find(c => c.codigo === form.codiCategoria);
+                const nombreCat = catObj ? (lang === "ca" ? catObj.nombre : (catObj.nombreEs || catObj.nombre)) : form.codiCategoriaNombre;
+
                 await guardarEnHistorial({
                     tipo: "ALTA_GUIA_PORCINO",
-                    resumen: `${lang === "ca" ? "Guia Porcí" : "Guía Porcino"} — ${trackingCode}`,
+                    resumen: `${nombreCat} — ${trackingCode}`,
                     datos: { ...form, codigoSeguimiento: trackingCode } as unknown as Record<string, unknown>,
                 });
 

@@ -41,7 +41,7 @@ export default function AltaGuiaPorcinoPage() {
         ? errorApi.tipo === "api" && errorApi.mensaje ? errorApi.mensaje : t("errors.network")
         : null;
 
-    const mapIdiomas = (arr: any[]) => arr.map(item => ({
+    const mapIdiomas = (arr: { codigo: string; nombre: string; nombreEs?: string }[]) => arr.map(item => ({
         codigo: item.codigo,
         nombre: lang === "ca" ? item.nombre : (item.nombreEs || item.nombre)
     }));
@@ -94,7 +94,7 @@ export default function AltaGuiaPorcinoPage() {
                     </h2>
 
                     <div className={isReadOnly ? "opacity-70 pointer-events-none" : ""}>
-                        <FormField label="Explotació de Sortida *">
+                        <FormField label={lang === "ca" ? "Explotació d'Entrada *" : "Explotación de Entrada *"}>
                             <input
                                 type="text"
                                 value={form.explotacioSortida}
@@ -106,7 +106,7 @@ export default function AltaGuiaPorcinoPage() {
                     </div>
 
                     <div className={isReadOnly ? "opacity-70 pointer-events-none" : ""}>
-                        <FormField label="Explotació d'Entrada *">
+                        <FormField label={lang === "ca" ? "Explotació de Sortida *" : "Explotación de Salida *"}>
                             <input
                                 type="text"
                                 value={form.explotacioEntrada}
@@ -126,7 +126,7 @@ export default function AltaGuiaPorcinoPage() {
                     </h2>
 
                     <div className={isReadOnly ? "opacity-70 pointer-events-none" : ""}>
-                        <FormField label="Categoria *">
+                        <FormField label={lang === "ca" ? "Categoria *" : "Categoría *"}>
                             <SelectInput
                                 value={form.codiCategoria}
                                 onChange={(c, n) => update({ codiCategoria: c, codiCategoriaNombre: n })}
@@ -137,7 +137,7 @@ export default function AltaGuiaPorcinoPage() {
                     </div>
 
                     <div className={isReadOnly ? "opacity-70 pointer-events-none" : ""}>
-                        <FormField label="Número d'Animals *">
+                        <FormField label={lang === "ca" ? "Número d'Animals *" : "Número de Animales *"}>
                             <input
                                 type="number"
                                 value={form.numAnimals}
@@ -157,7 +157,7 @@ export default function AltaGuiaPorcinoPage() {
                     </h2>
 
                     <div className={isReadOnly ? "opacity-70 pointer-events-none" : ""}>
-                        <FormField label="Data i Hora de Sortida *">
+                        <FormField label={lang === "ca" ? "Data i Hora de Sortida *" : "Fecha y Hora de Salida *"}>
                             <input
                                 type="datetime-local"
                                 value={form.dataSortida}
@@ -168,7 +168,7 @@ export default function AltaGuiaPorcinoPage() {
                     </div>
 
                     <div className={isReadOnly ? "opacity-70 pointer-events-none" : ""}>
-                        <FormField label="Data i Hora d'Arribada *">
+                        <FormField label={lang === "ca" ? "Data i Hora d'Arribada *" : "Fecha y Hora de Llegada *"}>
                             <input
                                 type="datetime-local"
                                 value={form.dataArribada}
@@ -187,7 +187,7 @@ export default function AltaGuiaPorcinoPage() {
                     </h2>
 
                     <div className={isReadOnly ? "opacity-70 pointer-events-none" : ""}>
-                        <FormField label="Mitjà de Transport">
+                        <FormField label={lang === "ca" ? "Mitjà de Transport" : "Medio de Transporte"}>
                             <SelectInput
                                 value={form.mitjaTransport || ""}
                                 onChange={(c, n) => update({ mitjaTransport: c, mitjaTransportNombre: n })}

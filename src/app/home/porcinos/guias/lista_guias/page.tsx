@@ -31,8 +31,11 @@ export default function ListaGuiasPorcinosPage() {
             const parts = filtros.fechaDisplay.split(" ");
             if (parts.length === 2) {
                 const [d, m, y] = parts[0].split("/");
+
+                /* eslint-disable react-hooks/set-state-in-effect */
                 setFechaISO(`${y}-${m}-${d}`);
                 setHoraStr(parts[1]);
+                /* eslint-enable react-hooks/set-state-in-effect */
             }
         }
     }, [filtros.fechaDisplay]);
@@ -70,8 +73,9 @@ export default function ListaGuiasPorcinosPage() {
         seleccionarGuia(guia);
         if (typeof window !== "undefined") {
             sessionStorage.setItem(SESSION_KEY_GUIA_PORCINO, JSON.stringify(guia));
+            // NUEVO: Levantamos la bandera para saber que venimos de la lista
+            sessionStorage.setItem("volverAListaPorcinos", "true");
         }
-
         router.push("/home/porcinos/guias/lista_guias/editar");
     };
 

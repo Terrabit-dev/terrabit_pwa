@@ -7,6 +7,7 @@ import { useDrawer } from "@/context/DrawerContext";
 import { useI18n } from "@/hooks/useI18n";
 import { obtenerBorradores, eliminarBorrador, type Borrador } from "@/lib/storage/borradores";
 import { TIPOS_MATERIAL } from "@/lib/bovinos/solicitudMaterial";
+import { CATEGORIAS_PORCINOS } from "@/lib/porcinos/altaGuias";
 
 
 // Molde con todas las propiedades posibles que podríamos buscar en los distintos borradores
@@ -30,6 +31,7 @@ function obtenerRutaFormulario(tipo: string): string {
         case "FALLECIMIENTO": return "/home/bovinos/gestion/fallecimiento";
         case "SOLICITUD_MATERIAL": return "/home/bovinos/material-categoria/solicitar";
         case "SOLICITUD_DUPLICADO": return "/home/bovinos/material-categoria/duplicado";
+        case "ALTA_GUIA_PORCINO": return "/home/porcinos/guias/creacion";
         default: return "/home";
     }
 }
@@ -64,6 +66,16 @@ function obtenerResumenBorrador(tipo: string, datos: DatosBorrador, lang: string
                 return `ES${String(primerId).replace('ES', '')}${extra}`;
             }
             return lang === "ca" ? "Sol·licitud de duplicats" : "Solicitud de duplicados";
+
+        case "ALTA_GUIA_PORCINO":
+            const codCat = datos.codiCategoria;
+            if (codCat) {
+                const catObj = CATEGORIAS_PORCINOS.find(c => c.codigo === codCat);
+                if (catObj) {
+                    return lang === "ca" ? catObj.nombre : (catObj.nombreEs || catObj.nombre);
+                }
+            }
+            return lang === "ca" ? "Alta de guia porcina" : "Alta de guía porcina";
 
         default:
             // Por defecto (Fallecimiento, Corrección, Identificación) usamos el identificador normal
