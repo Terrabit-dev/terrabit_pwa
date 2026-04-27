@@ -308,18 +308,35 @@ export async function enviarConfirmarMov(form: ConfirmarMovimientoForm): Promise
     }
 }
 
+
+export interface IdenBovi {
+    dataNaixement:            string;
+    explotacioNaixement:      string;
+    identificador:            string;
+    identificadorElectronico: string;
+    identificadorMare:        string;
+    paisNaixement:            string;
+    raca:                     string;
+    sexe:                     string;
+}
+
 // ─── Precarga desde un movimiento pendiente ───────────────────────────────────
 export interface MovimentoPendiente {
-    codiRemo:             string;
-    codiAtes:             string;
-    dataArribada:         string;   // "yyyymmddHHmm" — formato GTR
-    moDestinacio:         string;
-    mitjaTransport?:      string;
-    matricula?:           string | null;
-    nomTransportista?:    string | null;
-    nifConductor?:        string | null;
-    nomConductor?:        string | null;
-    identificadors:       Array<{ identificador: string }>;
+    codiAtes:         string | null;
+    codiRemo:         string | null;
+    dataArribada:     string;
+    dataSortida:      string;
+    especie:          string;
+    identificadors:   IdenBovi[];
+    matricula:        string | null;
+    mitjaTransport:   string | null;
+    moDestinacio:     string;
+    moOrigen:         string | null;
+    nifConductor:     string | null;
+    nomConductor:     string | null;
+    nomTransportista: string | null;
+    regaDestinacio:   string;
+    regaOrigen:       string;
 }
 
 function parsearFechaHoraAPI(fechaHora: string): { fecha: string; hora: string } {
@@ -336,18 +353,21 @@ export function precargarDesdeMovimiento(mov: MovimentoPendiente): ConfirmarMovi
     const { fecha, hora } = parsearFechaHoraAPI(mov.dataArribada);
     return {
         ...CONFIRMAR_MOV_FORM_INICIAL,
-        codiRemo:             mov.codiRemo,
-        codiAtes:             mov.codiAtes,
+        codiRemo:             mov.codiRemo         ?? "",
+        codiAtes:             mov.codiAtes         ?? "",
         dataArribada:         fecha,
         horaArribada:         hora,
-        explotacioDestinacio: mov.moDestinacio,
-        mitjaTransport:       mov.mitjaTransport ?? "",
-        matricula:            mov.matricula ?? "",
+        explotacioDestinacio: mov.moDestinacio     ?? "",
+        mitjaTransport:       mov.mitjaTransport   ?? "",
+        matricula:            mov.matricula        ?? "",
         nomTransportista:     mov.nomTransportista ?? "",
-        nifConductor:         mov.nifConductor ?? "",
-        nomConductor:         mov.nomConductor ?? "",
+        nifConductor:         mov.nifConductor     ?? "",
+        nomConductor:         mov.nomConductor     ?? "",
         animales: mov.identificadors.length > 0
-            ? mov.identificadors.map((it) => ({ ...ANIMAL_MOV_INICIAL, identificador: it.identificador }))
+            ? mov.identificadors.map((it) => ({
+                ...ANIMAL_MOV_INICIAL,
+                identificador: it.identificador ?? "",
+            }))
             : [{ ...ANIMAL_MOV_INICIAL }],
     };
 }

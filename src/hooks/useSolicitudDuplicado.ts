@@ -12,8 +12,24 @@ import { guardarEnHistorial, obtenerHistorialPorId } from "@/lib/storage/histori
 import { actualizarBorrador, guardarBorrador, obtenerBorradorPorId, eliminarBorrador } from "@/lib/storage/borradores";
 import { secureLog } from "@/lib/utils/secureLogger";
 import { parseDraft } from "@/lib/storage/parseDraft";
-import { useI18n } from "@/hooks/useI18n"; 
+import { useI18n } from "@/hooks/useI18n";
+import {GtrBaseResponse} from "@/lib/api/endpoints";
 
+interface ApiPayloadDuplicado {
+    nif: string;
+    passwordMobilitat: string;
+    especie: string;
+    empresaSubministradora: string;
+    tipusEnviament: string;
+    adrecaLliurament: string;
+    identificadors?: Array<{ identificador: string; tipusMaterial: string }>;
+    oc?: string;
+    adreca?: string;
+    poblacio?: string;
+    cp?: string;
+    municipi?: string;
+    telefonContacte?: string;
+}
 
 interface SolicitudDuplicadoError { tipo: "api" | "red"; mensaje?: string; }
 
@@ -89,7 +105,7 @@ export function useSolicitudDuplicado(): UseSolicitudDuplicadoReturn {
 
         setEnviando(true); setErrorApi(null); setExito(false); setCodigoSeguimiento(null);
 
-        const body: any = {
+        const body: ApiPayloadDuplicado = {
             nif: credentials.nif,
             passwordMobilitat: credentials.password,
             especie: "01",
@@ -122,7 +138,7 @@ export function useSolicitudDuplicado(): UseSolicitudDuplicadoReturn {
         }
 
         secureLog.group("[GTR] WSSolicitudDuplicat →");
-        secureLog.request("WSSolicitudDuplicat", body);
+        secureLog.request("WSSolicitudDuplicat", body as unknown as Record<string, unknown>);
 
         try {
             const response = await fetch(
@@ -134,7 +150,7 @@ export function useSolicitudDuplicado(): UseSolicitudDuplicadoReturn {
                 }
             );
 
-            let data: any;
+            let data: GtrBaseResponse;
             try { data = await response.json(); } catch {
                 setErrorApi({ tipo: "red" }); setEnviando(false); return;
             }

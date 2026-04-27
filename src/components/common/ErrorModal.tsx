@@ -17,7 +17,7 @@ export default function ErrorModal({
                         </svg>
                     </div>
                     <h3 className="text-base font-bold text-dark-blue-grey text-center">Error</h3>
-                    <p className="text-sm text-blue-grey text-center">{mensaje}</p>
+                    <p className="text-sm text-blue-grey whitespace-pre-line">{mensaje}</p>
                 </div>
                 <button
                     onClick={onClose}

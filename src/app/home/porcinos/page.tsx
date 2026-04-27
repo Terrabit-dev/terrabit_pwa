@@ -1,255 +1,180 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import TopBar from "@/components/layout/TopBar";
 import { useDrawer } from "@/context/DrawerContext";
 import { useI18n } from "@/hooks/useI18n";
-import { useListarBovinos, Animal } from "@/hooks/useListarBovinos";
+import { useRouter } from "next/navigation";
+import { useState, useRef, useEffect } from "react";
 
-function formatFecha(fecha: string): string {
-    try {
-        if (fecha?.length === 8) {
-            return `${fecha.substring(6, 8)}/${fecha.substring(4, 6)}/${fecha.substring(0, 4)}`;
-        }
-        return fecha ?? "-";
-    } catch {
-        return fecha ?? "-";
-    }
+const IconTractor = () => (
+    <svg className="w-8 h-8" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M8 18c-1.66 0-3-1.34-3-3H3v-2.25c0-1.24.9-2.25 2-2.25h2.5L9 8h5v7h1.5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5H19v-2h2v3h-1c0 1.66-1.34 3-3 3s-3-1.34-3-3H9.5c0 1.66-1.34 3-3 3zm0-4.5c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5-1.5-.67-1.5-1.5.67-1.5 1.5-1.5zm9 0c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5-1.5-.67-1.5-1.5.67-1.5 1.5-1.5zM14 9.5V13h-4.5l-1.5-3.5H14z"/>
+    </svg>
+);
+
+const IconCart = () => (
+    <svg className="w-8 h-8" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96C5 16.1 6.1 17 7 17h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63H19c.75 0 1.41-.41 1.75-1.03l3.58-6.49A1 1 0 0023.45 4H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z"/>
+    </svg>
+);
+
+const IconPig = () => (
+    <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M18.8 11.2c.4-.2.8-.5 1-.9V9c0-.6-.4-1-1-1h-.8A7 7 0 0 0 13 4.2V3c0-.6-.4-1-1-1s-1 .4-1 1v1.2A7 7 0 0 0 6.1 8H5c-.6 0-1 .4-1 1v2c0 .6.4 1 1 1h.1a7 7 0 0 0-.1 1v3c0 .6.4 1 1 1s1-.4 1-1v-1h8v1c0 .6.4 1 1 1s1-.4 1-1v-3c0-.3 0-.6-.1-.9h.8zM15 11c-.6 0-1-.4-1-1s.4-1 1-1 1 .4 1 1-.4 1-1 1zm-6 0c-.6 0-1-.4-1-1s.4-1 1-1 1 .4 1 1-.4 1-1 1z" />
+        <circle cx="5" cy="5" r="1.5" />
+        <circle cx="2" cy="8" r="1" />
+    </svg>
+);
+
+interface SeccionCard {
+    titleKey: string;
+    subtitleKey: string;
+    path: string;
+    icon: React.ReactNode;
 }
 
-function getSexoLabel(sexe: string, lang: string): string {
-    if (sexe === "01") return lang === "ca" ? "Femella" : "Hembra";
-    if (sexe === "02") return lang === "ca" ? "Mascle" : "Macho";
-    return sexe;
-}
+const LANGUAGES = [
+    { code: "es" as const, label: "Español" },
+    { code: "ca" as const, label: "Català" },
+];
 
-function getSexoColor(sexe: string): string {
-    if (sexe === "01") return "bg-pink-100 text-pink-700";
-    if (sexe === "02") return "bg-blue-100 text-blue-700";
-    return "bg-surface text-blue-grey";
-}
-
-function InfoRow({ label, value }: { label: string; value: string }) {
-    return (
-        <div className="flex justify-between items-start py-1.5 border-b border-surface-variant last:border-0">
-            <span className="text-xs text-blue-grey">{label}</span>
-            <span className="text-xs font-medium text-dark-blue-grey text-right max-w-44">{value}</span>
-        </div>
-    );
-}
-
-export default function ListarBovinosPage() {
+export default function HomePorcinos() {
     const { toggle } = useDrawer();
-    const { lang } = useI18n();
-    const { lista, cargando, error, cargarBovinos, filtrar } = useListarBovinos();
+    const { t, lang, changeLanguage } = useI18n();
+    const router = useRouter();
+    const [showLangMenu, setShowLangMenu] = useState(false);
+    const langRef = useRef<HTMLDivElement>(null);
 
-    const [busqueda, setBusqueda] = useState("");
-    const [animalSeleccionado, setAnimalSeleccionado] = useState<Animal | null>(null);
-
+    // Cierra el menú al hacer clic fuera
     useEffect(() => {
-        cargarBovinos();
-    }, [cargarBovinos]);
+        const handler = (e: MouseEvent) => {
+            if (langRef.current && !langRef.current.contains(e.target as Node)) {
+                setShowLangMenu(false);
+            }
+        };
+        document.addEventListener("mousedown", handler);
+        return () => document.removeEventListener("mousedown", handler);
+    }, []);
 
-    const listaFiltrada = filtrar(lista, busqueda);
+    // Secciones de Porcinos
+    const secciones: SeccionCard[] = [
+        {
+            titleKey: "porcinos.guias_title",
+            subtitleKey: "porcinos.guias_subtitle",
+            path: "/home/porcinos/guias",
+            icon: <IconTractor />,
+        },
+        {
+            titleKey: "porcinos.movimientos_title",
+            subtitleKey: "porcinos.movimientos_subtitle",
+            path: "/home/porcinos/movimientos",
+            icon: <IconCart />,
+        }
+    ];
+
+    // Color principal para Porcinos (naranja)
+    const orangeBg = "bg-[#DE8A3E]";
 
     return (
-        <div className="min-h-screen bg-surface">
-            <TopBar
-                title={lang === "ca" ? "Llistar animals" : "Listar animales"}
-                onMenuClick={toggle}
-                accentColor="green"
-            />
-
-            {/* Buscador */}
-            <div className="px-4 pt-4 pb-2">
-                <div className="flex items-center gap-2 bg-white border border-surface-variant rounded-xl px-3 py-2.5 focus-within:border-main-green transition-colors">
-                    <svg className="w-4 h-4 text-blue-grey shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd"/>
-                    </svg>
-                    <input
-                        type="text"
-                        value={busqueda}
-                        onChange={(e) => setBusqueda(e.target.value)}
-                        placeholder={lang === "ca" ? "Cercar animal..." : "Buscar animal..."}
-                        className="flex-1 text-sm bg-transparent outline-none text-dark-blue-grey placeholder-blue-grey/50"
-                    />
-                    {busqueda && (
-                        <button onClick={() => setBusqueda("")} className="text-blue-grey">
-                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd"/>
-                            </svg>
-                        </button>
-                    )}
-                </div>
-            </div>
-
-            {/* Contador / estado */}
-            <div className="px-4 py-2 flex items-center justify-between">
-                <p className="text-xs text-blue-grey">
-                    {cargando
-                        ? (lang === "ca" ? "Carregant..." : "Cargando...")
-                        : `${listaFiltrada.length} ${lang === "ca" ? "animals" : "animales"}`}
-                </p>
-                <button
-                    onClick={cargarBovinos}
-                    disabled={cargando}
-                    className="text-xs text-main-green font-medium disabled:opacity-40"
-                >
-                    {lang === "ca" ? "Actualitzar" : "Actualizar"}
-                </button>
-            </div>
-
-            {/* Loading */}
-            {cargando && (
-                <div className="flex justify-center py-16">
-                    <div className="w-8 h-8 border-4 border-main-green border-t-transparent rounded-full animate-spin"/>
-                </div>
-            )}
-
-            {/* Error */}
-            {error && !cargando && (
-                <div className="mx-4 mt-2 px-4 py-3 bg-error-red-bg rounded-xl">
-                    <p className="text-xs text-error-red text-center">{error}</p>
+        <div className="min-h-screen bg-[#f2f4f7] flex flex-col">
+            {/* Header naranja recto y clásico (idéntico a bovinos) */}
+            <div className={`${orangeBg} pt-4 pb-8 px-5`}>
+                {/* TopBar dentro del header */}
+                <div className="flex items-center justify-between mb-4">
                     <button
-                        onClick={cargarBovinos}
-                        className="w-full mt-2 text-xs text-error-red font-semibold"
+                        onClick={toggle}
+                        className="text-white p-1 -ml-1"
+                        aria-label="Menú"
                     >
-                        {lang === "ca" ? "Tornar a intentar" : "Reintentar"}
+                        <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/>
+                        </svg>
                     </button>
-                </div>
-            )}
 
-            {/* Lista */}
-            {!cargando && !error && (
-                <div className="px-4 pb-6 flex flex-col gap-3">
-                    {listaFiltrada.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center py-16 gap-3">
-                            <svg className="w-12 h-12 text-blue-grey/40" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/>
-                            </svg>
-                            <p className="text-sm text-blue-grey">
-                                {lang === "ca" ? "Sense dades" : "Sin datos"}
-                            </p>
-                        </div>
-                    ) : (
-                        listaFiltrada.map((animal) => (
-                            <button
-                                key={animal.identificador}
-                                onClick={() => setAnimalSeleccionado(animal)}
-                                className="bg-white rounded-2xl p-4 shadow-sm text-left active:scale-95 transition-transform w-full"
-                            >
-                                <div className="flex items-center justify-between mb-2">
-                  <span className="text-dark-blue-grey font-semibold text-sm">
-                    {animal.identificador}
-                  </span>
-                                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${getSexoColor(animal.sexe)}`}>
-                    {getSexoLabel(animal.sexe, lang)}
-                  </span>
-                                </div>
-                                <div className="flex gap-4">
-                                    <div>
-                                        <p className="text-xs text-blue-grey">{lang === "ca" ? "Data naix." : "F. nacimiento"}</p>
-                                        <p className="text-xs font-medium text-dark-blue-grey">{formatFecha(animal.dataNaixement)}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-xs text-blue-grey">{lang === "ca" ? "Raça" : "Raza"}</p>
-                                        <p className="text-xs font-medium text-dark-blue-grey">{animal.raza}</p>
-                                    </div>
-                                    {animal.identificadorMare && (
-                                        <div>
-                                            <p className="text-xs text-blue-grey">{lang === "ca" ? "Mare" : "Madre"}</p>
-                                            <p className="text-xs font-medium text-dark-blue-grey truncate max-w-24">
-                                                {animal.identificadorMare}
-                                            </p>
-                                        </div>
-                                    )}
-                                </div>
-                            </button>
-                        ))
-                    )}
-                </div>
-            )}
-
-            {/* Modal detalle */}
-            {animalSeleccionado && (
-                <div className="fixed inset-0 bg-black/40 z-50 flex items-end justify-center">
-                    <div className="bg-white w-full max-w-lg rounded-t-3xl p-6 max-h-[85vh] overflow-y-auto">
-                        <div className="w-10 h-1 bg-surface-variant rounded-full mx-auto mb-4"/>
-                        <div className="flex items-center justify-between mb-4">
-                            <h2 className="text-base font-bold text-dark-blue-grey">
-                                {lang === "ca" ? "Detalls de l'animal" : "Detalles del animal"}
-                            </h2>
-                            <button onClick={() => setAnimalSeleccionado(null)} className="text-blue-grey p-1">
-                                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd"/>
-                                </svg>
-                            </button>
-                        </div>
-
-                        <div className="bg-main-green-bg rounded-xl p-4 mb-3">
-                            <p className="text-xs text-main-green font-semibold uppercase tracking-wide mb-2">
-                                {lang === "ca" ? "Identificador de l'animal" : "Identificador del animal"}
-                            </p>
-                            <InfoRow label="Identificador" value={animalSeleccionado.identificador}/>
-                            {animalSeleccionado.identificadorElectronic && (
-                                <InfoRow
-                                    label={lang === "ca" ? "Id. electrònic" : "Id. electrónico"}
-                                    value={animalSeleccionado.identificadorElectronic}
-                                />
-                            )}
-                            {animalSeleccionado.tipusIdentificadorElectronic && (
-                                <InfoRow
-                                    label={lang === "ca" ? "Tipus id. electrònic" : "Tipo id. electrónico"}
-                                    value={animalSeleccionado.tipusIdentificadorElectronic}
-                                />
-                            )}
-                        </div>
-
-                        <div className="bg-surface rounded-xl p-4 mb-3">
-                            <p className="text-xs text-blue-grey font-semibold uppercase tracking-wide mb-2">
-                                {lang === "ca" ? "Informació bàsica" : "Información básica"}
-                            </p>
-                            <InfoRow
-                                label={lang === "ca" ? "Data de naixement" : "Fecha de nacimiento"}
-                                value={formatFecha(animalSeleccionado.dataNaixement)}
-                            />
-                            <InfoRow label={lang === "ca" ? "Raça" : "Raza"} value={animalSeleccionado.raza}/>
-                            <InfoRow label={lang === "ca" ? "Sexe" : "Sexo"} value={getSexoLabel(animalSeleccionado.sexe, lang)}/>
-                        </div>
-
-                        <div className="bg-surface rounded-xl p-4 mb-5">
-                            <p className="text-xs text-blue-grey font-semibold uppercase tracking-wide mb-2">
-                                {lang === "ca" ? "Orígens de l'animal" : "Orígenes del animal"}
-                            </p>
-                            {animalSeleccionado.explotacioNaixement && (
-                                <InfoRow
-                                    label={lang === "ca" ? "Explotació de naixement" : "Explotación de nacimiento"}
-                                    value={animalSeleccionado.explotacioNaixement}
-                                />
-                            )}
-                            {animalSeleccionado.paisNaixement && (
-                                <InfoRow
-                                    label={lang === "ca" ? "País de naixement" : "País de nacimiento"}
-                                    value={animalSeleccionado.paisNaixement}
-                                />
-                            )}
-                            {animalSeleccionado.identificadorMare && (
-                                <InfoRow
-                                    label={lang === "ca" ? "Id. de la mare" : "Id. de la madre"}
-                                    value={animalSeleccionado.identificadorMare}
-                                />
-                            )}
-                        </div>
-
+                    {/* Selector de idioma */}
+                    <div ref={langRef} className="relative mr-2">
                         <button
-                            onClick={() => setAnimalSeleccionado(null)}
-                            className="w-full bg-main-green text-white rounded-xl py-3 text-sm font-semibold"
+                            onClick={() => setShowLangMenu((v) => !v)}
+                            className="text-white p-1"
+                            aria-label="Cambiar idioma"
                         >
-                            {lang === "ca" ? "Tancar" : "Cerrar"}
+                            <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zm6.93 6h-2.95c-.32-1.25-.78-2.45-1.38-3.56 1.84.63 3.37 1.91 4.33 3.56zM12 4.04c.83 1.2 1.48 2.53 1.91 3.96h-3.82c.43-1.43 1.08-2.76 1.91-3.96zM4.26 14C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.32-.14 2s.06 1.34.14 2H4.26zm.82 2h2.95c.32 1.25.78 2.45 1.38 3.56-1.84-.63-3.37-1.9-4.33-3.56zm2.95-8H5.08c.96-1.66 2.49-2.93 4.33-3.56C8.81 5.55 8.35 6.75 8.03 8zM12 19.96c-.83-1.2-1.48-2.53-1.91-3.96h3.82c-.43 1.43-1.08 2.76-1.91 3.96zM14.34 14H9.66c-.09-.66-.16-1.32-.16-2s.07-1.35.16-2h4.68c.09.65.16 1.32.16 2s-.07 1.34-.16 2zm.25 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95c-.96 1.65-2.49 2.93-4.33 3.56zM16.36 14c.08-.66.14-1.32.14-2s-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2h-3.38z"/>
+                            </svg>
                         </button>
+
+                        {/* Dropdown de idiomas */}
+                        {showLangMenu && (
+                            <div className="absolute right-0 top-9 bg-white rounded-xl shadow-lg overflow-hidden z-50 min-w-[120px]">
+                                {LANGUAGES.map((l) => (
+                                    <button
+                                        key={l.code}
+                                        onClick={() => {
+                                            changeLanguage(l.code);
+                                            setShowLangMenu(false);
+                                        }}
+                                        className={[
+                                            "w-full text-left px-4 py-3 text-sm transition-colors",
+                                            lang === l.code
+                                                ? "bg-[#fff3e0] text-[#DE8A3E] font-semibold"
+                                                : "text-[#1a202c] hover:bg-gray-50",
+                                        ].join(" ")}
+                                    >
+                                        {l.label}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 </div>
-            )}
+
+                <h1 className="text-white text-2xl font-bold mb-3">
+                    {lang === "ca" ? "Benvingut/da!" : "¡Bienvenido/a!"}
+                </h1>
+
+                <div className="inline-flex items-center gap-2 bg-white/20 rounded-full px-3 py-1.5">
+                    <IconPig />
+                    <span className="text-white text-sm font-medium">Porcinos</span>
+                </div>
+            </div>
+
+            {/* Tarjetas — se superponen levemente sobre el header igual que bovinos */}
+            <div className="flex-1 px-4 -mt-3 pb-6 flex flex-col gap-3">
+                <p className="text-[#4a5568] text-base font-semibold mt-4 mb-1">
+                    {lang === "ca" ? "Menú Principal" : "Menú Principal"}
+                </p>
+
+                {secciones.map((seccion) => (
+                    <button
+                        key={seccion.path}
+                        onClick={() => router.push(seccion.path)}
+                        className="bg-white rounded-2xl p-5 shadow-sm flex items-center gap-4 active:scale-[0.98] transition-transform text-left w-full"
+                    >
+                        {/* Icono (Usamos siempre el fondo naranja para porcinos) */}
+                        <div className={`p-4 rounded-2xl shrink-0 flex items-center justify-center ${orangeBg} text-white`}>
+                            {seccion.icon}
+                        </div>
+
+                        {/* Texto */}
+                        <div className="flex-1 min-w-0">
+                            <p className="text-[#1a202c] text-base font-semibold leading-snug">
+                                {t(seccion.titleKey)}
+                            </p>
+                            <p className="text-[#718096] text-sm mt-0.5 leading-snug">
+                                {t(seccion.subtitleKey)}
+                            </p>
+                        </div>
+
+                        {/* Flecha clásica */}
+                        <svg
+                            className="w-5 h-5 text-[#a0aec0] shrink-0"
+                            viewBox="0 0 24 24"
+                            fill="currentColor"
+                        >
+                            <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/>
+                        </svg>
+                    </button>
+                ))}
+            </div>
         </div>
     );
 }

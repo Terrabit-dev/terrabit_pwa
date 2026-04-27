@@ -12,18 +12,14 @@ import { obtenerHistorial, type HistorialEntry } from "@/lib/storage/historial";
 // Mapeamos el 'tipo' guardado a la ruta real de tu aplicación
 function obtenerRutaFormulario(tipo: string): string {
     switch (tipo) {
-        case "IDENTIFICACION":
-            return "/home/bovinos/gestion/identificacion_aplazada";
-        case "NACIMIENTO":
-            return "/home/bovinos/gestion/nacimiento"; // <- Ajusta esta ruta si es diferente
-        case "CORRECCION_SEXO":
-            return "/home/bovinos/gestion/correccion_sexo"; // <- Ajusta esta ruta si es diferente
-        case "FALLECIMIENTO":
-            return "/home/bovinos/gestion/fallecimiento";
-        case "SOLICITUD_MATERIAL":
-            return "/home/bovinos/material-categoria/solicitar";
-        case "SOLICITUD_DUPLICADO":
-            return "/home/bovinos/material-categoria/duplicado";
+        case "IDENTIFICACION":return "/home/bovinos/gestion/identificacion_aplazada";
+        case "NACIMIENTO":return "/home/bovinos/gestion/nacimiento"; // <- Ajusta esta ruta si es diferente
+        case "CORRECCION_SEXO":return "/home/bovinos/gestion/correccion_sexo"; // <- Ajusta esta ruta si es diferente
+        case "FALLECIMIENTO":return "/home/bovinos/gestion/fallecimiento";
+        case "SOLICITUD_MATERIAL":return "/home/bovinos/material-categoria/solicitar";
+        case "SOLICITUD_DUPLICADO":return "/home/bovinos/material-categoria/duplicado";
+        case "EMISION_GUIA_PORCINO":return "/home/porcinos/guias/lista_guias/editar";
+        case "ALTA_GUIA_PORCINO": return "/home/porcinos/guias/creacion";
         default:
             return "/home";
     }

@@ -13,7 +13,25 @@ import { guardarEnHistorial, obtenerHistorialPorId } from "@/lib/storage/histori
 import { actualizarBorrador, guardarBorrador, obtenerBorradorPorId, eliminarBorrador } from "@/lib/storage/borradores";
 import { secureLog } from "@/lib/utils/secureLogger";
 import { parseDraft } from "@/lib/storage/parseDraft";
-import { useI18n } from "@/hooks/useI18n"; //
+import { useI18n } from "@/hooks/useI18n";
+import {GtrBaseResponse} from "@/lib/bovinos/types"; //
+
+interface ApiPayloadMaterial {
+    nif: string;
+    passwordMobilitat: string;
+    especie: string;
+    empresaSubministradora: string;
+    tipusEnviament: string;
+    adrecaLliurament: string;
+    tipusMaterial: string;
+    unitats?: Array<{ nombreUnitats: string; codiExplotacio: string }>;
+    oc?: string;
+    adreca?: string;
+    poblacio?: string;
+    cp?: string;
+    municipi?: string;
+    telefonContacte?: string;
+}
 
 interface SolicitudMaterialError { tipo: "api" | "red"; mensaje?: string; }
 
@@ -93,7 +111,7 @@ export function useSolicitudMaterial(): UseSolicitudMaterialReturn {
 
         setEnviando(true); setErrorApi(null); setExito(false); setCodigoSeguimiento(null);
 
-        const body: any = {
+        const body: ApiPayloadMaterial = {
             nif: credentials.nif,
             passwordMobilitat: credentials.password,
             especie: "01",
@@ -137,7 +155,7 @@ export function useSolicitudMaterial(): UseSolicitudMaterialReturn {
         }
 
         secureLog.group("[GTR] WSSolicitudMaterial →");
-        secureLog.request("WSSolicitudMaterial", body);
+        secureLog.request("WSSolicitudMaterial", body as unknown as Record<string, unknown>);
 
         try {
             const response = await fetch(
@@ -149,7 +167,7 @@ export function useSolicitudMaterial(): UseSolicitudMaterialReturn {
                 }
             );
 
-            let data: any;
+            let data: GtrBaseResponse;
             try { data = await response.json(); } catch {
                 setErrorApi({ tipo: "red" }); setEnviando(false); return;
             }

@@ -8,31 +8,34 @@ import { useI18n } from "@/hooks/useI18n";
 import FormField from "@/components/forms/FormField";
 import DateInputDMY from "@/components/forms/DateInputDMY";
 import LoadingOverlay from "@/components/common/LoadingOverlay";
-import { useListarGuias } from "@/hooks/useListarGuias";
+import { useListarMovimientos } from "@/hooks/useListarMovimientos";
 import {
     apiFormatToDisplayFecha,
-    type Guia,
-} from "@/lib/bovinos/listarGuias";
+    type Moviment,
+} from "@/lib/bovinos/listarMovimientos";
 
-const SESSION_KEY_GUIA = "guiaSeleccionada";
+const SESSION_KEY_MOVIMIENTO = "movimientoSeleccionado";
 
-export default function ListaGuiasPage() {
+export default function ListaMovimientosPage() {
     const { toggle }  = useDrawer();
     const { t, lang } = useI18n();
     const router      = useRouter();
 
     const {
         filtros, lista, cargando, consultaIniciada, error,
-        onRegaChange, onFechaChange, validarPeticion, resetearConsulta,
-        seleccionarGuia,
-    } = useListarGuias();
+        onCodiChange, onFechaChange, validarPeticion, resetearConsulta,
+        seleccionarMovi,
+    } = useListarMovimientos();
 
-    // Estado local: fecha (YYYY-MM-DD) + hora (HH:mm) que combinamos en "dd/MM/yyyy HH:mm"
     const [fechaISO, setFechaISO] = useState("");
     const [horaStr, setHoraStr]   = useState("");
 
+    // Interceptar el back del navegador cuando hay consulta iniciada:
+    // en vez de salir de la página, volvemos al MiniFormulario.
     useEffect(() => {
         if (!consultaIniciada) return;
+        // Empujamos un estado "fantasma" al historial. Si el usuario pulsa back,
+        // popstate dispara y reseteamos la consulta en lugar de salir.
         window.history.pushState({ consultaIniciada: true }, "");
         const handlePopState = () => resetearConsulta();
         window.addEventListener("popstate", handlePopState);
@@ -60,18 +63,18 @@ export default function ListaGuiasPage() {
 
     const handleConsultar = () => validarPeticion(lang);
 
-    const handleEditar = (guia: Guia) => {
-        seleccionarGuia(guia);
+    const handleEditar = (mov: Moviment) => {
+        seleccionarMovi(mov);
         if (typeof window !== "undefined") {
-            sessionStorage.setItem(SESSION_KEY_GUIA, JSON.stringify(guia));
+            sessionStorage.setItem(SESSION_KEY_MOVIMIENTO, JSON.stringify(mov));
         }
-        router.push("/home/bovinos/guias-movimientos/confirmar_guia");
+        router.push("/home/bovinos/guias-movimientos/confirmar_movimiento");
     };
 
     return (
         <div className="min-h-screen bg-surface pointer-events-auto">
             <TopBar
-                title={lang === "ca" ? "Llista Guies" : "Lista Guías"}
+                title={lang === "ca" ? "Llista Moviments" : "Lista Movimientos"}
                 onMenuClick={toggle}
                 accentColor="orange"
                 showBack
@@ -79,11 +82,11 @@ export default function ListaGuiasPage() {
 
             {!consultaIniciada && (
                 <MiniFormulario
-                    rega={filtros.codiRega}
+                    rega={filtros.explotacioDestinacio}
                     fechaISO={fechaISO}
                     horaStr={horaStr}
                     error={error}
-                    onRegaChange={onRegaChange}
+                    onRegaChange={onCodiChange}
                     onFechaChange={handleFechaChange}
                     onHoraChange={handleHoraChange}
                     onConsultar={handleConsultar}
@@ -95,7 +98,7 @@ export default function ListaGuiasPage() {
                 <div className="flex flex-col items-center justify-center py-20 gap-4">
                     <div className="w-12 h-12 rounded-full border-4 border-main-orange border-t-transparent animate-spin"/>
                     <p className="text-sm text-blue-grey">
-                        {lang === "ca" ? "Carregant guies..." : "Cargando guías..."}
+                        {lang === "ca" ? "Carregant moviments..." : "Cargando movimientos..."}
                     </p>
                 </div>
             )}
@@ -124,8 +127,8 @@ export default function ListaGuiasPage() {
                         <p className="text-xs text-blue-grey">
                             {lista.length}{" "}
                             {lang === "ca"
-                                ? (lista.length === 1 ? "guia trobada" : "guies trobades")
-                                : (lista.length === 1 ? "guía encontrada" : "guías encontradas")}
+                                ? (lista.length === 1 ? "moviment trobat" : "moviments trobats")
+                                : (lista.length === 1 ? "movimiento encontrado" : "movimientos encontrados")}
                         </p>
                         <button
                             onClick={resetearConsulta}
@@ -134,12 +137,12 @@ export default function ListaGuiasPage() {
                             {lang === "ca" ? "Nova consulta" : "Nueva consulta"}
                         </button>
                     </div>
-                    {lista.map((guia, idx) => (
-                        <GuiaCard
-                            key={`${guia.remo}-${idx}`}
-                            guia={guia}
+                    {lista.map((mov, idx) => (
+                        <MovimientoCard
+                            key={`${mov.codiRemo}-${idx}`}
+                            mov={mov}
                             lang={lang}
-                            onEditar={() => handleEditar(guia)}
+                            onEditar={() => handleEditar(mov)}
                         />
                     ))}
                 </div>
@@ -177,13 +180,13 @@ function MiniFormulario({
                         </svg>
                     </div>
                     <h2 className="text-base font-bold text-dark-blue-grey">
-                        {lang === "ca" ? "Consulta de guies" : "Consulta de guías"}
+                        {lang === "ca" ? "Consulta de moviments" : "Consulta de movimientos"}
                     </h2>
                 </div>
 
                 <div className="border-t border-surface-variant"/>
 
-                <FormField label={lang === "ca" ? "Codi REGA" : "Código REGA"}>
+                <FormField label={lang === "ca" ? "Codi REGA destí" : "Código REGA destino"}>
                     <input
                         type="text"
                         value={rega}
@@ -227,36 +230,36 @@ function MiniFormulario({
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                               d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                     </svg>
-                    {lang === "ca" ? "Consultar guies" : "Consultar guías"}
+                    {lang === "ca" ? "Consultar moviments" : "Consultar movimientos"}
                 </button>
             </div>
         </div>
     );
 }
 
-// ─── Card de guía ─────────────────────────────────────────────────────────────
-interface GuiaCardProps {
-    guia:      Guia;
+// ─── Card de movimiento ───────────────────────────────────────────────────────
+interface MovimientoCardProps {
+    mov:       Moviment;
     lang:      "es" | "ca";
     onEditar:  () => void;
 }
 
-function GuiaCard({ guia, lang, onEditar }: GuiaCardProps) {
-    const fechaSalida  = apiFormatToDisplayFecha(guia.dataSortida)  || "--/--/----";
-    const fechaLlegada = apiFormatToDisplayFecha(guia.dataArribada) || "--/--/----";
+function MovimientoCard({ mov, lang, onEditar }: MovimientoCardProps) {
+    const fechaSalida  = apiFormatToDisplayFecha(mov.dataSortida)  || "--/--/----";
+    const fechaLlegada = apiFormatToDisplayFecha(mov.dataArribada) || "--/--/----";
 
     return (
         <div className="bg-white rounded-2xl shadow-sm p-4 flex flex-col gap-3">
             <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2 flex-1 min-w-0">
                     <span className="font-bold text-sm text-dark-blue-grey truncate">
-                        {guia.explotacioOrigen}
+                        {mov.moOrigen ?? ""}
                     </span>
                     <svg className="w-4 h-4 text-main-orange shrink-0" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M5 12h14M13 5l7 7-7 7"/>
                     </svg>
                     <span className="font-bold text-sm text-dark-blue-grey truncate">
-                        {guia.explotacioDestinacio}
+                        {mov.moDestinacio}
                     </span>
                 </div>
                 <button
@@ -271,7 +274,7 @@ function GuiaCard({ guia, lang, onEditar }: GuiaCardProps) {
                 </button>
             </div>
 
-            <p className="font-mono text-xs text-blue-grey tracking-wider">{guia.remo}</p>
+            <p className="font-mono text-xs text-blue-grey tracking-wider">{mov.codiRemo}</p>
 
             <div className="border-t border-surface-variant"/>
 
@@ -292,16 +295,16 @@ function GuiaCard({ guia, lang, onEditar }: GuiaCardProps) {
 
             <div className="flex flex-wrap gap-2">
                 <InfoChip
-                    label={`${guia.numeroAnimals} ${lang === "ca" ? "animals" : "animales"}`}
+                    label={`${mov.identificadors.length} ${lang === "ca" ? "animals" : "animales"}`}
                     iconPath="M4.5 12a5.5 5.5 0 1111 0c0 3-2.5 5-5.5 8-3-3-5.5-5-5.5-8z"
                 />
                 <InfoChip
-                    label={guia.matricula || (lang === "ca" ? "Sense matrícula" : "Sin matrícula")}
+                    label={mov.matricula ?? (lang === "ca" ? "Sense matrícula" : "Sin matrícula")}
                     iconPath="M3 7h18v10H3V7zm0 0l2-3h14l2 3"
                 />
-                {guia.nifConductor && (
+                {mov.nifConductor && (
                     <InfoChip
-                        label={guia.nifConductor}
+                        label={mov.nifConductor}
                         iconPath="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
                     />
                 )}
@@ -316,7 +319,7 @@ function InfoChip({ label, iconPath }: { label: string; iconPath: string }) {
             <svg className="w-3 h-3 text-main-orange shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={iconPath}/>
             </svg>
-            <span className="text-[11px] text-blue-grey font-medium truncate max-w-36">{label}</span>
+            <span className="text-[11px] text-blue-grey font-medium truncate max-w-9 ">{label}</span>
         </div>
     );
 }
