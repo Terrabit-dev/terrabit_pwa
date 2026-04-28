@@ -58,7 +58,7 @@ export default function ListarBovinosPage() {
 
         {/* Buscador */}
         <div className="px-4 pt-4 pb-2">
-          <div className="flex items-center gap-2 bg-white border border-surface-variant rounded-xl px-3 py-2.5 focus-within:border-main-green transition-colors">
+          <div className="flex items-center gap-2 bg-card border border-surface-variant rounded-xl px-3 py-2.5 focus-within:border-main-green transition-colors">
             <svg className="w-4 h-4 text-blue-grey shrink-0" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd"/>
             </svg>
@@ -129,7 +129,7 @@ export default function ListarBovinosPage() {
                       <button
                           key={animal.identificador}
                           onClick={() => setAnimalSeleccionado(animal)}
-                          className="bg-white rounded-2xl p-4 shadow-sm text-left active:scale-95 transition-transform w-full"
+                          className="bg-card rounded-2xl p-4 shadow-sm text-left active:scale-95 transition-transform w-full"
                       >
                         <div className="flex items-center justify-between mb-2">
                                     <span className="text-dark-blue-grey font-semibold text-sm">
@@ -167,7 +167,7 @@ export default function ListarBovinosPage() {
         {/* Modal detalle */}
         {animalSeleccionado && (
             <div className="fixed inset-0 bg-black/40 z-50 flex items-end justify-center">
-              <div className="bg-white w-full max-w-lg rounded-t-3xl p-6 max-h-[85vh] overflow-y-auto">
+              <div className="bg-card w-full max-w-lg rounded-t-3xl p-6 max-h-[85vh] overflow-y-auto">
                 <div className="w-10 h-1 bg-surface-variant rounded-full mx-auto mb-4"/>
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-base font-bold text-dark-blue-grey">

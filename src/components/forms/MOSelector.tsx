@@ -66,7 +66,7 @@ export default function MOSelector({ variant = "green" }: MOSelectorProps) {
             </button>
 
             {hasMultiple && open && (
-                <div className="absolute left-0 top-full mt-2 z-50 bg-white rounded-xl shadow-lg border border-slate-100 min-w-[150px] overflow-hidden">
+                <div className="absolute left-0 top-full mt-2 z-50 bg-card rounded-xl shadow-lg border border-surface-variant min-w-[150px] overflow-hidden">
                     {moList.map((mo) => (
                         <button
                             key={mo}

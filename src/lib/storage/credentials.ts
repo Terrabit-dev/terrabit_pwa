@@ -64,3 +64,29 @@ export function getCodiMOList(): string[] {
 export function getActiveCodiMO(): string {
   return getCredentials()?.codiMO ?? "";
 }
+
+export function setActiveCodiMO(nuevoMO: string): void {
+  if (!isClient()) return;
+  const credentials = getCredentials();
+  if (!credentials) return;
+
+  credentials.codiMO = nuevoMO;
+  // Si no estaba en la lista, lo añadimos por si acaso
+  if (!credentials.codiMOList.includes(nuevoMO)) {
+    credentials.codiMOList.push(nuevoMO);
+  }
+
+  saveCredentials(credentials);
+
+  // Disparamos un evento personalizado para que toda la app
+  window.dispatchEvent(new Event("mo_changed"));
+}
+
+export function clearCodiMOList(): void {
+  if (!isClient()) return;
+  const credentials = getCredentials();
+  if (!credentials) return;
+
+  credentials.codiMOList = [credentials.codiMO];
+  saveCredentials(credentials);
+}

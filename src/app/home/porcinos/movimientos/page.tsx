@@ -22,7 +22,7 @@ export default function GuiasMovimientosPage() {
     const actions: SubMenuAction[] = [
         {
             label: t("movimientos_porcinos.confirmar"),
-            path: "/home/porcinos/guias/crear",
+            path: "/home/porcinos/movimientos/lista_movimientos",
             icon: <IconPlus />,
             variant: "primary",
         }

@@ -94,7 +94,7 @@ export default function NacimientoPage() {
             <div className="px-4 py-5 flex flex-col gap-4 pb-24">
 
                 {/* Identificadores */}
-                <div className="bg-white rounded-2xl shadow-sm p-4 flex flex-col gap-4">
+                <div className="bg-card rounded-2xl shadow-sm p-4 flex flex-col gap-4">
                     <h2 className="text-sm font-bold text-dark-blue-grey">
                         {lang === "ca" ? "Identificadors" : "Identificadores"}
                     </h2>
@@ -125,7 +125,7 @@ export default function NacimientoPage() {
                 </div>
 
                 {/* Fechas */}
-                <div className="bg-white rounded-2xl shadow-sm p-4 flex flex-col gap-4">
+                <div className="bg-card rounded-2xl shadow-sm p-4 flex flex-col gap-4">
                     <h2 className="text-sm font-bold text-dark-blue-grey">
                         {lang === "ca" ? "Dates" : "Fechas"}
                     </h2>
@@ -150,7 +150,7 @@ export default function NacimientoPage() {
                 </div>
 
                 {/* Características */}
-                <div className="bg-white rounded-2xl shadow-sm p-4 flex flex-col gap-4">
+                <div className="bg-card rounded-2xl shadow-sm p-4 flex flex-col gap-4">
                     <h2 className="text-sm font-bold text-dark-blue-grey">
                         {lang === "ca" ? "Característiques" : "Características"}
                     </h2>
@@ -189,7 +189,7 @@ export default function NacimientoPage() {
 
             {/* NUEVO: Botones fijos condicionales */}
             {!isReadOnly && (
-                <div className="fixed bottom-0 left-0 right-0 px-4 py-4 bg-white border-t border-surface-variant flex gap-3 z-40">
+                <div className="fixed bottom-0 left-0 right-0 px-4 py-4 bg-card border-t border-surface-variant flex gap-3 z-40">
                     <button
                         onClick={handleGuardarBorrador}
                         title={lang === "ca" ? "Desar esborrany" : "Guardar borrador"}
@@ -210,7 +210,7 @@ export default function NacimientoPage() {
             )}
 
             {isReadOnly && (
-                <div className="fixed bottom-0 left-0 right-0 px-4 py-4 bg-white border-t border-surface-variant z-40">
+                <div className="fixed bottom-0 left-0 right-0 px-4 py-4 bg-card border-t border-surface-variant z-40">
                     <button
                         onClick={() => window.history.back()}
                         className="w-full bg-surface-variant text-dark-blue-grey rounded-xl py-3 text-sm font-semibold"
@@ -224,7 +224,7 @@ export default function NacimientoPage() {
             {/* ... Modal confirmación, Success, ErrorLocal, ErrorApi, LoadingOverlay ... */}
             {mostrarConfirm && (
                 <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center px-4">
-                    <div className="bg-white rounded-2xl p-6 w-full max-w-sm">
+                    <div className="bg-card rounded-2xl p-6 w-full max-w-sm">
                         <h3 className="text-base font-bold text-dark-blue-grey mb-2">
                             {lang === "ca" ? "Confirmar registre" : "Confirmar registro"}
                         </h3>

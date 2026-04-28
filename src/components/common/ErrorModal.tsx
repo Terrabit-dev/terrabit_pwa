@@ -9,7 +9,7 @@ export default function ErrorModal({
 }) {
     return (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center px-4">
-            <div className="bg-white rounded-2xl p-6 w-full max-w-sm">
+            <div className="bg-card rounded-2xl p-6 w-full max-w-sm">
                 <div className="flex flex-col items-center gap-3 mb-4">
                     <div className="w-12 h-12 bg-error-red-bg rounded-full flex items-center justify-center">
                         <svg className="w-6 h-6 text-error-red" fill="currentColor" viewBox="0 0 20 20">

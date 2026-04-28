@@ -52,7 +52,7 @@ export default function EditarGuiaPorcinoPage() {
                 </div>
 
                 {/* 2. Detalles de los Animales */}
-                <div className="bg-white rounded-2xl shadow-sm p-4 flex flex-col gap-4">
+                <div className="bg-card rounded-2xl shadow-sm p-4 flex flex-col gap-4">
                     <h2 className="text-sm font-bold text-dark-blue-grey flex items-center gap-2">
                         <span className="w-2 h-2 rounded-full bg-main-orange"></span>
                         {lang === "ca" ? "Detalls del Moviment" : "Detalles del Movimiento"}
@@ -79,7 +79,7 @@ export default function EditarGuiaPorcinoPage() {
                 </div>
 
                 {/* 3. Fechas */}
-                <div className="bg-white rounded-2xl shadow-sm p-4 flex flex-col gap-4">
+                <div className="bg-card rounded-2xl shadow-sm p-4 flex flex-col gap-4">
                     <h2 className="text-sm font-bold text-dark-blue-grey flex items-center gap-2">
                         <span className="w-2 h-2 rounded-full bg-main-orange"></span>
                         {lang === "ca" ? "Dates" : "Fechas"}
@@ -105,7 +105,7 @@ export default function EditarGuiaPorcinoPage() {
                 </div>
 
                 {/* 4. Transporte (Obligatorios aquí) */}
-                <div className="bg-white rounded-2xl shadow-sm p-4 flex flex-col gap-4">
+                <div className="bg-card rounded-2xl shadow-sm p-4 flex flex-col gap-4">
                     <h2 className="text-sm font-bold text-dark-blue-grey flex items-center gap-2">
                         <span className="w-2 h-2 rounded-full bg-main-orange"></span>
                         {lang === "ca" ? "Transport" : "Transporte"}
@@ -141,7 +141,7 @@ export default function EditarGuiaPorcinoPage() {
             </div>
 
             {/* Botones */}
-            <div className="fixed bottom-0 left-0 right-0 px-4 py-4 bg-white border-t border-surface-variant flex gap-3 z-40">
+            <div className="fixed bottom-0 left-0 right-0 px-4 py-4 bg-card border-t border-surface-variant flex gap-3 z-40">
                 <button
                     onClick={() => enviar(lang)}
                     disabled={enviando}

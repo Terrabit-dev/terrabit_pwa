@@ -1,17 +1,19 @@
 export async function validateCredentials(
-  nif: string,
-  password: string,
-  codiMO: string
+    nif: string,
+    password: string,
+    codiMO: string
 ): Promise<boolean> {
   try {
-    const params = new URLSearchParams({ nif, passwordMobilitat: password, codiMO });
-    const response = await fetch(`/api/gtr/identificadors?${params.toString()}`);
+    const response = await fetch(`/api/gtr/identificadors`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ nif, passwordMobilitat: password, codiMO }),
+    });
 
     if (!response.ok) throw new Error("network");
 
     const data = await response.json();
 
-    // La GTR API devuelve errors:[] si hay error de credenciales
     if (data.errors && data.errors.length > 0) {
       return false;
     }
