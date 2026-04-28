@@ -2,6 +2,7 @@
 
 import { useI18n } from "@/hooks/useI18n";
 import { useRouter } from "next/navigation";
+import SelectorMO from "@/components/common/SelectorMO"; // <-- NUEVO IMPORT
 
 type TopBarIcon =
     | "history"
@@ -74,6 +75,8 @@ export default function TopBar({
     return (
         <header className={`${bgColor} px-4 pt-10 pb-4 shadow-md`}>
             <div className="flex items-center justify-between gap-3">
+
+                {/* Lado Izquierdo: Botón Menú/Atrás + Título */}
                 <div className="flex items-center gap-3 min-w-0">
                     {showBack ? (
                         <button
@@ -99,36 +102,42 @@ export default function TopBar({
                     <h1 className="text-white text-lg font-bold truncate">{title}</h1>
                 </div>
 
-                {/* Lado derecho: rightIcon (si se pasa) o selector de idioma por defecto */}
-                {rightIcon ? (
-                    <button
-                        type="button"
-                        onClick={onRightIconClick}
-                        disabled={!onRightIconClick}
-                        aria-label={rightIcon}
-                        className="text-white p-1 rounded-lg hover:bg-white/10 transition-colors shrink-0 disabled:cursor-default disabled:hover:bg-transparent"
-                    >
-                        <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                            <path d={ICON_PATHS[rightIcon]} />
-                        </svg>
-                    </button>
-                ) : (
-                    <div className="flex gap-1 shrink-0">
-                        {(["es", "ca"] as const).map((l) => (
-                            <button
-                                key={l}
-                                onClick={() => changeLanguage(l)}
-                                className={`text-xs px-2 py-1 rounded-full font-medium transition-colors ${
-                                    lang === l
-                                        ? `bg-white ${activeLangText}`
-                                        : "text-white/70 hover:text-white"
-                                }`}
-                            >
-                                {l === "es" ? "ES" : "CA"}
-                            </button>
-                        ))}
-                    </div>
-                )}
+                {/* Lado Derecho: Selector MO + Icono Derecho/Idioma */}
+                <div className="flex items-center gap-3 shrink-0">
+
+                    {/* Componente del Selector (Solo se renderiza si hay >1 MO) */}
+                    <SelectorMO />
+
+                    {rightIcon ? (
+                        <button
+                            type="button"
+                            onClick={onRightIconClick}
+                            disabled={!onRightIconClick}
+                            aria-label={rightIcon}
+                            className="text-white p-1 rounded-lg hover:bg-white/10 transition-colors shrink-0 disabled:cursor-default disabled:hover:bg-transparent"
+                        >
+                            <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                                <path d={ICON_PATHS[rightIcon]} />
+                            </svg>
+                        </button>
+                    ) : (
+                        <div className="flex gap-1 shrink-0">
+                            {(["es", "ca"] as const).map((l) => (
+                                <button
+                                    key={l}
+                                    onClick={() => changeLanguage(l)}
+                                    className={`text-xs px-2 py-1 rounded-full font-medium transition-colors ${
+                                        lang === l
+                                            ? `bg-white ${activeLangText}`
+                                            : "text-white/70 hover:text-white"
+                                    }`}
+                                >
+                                    {l === "es" ? "ES" : "CA"}
+                                </button>
+                            ))}
+                        </div>
+                    )}
+                </div>
             </div>
 
             {/* Badge opcional */}
