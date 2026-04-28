@@ -9,6 +9,7 @@ import { useAddMO } from "@/hooks/useAddMO";
 import ErrorModal from "@/components/common/ErrorModal";
 import SuccessModal from "@/components/common/SuccessModal";
 import LoadingOverlay from "@/components/common/LoadingOverlay";
+import { useTheme } from "@/context/ThemeContext";
 
 // ─── Subcomponentes ───────────────────────────────────────────────────────────
 function SectionLabel({ text }: { text: string }) {
@@ -49,8 +50,7 @@ function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) =>
 export default function ConfiguracionPage() {
     const { toggle } = useDrawer();
     const { lang } = useI18n();
-
-    const [temaOscuro, setTemaOscuro] = useState(false);
+    const { isDark, toggleTheme } = useTheme();
     const [nifUsuario, setNifUsuario] = useState<string>("...");
 
     // Estados del Modal
@@ -114,7 +114,12 @@ export default function ConfiguracionPage() {
 
                 <SectionLabel text={t.apariencia} />
                 <SettingCard>
-                    <SettingRow icon={<IconSun />} label={t.temaOscuro} sublabel={temaOscuro ? t.activado : t.desactivado} right={<Toggle value={temaOscuro} onChange={setTemaOscuro} />} />
+                    <SettingRow
+                        icon={<IconSun />}
+                        label={t.temaOscuro}
+                        sublabel={isDark ? t.activado : t.desactivado}
+                        right={<Toggle value={isDark} onChange={toggleTheme} />}
+                    />
                 </SettingCard>
             </div>
 
