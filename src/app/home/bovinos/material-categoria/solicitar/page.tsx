@@ -129,7 +129,7 @@ export default function SolicitudMaterialPage() {
                 )}
 
                 {/* 1. Datos del Material */}
-                <div className="bg-white rounded-2xl shadow-sm p-4 flex flex-col gap-4">
+                <div className="bg-card rounded-2xl shadow-sm p-4 flex flex-col gap-4">
                     <h2 className="text-sm font-bold text-dark-blue-grey">{lang === "ca" ? "Material i Subministrament" : "Material y Suministro"}</h2>
 
                     <div className={isReadOnly ? "opacity-70 pointer-events-none" : ""}>
@@ -191,7 +191,7 @@ export default function SolicitudMaterialPage() {
                                             value={u.nombreUnitats}
                                             onChange={(e) => updateUnitat(index, "nombreUnitats", e.target.value)}
                                             placeholder="Ex: 50"
-                                            className="w-full border border-surface-variant rounded-xl px-3 py-2.5 text-sm focus:border-main-green bg-white outline-none"
+                                            className="w-full border border-surface-variant rounded-xl px-3 py-2.5 text-sm focus:border-main-green bg-card outline-none"
                                         />
                                     </FormField>
                                 </div>
@@ -204,7 +204,7 @@ export default function SolicitudMaterialPage() {
                                                 value={u.codiExplotacio}
                                                 onChange={(e) => updateUnitat(index, "codiExplotacio", e.target.value.toUpperCase())}
                                                 placeholder="ES000..."
-                                                className="w-full border border-surface-variant rounded-xl px-3 py-2.5 text-sm uppercase focus:border-main-green bg-white outline-none"
+                                                className="w-full border border-surface-variant rounded-xl px-3 py-2.5 text-sm uppercase focus:border-main-green bg-card outline-none"
                                             />
                                         </FormField>
                                     </div>
@@ -221,7 +221,7 @@ export default function SolicitudMaterialPage() {
                 </div>
 
                 {/* 2. Datos de Envío */}
-                <div className="bg-white rounded-2xl shadow-sm p-4 flex flex-col gap-4">
+                <div className="bg-card rounded-2xl shadow-sm p-4 flex flex-col gap-4">
                     <h2 className="text-sm font-bold text-dark-blue-grey">{lang === "ca" ? "Dades d'Enviament" : "Datos de Envío"}</h2>
 
                     <div className={isReadOnly ? "opacity-70 pointer-events-none" : ""}>
@@ -263,7 +263,7 @@ export default function SolicitudMaterialPage() {
 
                 {/* 3. Detalle de Dirección Condicional */}
                 {form.adrecaLliurament === "01" && (
-                    <div className="bg-white rounded-2xl shadow-sm p-4 flex flex-col gap-4 animate-in fade-in slide-in-from-top-4">
+                    <div className="bg-card rounded-2xl shadow-sm p-4 flex flex-col gap-4 animate-in fade-in slide-in-from-top-4">
                         <div className={isReadOnly ? "opacity-70 pointer-events-none" : ""}>
                             <FormField label="Oficina Comarcal *">
                                 <SelectInput
@@ -278,7 +278,7 @@ export default function SolicitudMaterialPage() {
                 )}
 
                 {(form.adrecaLliurament === "02" || form.adrecaLliurament === "03") && (
-                    <div className="bg-white rounded-2xl shadow-sm p-4 flex flex-col gap-4 animate-in fade-in slide-in-from-top-4">
+                    <div className="bg-card rounded-2xl shadow-sm p-4 flex flex-col gap-4 animate-in fade-in slide-in-from-top-4">
                         <div className={isReadOnly ? "opacity-70 pointer-events-none" : ""}>
                             <FormField label={`${lang === "ca" ? "Adreça" : "Dirección"} *`}>
                                 <input
@@ -317,7 +317,7 @@ export default function SolicitudMaterialPage() {
 
             {/* Botones */}
             {!isReadOnly && (
-                <div className="fixed bottom-0 left-0 right-0 px-4 py-4 bg-white border-t border-surface-variant flex gap-3 z-40">
+                <div className="fixed bottom-0 left-0 right-0 px-4 py-4 bg-card border-t border-surface-variant flex gap-3 z-40">
                     <button onClick={handleGuardarBorrador} className="w-12 h-12 shrink-0 flex items-center justify-center border-2 border-main-green text-main-green rounded-xl hover:bg-main-green/10">
                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" /></svg>
                     </button>
@@ -332,7 +332,7 @@ export default function SolicitudMaterialPage() {
             )}
 
             {isReadOnly && (
-                <div className="fixed bottom-0 left-0 right-0 px-4 py-4 bg-white border-t border-surface-variant z-40">
+                <div className="fixed bottom-0 left-0 right-0 px-4 py-4 bg-card border-t border-surface-variant z-40">
                     <button onClick={() => window.history.back()} className="w-full bg-surface-variant text-dark-blue-grey rounded-xl py-3 text-sm font-semibold">
                         {lang === "ca" ? "Tornar a l'historial" : "Volver al historial"}
                     </button>
@@ -342,7 +342,7 @@ export default function SolicitudMaterialPage() {
             {/* Modales de Confirmación y Error */}
             {mostrarConfirm && (
                 <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center px-4">
-                    <div className="bg-white rounded-2xl p-6 w-full max-w-sm">
+                    <div className="bg-card rounded-2xl p-6 w-full max-w-sm">
                         <h3 className="text-base font-bold text-dark-blue-grey mb-2">
                             {lang === "ca" ? "Confirmar sol·licitud" : "Confirmar solicitud"}
                         </h3>

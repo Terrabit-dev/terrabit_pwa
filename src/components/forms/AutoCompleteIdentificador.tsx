@@ -100,7 +100,7 @@ export default function AutoCompleteIdentificador({
         ? createPortal(
             <div
                 style={{ ...dropdownStyle, maxHeight: "240px", WebkitOverflowScrolling: "touch" } as React.CSSProperties}
-                className="bg-white border border-surface-variant rounded-xl shadow-xl overflow-y-auto overscroll-contain"
+                className="bg-card border border-surface-variant rounded-xl shadow-xl overflow-y-auto overscroll-contain"
             >
                 {suggestions.map((animal) => (
                     <button

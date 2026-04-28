@@ -172,7 +172,7 @@ function MiniFormulario({
                         }: MiniFormularioProps) {
     return (
         <div className="px-4 py-6">
-            <div className="bg-white rounded-2xl shadow-sm p-5 flex flex-col gap-5">
+            <div className="bg-card rounded-2xl shadow-sm p-5 flex flex-col gap-5">
                 <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-main-orange/10 flex items-center justify-center">
                         <svg className="w-5 h-5 text-main-orange" fill="currentColor" viewBox="0 0 24 24">
@@ -249,7 +249,7 @@ function MovimientoCard({ mov, lang, onEditar }: MovimientoCardProps) {
     const fechaLlegada = apiFormatToDisplayFecha(mov.dataArribada) || "--/--/----";
 
     return (
-        <div className="bg-white rounded-2xl shadow-sm p-4 flex flex-col gap-3">
+        <div className="bg-card rounded-2xl shadow-sm p-4 flex flex-col gap-3">
             <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2 flex-1 min-w-0">
                     <span className="font-bold text-sm text-dark-blue-grey truncate">

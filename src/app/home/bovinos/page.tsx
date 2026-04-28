@@ -49,7 +49,6 @@ export default function HomeBovinos() {
   const [showLangMenu, setShowLangMenu] = useState(false);
   const langRef = useRef<HTMLDivElement>(null);
 
-  // Cierra el menú al hacer clic fuera
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (langRef.current && !langRef.current.contains(e.target as Node)) {
@@ -92,10 +91,9 @@ export default function HomeBovinos() {
   ];
 
   return (
-      <div className="min-h-screen bg-[#f2f4f7] flex flex-col">
+      <div className="min-h-screen bg-surface flex flex-col">
         {/* Header verde con bienvenida */}
         <div className="bg-main-green pt-4 pb-8 px-5">
-          {/* TopBar dentro del header verde */}
           <div className="flex items-center justify-between mb-4">
             <button
                 onClick={toggle}
@@ -107,7 +105,6 @@ export default function HomeBovinos() {
               </svg>
             </button>
 
-            {/* Selector de idioma con globo — desplazado hacia el interior */}
             <div ref={langRef} className="relative mr-2">
               <button
                   onClick={() => setShowLangMenu((v) => !v)}
@@ -119,9 +116,8 @@ export default function HomeBovinos() {
                 </svg>
               </button>
 
-              {/* Dropdown de idiomas */}
               {showLangMenu && (
-                  <div className="absolute right-0 top-9 bg-white rounded-xl shadow-lg overflow-hidden z-50 min-w-[120px]">
+                  <div className="absolute right-0 top-9 bg-card rounded-xl shadow-lg overflow-hidden z-50 min-w-[120px]">
                     {LANGUAGES.map((l) => (
                         <button
                             key={l.code}
@@ -132,8 +128,8 @@ export default function HomeBovinos() {
                             className={[
                               "w-full text-left px-4 py-3 text-sm transition-colors",
                               lang === l.code
-                                  ? "bg-[#e6f4ee] text-main-green font-semibold"
-                                  : "text-[#1a202c] hover:bg-gray-50",
+                                  ? "bg-main-green-bg text-main-green font-semibold"
+                                  : "text-dark-blue-grey hover:bg-surface",
                             ].join(" ")}
                         >
                           {l.label}
@@ -156,9 +152,9 @@ export default function HomeBovinos() {
           </div>
         </div>
 
-        {/* Tarjetas — se superponen levemente sobre el header */}
+        {/* Tarjetas */}
         <div className="flex-1 px-4 -mt-3 pb-6 flex flex-col gap-3">
-          <p className="text-[#4a5568] text-base font-semibold mt-4 mb-1">
+          <p className="text-dark-blue-grey text-base font-semibold mt-4 mb-1">
             Menú Principal
           </p>
 
@@ -168,9 +164,8 @@ export default function HomeBovinos() {
                 <button
                     key={seccion.path}
                     onClick={() => router.push(seccion.path)}
-                    className="bg-white rounded-2xl p-5 shadow-sm flex items-center gap-4 active:scale-[0.98] transition-transform text-left w-full"
+                    className="bg-card rounded-2xl p-5 shadow-sm flex items-center gap-4 active:scale-[0.98] transition-transform text-left w-full"
                 >
-                  {/* Icono */}
                   <div
                       className={[
                         "p-4 rounded-2xl shrink-0 flex items-center justify-center",
@@ -182,19 +177,17 @@ export default function HomeBovinos() {
                     {seccion.icon}
                   </div>
 
-                  {/* Texto */}
                   <div className="flex-1 min-w-0">
-                    <p className="text-[#1a202c] text-base font-semibold leading-snug">
+                    <p className="text-dark-blue-grey text-base font-semibold leading-snug">
                       {t(seccion.titleKey)}
                     </p>
-                    <p className="text-[#718096] text-sm mt-0.5 leading-snug">
+                    <p className="text-blue-grey text-sm mt-0.5 leading-snug">
                       {t(seccion.subtitleKey)}
                     </p>
                   </div>
 
-                  {/* Flecha */}
                   <svg
-                      className="w-5 h-5 text-[#a0aec0] shrink-0"
+                      className="w-5 h-5 text-blue-grey shrink-0"
                       viewBox="0 0 24 24"
                       fill="currentColor"
                   >

@@ -156,7 +156,7 @@ interface MiniFormularioProps {
 function MiniFormulario({ rega, fechaISO, horaStr, error, onRegaChange, onFechaChange, onHoraChange, onConsultar, lang }: MiniFormularioProps) {
     return (
         <div className="px-4 py-6">
-            <div className="bg-white rounded-2xl shadow-sm p-5 flex flex-col gap-5">
+            <div className="bg-card rounded-2xl shadow-sm p-5 flex flex-col gap-5">
                 <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-main-orange/10 flex items-center justify-center">
                         <svg className="w-5 h-5 text-main-orange" fill="currentColor" viewBox="0 0 24 24"><path d="M3 4h18v2H3V4zm0 7h18v2H3v-2zm0 7h18v2H3v-2z"/></svg>
@@ -202,7 +202,7 @@ function GuiaPorcinoCard({ guia, lang, onEditar }: { guia: GuiaPorcino; lang: "e
     const horaSalida = apiFormatToDisplayHora(guia.dataSortida);
 
     return (
-        <div className="bg-white rounded-2xl shadow-sm p-4 flex flex-col gap-3 border border-transparent hover:border-main-orange/30 transition-colors">
+        <div className="bg-card rounded-2xl shadow-sm p-4 flex flex-col gap-3 border border-transparent hover:border-main-orange/30 transition-colors">
             <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2 flex-1 min-w-0">
                     <span className="font-bold text-sm text-dark-blue-grey truncate">{guia.moOrigen}</span>

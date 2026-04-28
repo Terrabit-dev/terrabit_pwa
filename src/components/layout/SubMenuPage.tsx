@@ -54,7 +54,7 @@ export default function SubMenuPage({
               <button
                 key={action.path}
                 onClick={() => router.push(action.path)}
-                className="bg-white rounded-2xl p-5 shadow-sm flex flex-col items-center gap-3 active:scale-95 transition-transform text-center"
+                className="bg-card rounded-2xl p-5 shadow-sm flex flex-col items-center gap-3 active:scale-95 transition-transform text-center"
               >
                 <div className={`${colors.icon} p-4 rounded-2xl`}>
                   {action.icon}

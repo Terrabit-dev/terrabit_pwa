@@ -57,7 +57,7 @@ export default function SelectorMO() {
                 title="Canviar d'explotació"
             >
                 {moList.map((mo) => (
-                    <option key={mo} value={mo} className="text-dark-blue-grey bg-white font-medium">
+                    <option key={mo} value={mo} className="text-dark-blue-grey bg-card font-medium">
                         {mo}
                     </option>
                 ))}

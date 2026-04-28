@@ -90,7 +90,7 @@ export default function IdentificacionPage() {
             />
 
             <div className="px-4 py-5 flex flex-col gap-4 pb-24">
-                <div className="bg-white rounded-2xl shadow-sm p-4 flex flex-col gap-4">
+                <div className="bg-card rounded-2xl shadow-sm p-4 flex flex-col gap-4">
                     <div className={isReadOnly ? "opacity-70 pointer-events-none" : ""}>
                         <AutoCompleteIdentificador
                             label={`${lang === "ca" ? "Identificador animal" : "Identificador animal"} *`}
@@ -119,7 +119,7 @@ export default function IdentificacionPage() {
 
             {/* Botón fijo */}
             {!isReadOnly && (
-                <div className="fixed bottom-0 left-0 right-0 px-4 py-4 bg-white border-t border-surface-variant flex gap-3">
+                <div className="fixed bottom-0 left-0 right-0 px-4 py-4 bg-card border-t border-surface-variant flex gap-3">
                     {/* Botón de Guardar Borrador (Icono) */}
                     <button
                         onClick={handleGuardarBorrador}
@@ -144,7 +144,7 @@ export default function IdentificacionPage() {
                 </div>
             )}
             {isReadOnly && (
-                <div className="fixed bottom-0 left-0 right-0 px-4 py-4 bg-white border-t border-surface-variant">
+                <div className="fixed bottom-0 left-0 right-0 px-4 py-4 bg-card border-t border-surface-variant">
                     <button
                         onClick={() => window.history.back()}
                         className="w-full bg-surface-variant text-dark-blue-grey rounded-xl py-3 text-sm font-semibold"
@@ -157,7 +157,7 @@ export default function IdentificacionPage() {
             {/* Modal confirmación */}
             {mostrarConfirm && (
                 <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center px-4">
-                    <div className="bg-white rounded-2xl p-6 w-full max-w-sm">
+                    <div className="bg-card rounded-2xl p-6 w-full max-w-sm">
                         <h3 className="text-base font-bold text-dark-blue-grey mb-2">
                             {lang === "ca" ? "Confirmar identificació" : "Confirmar identificación"}
                         </h3>

@@ -23,22 +23,18 @@
   --color-card: #FFFFFF;
 }
 
-@layer theme {
-  .dark {
-    --color-surface: #121212;
-    --color-surface-variant: #2A2A2A;
-    --color-card: #1E1E1E;
-
-    --color-dark-blue-grey: #F5F5F5;
-    --color-blue-grey: #A0AAB2;
-
-    --color-main-green-bg: rgba(46, 125, 50, 0.15);
-    --color-main-orange-bg: rgba(223, 142, 63, 0.15);
-  }
+html.dark {
+  --color-surface: #121212;
+  --color-surface-variant: #2A2A2A;
+  --color-card: #1E1E1E;
+  --color-dark-blue-grey: #F5F5F5;
+  --color-blue-grey: #A0AAB2;
+  --color-main-green-bg: rgba(46, 125, 50, 0.15);
+  --color-main-orange-bg: rgba(223, 142, 63, 0.15);
 }
 
-:root { color-scheme: light; }
-.dark { color-scheme: dark; }
+html { color-scheme: light; }
+html.dark { color-scheme: dark; }
 
 body {
   background-color: var(--color-surface);

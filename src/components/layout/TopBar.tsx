@@ -81,11 +81,9 @@ export default function TopBar({
     const { lang, changeLanguage } = useI18n();
     const router = useRouter();
 
-    // Estados para el menú de idioma
     const [showLangMenu, setShowLangMenu] = useState(false);
     const langRef = useRef<HTMLDivElement>(null);
 
-    // Cierra el menú al hacer clic fuera
     useEffect(() => {
         const handler = (e: MouseEvent) => {
             if (langRef.current && !langRef.current.contains(e.target as Node)) {
@@ -104,7 +102,6 @@ export default function TopBar({
         <header className={`${bgColor} px-4 pt-10 pb-4 shadow-md z-30 relative`}>
             <div className="flex items-center justify-between gap-3">
 
-                {/* Lado Izquierdo: Botón Menú/Atrás + Título */}
                 <div className="flex items-center gap-3 min-w-0">
                     {showBack ? (
                         <button
@@ -130,13 +127,10 @@ export default function TopBar({
                     <h1 className="text-white text-lg font-bold truncate">{title}</h1>
                 </div>
 
-                {/* Lado Derecho: Selector MO + Icono Derecho/Idioma */}
                 <div className="flex items-center gap-2 shrink-0">
 
                     <SelectorMO />
 
-                    {/* Lógica: Si hay rightIcon y NO es "language", pintamos el botón normal.
-                        Si es "language" o no se pasa rightIcon, pintamos el menú desplegable del globo. */}
                     {rightIcon && rightIcon !== "language" ? (
                         <button
                             type="button"
@@ -161,9 +155,8 @@ export default function TopBar({
                                 </svg>
                             </button>
 
-                            {/* Dropdown de idiomas */}
                             {showLangMenu && (
-                                <div className="absolute right-0 top-10 bg-white rounded-xl shadow-lg overflow-hidden z-50 min-w-[120px]">
+                                <div className="absolute right-0 top-10 bg-card rounded-xl shadow-lg overflow-hidden z-50 min-w-[120px]">
                                     {LANGUAGES.map((l) => (
                                         <button
                                             key={l.code}
@@ -188,7 +181,6 @@ export default function TopBar({
                 </div>
             </div>
 
-            {/* Badge opcional */}
             {badge && (
                 <div className="mt-3 flex">
                     <div className="inline-flex items-center gap-1.5 bg-white/20 backdrop-blur-sm rounded-full px-3 py-1">

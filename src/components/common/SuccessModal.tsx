@@ -10,7 +10,7 @@ interface SuccessModalProps {
 export default function SuccessModal({ titulo, mensaje, boton, onClose }: SuccessModalProps) {
     return (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center px-4">
-            <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl">
+            <div className="bg-card rounded-2xl p-6 w-full max-w-sm shadow-xl">
 
                 {/* Icono */}
                 <div className="flex justify-center mb-4">

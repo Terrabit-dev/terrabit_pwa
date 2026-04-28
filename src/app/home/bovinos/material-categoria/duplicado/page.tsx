@@ -122,7 +122,7 @@ export default function SolicitudDuplicadoPage() {
                 )}
 
                 {/* 1. Datos Suministro */}
-                <div className="bg-white rounded-2xl shadow-sm p-4 flex flex-col gap-4">
+                <div className="bg-card rounded-2xl shadow-sm p-4 flex flex-col gap-4">
                     <h2 className="text-sm font-bold text-dark-blue-grey">{lang === "ca" ? "Subministrament" : "Suministro"}</h2>
 
                     <div className={isReadOnly ? "opacity-70 pointer-events-none" : ""}>
@@ -138,7 +138,7 @@ export default function SolicitudDuplicadoPage() {
                 </div>
 
                 {/* 2. Llistat d'Animals */}
-                <div className="bg-white rounded-2xl shadow-sm p-4 flex flex-col gap-4">
+                <div className="bg-card rounded-2xl shadow-sm p-4 flex flex-col gap-4">
                     <div className="flex justify-between items-center">
                         <h2 className="text-sm font-bold text-dark-blue-grey">{lang === "ca" ? "Animals i Material" : "Animales y Material"}</h2>
                         {!isReadOnly && (
@@ -186,7 +186,7 @@ export default function SolicitudDuplicadoPage() {
                                 </div>
 
                                 {!isReadOnly && form.identificadors.length > 1 && (
-                                    <button onClick={() => removeAnimal(index)} className="absolute top-2 right-2 text-error-red p-1 hover:bg-error-red/10 rounded-lg bg-white shadow-sm border border-error-red/20 transition-colors">
+                                    <button onClick={() => removeAnimal(index)} className="absolute top-2 right-2 text-error-red p-1 hover:bg-error-red/10 rounded-lg bg-card shadow-sm border border-error-red/20 transition-colors">
                                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                                     </button>
                                 )}
@@ -196,7 +196,7 @@ export default function SolicitudDuplicadoPage() {
                 </div>
 
                 {/* 3. Datos de Envío */}
-                <div className="bg-white rounded-2xl shadow-sm p-4 flex flex-col gap-4">
+                <div className="bg-card rounded-2xl shadow-sm p-4 flex flex-col gap-4">
                     <h2 className="text-sm font-bold text-dark-blue-grey">{lang === "ca" ? "Dades d'Enviament" : "Datos de Envío"}</h2>
 
                     <div className={isReadOnly ? "opacity-70 pointer-events-none" : ""}>
@@ -230,7 +230,7 @@ export default function SolicitudDuplicadoPage() {
 
                 {/* 4. Detalle de Dirección Condicional */}
                 {form.adrecaLliurament === "01" && (
-                    <div className="bg-white rounded-2xl shadow-sm p-4 flex flex-col gap-4 animate-in fade-in slide-in-from-top-4">
+                    <div className="bg-card rounded-2xl shadow-sm p-4 flex flex-col gap-4 animate-in fade-in slide-in-from-top-4">
                         <div className={isReadOnly ? "opacity-70 pointer-events-none" : ""}>
                             <FormField label="Oficina Comarcal *">
                                 <SelectInput value={form.oc} onChange={(c, n) => update({ oc: c, ocNombre: n })} options={OFICINAS_COMARCALES} placeholder="Selecciona OC" />
@@ -240,7 +240,7 @@ export default function SolicitudDuplicadoPage() {
                 )}
 
                 {(form.adrecaLliurament === "02" || form.adrecaLliurament === "03") && (
-                    <div className="bg-white rounded-2xl shadow-sm p-4 flex flex-col gap-4 animate-in fade-in slide-in-from-top-4">
+                    <div className="bg-card rounded-2xl shadow-sm p-4 flex flex-col gap-4 animate-in fade-in slide-in-from-top-4">
                         <div className={isReadOnly ? "opacity-70 pointer-events-none" : ""}>
                             <FormField label={`${lang === "ca" ? "Adreça" : "Dirección"} *`}>
                                 <input type="text" value={form.adreca} onChange={(e) => update({ adreca: e.target.value })} className="w-full border border-surface-variant rounded-xl px-3 py-2.5 text-sm" />
@@ -268,7 +268,7 @@ export default function SolicitudDuplicadoPage() {
 
             {/* Botones */}
             {!isReadOnly && (
-                <div className="fixed bottom-0 left-0 right-0 px-4 py-4 bg-white border-t border-surface-variant flex gap-3 z-40">
+                <div className="fixed bottom-0 left-0 right-0 px-4 py-4 bg-card border-t border-surface-variant flex gap-3 z-40">
                     <button onClick={handleGuardarBorrador} className="w-12 h-12 shrink-0 flex items-center justify-center border-2 border-main-green text-main-green rounded-xl hover:bg-main-green/10">
                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" /></svg>
                     </button>
@@ -279,7 +279,7 @@ export default function SolicitudDuplicadoPage() {
             )}
 
             {isReadOnly && (
-                <div className="fixed bottom-0 left-0 right-0 px-4 py-4 bg-white border-t border-surface-variant z-40">
+                <div className="fixed bottom-0 left-0 right-0 px-4 py-4 bg-card border-t border-surface-variant z-40">
                     <button onClick={() => window.history.back()} className="w-full bg-surface-variant text-dark-blue-grey rounded-xl py-3 text-sm font-semibold">
                         {lang === "ca" ? "Tornar a l'historial" : "Volver al historial"}
                     </button>
@@ -288,7 +288,7 @@ export default function SolicitudDuplicadoPage() {
 
             {mostrarConfirm && (
                 <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center px-4">
-                    <div className="bg-white rounded-2xl p-6 w-full max-w-sm">
+                    <div className="bg-card rounded-2xl p-6 w-full max-w-sm">
                         <h3 className="text-base font-bold text-dark-blue-grey mb-2">{lang === "ca" ? "Confirmar sol·licitud" : "Confirmar solicitud"}</h3>
                         <p className="text-sm text-blue-grey mb-4">{lang === "ca" ? "Confirmes la sol·licitud del duplicat?" : "¿Confirmas la solicitud del duplicado?"}</p>
                         <div className="flex gap-3 mt-5">

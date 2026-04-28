@@ -35,7 +35,7 @@ export default function ConfirmarMovimientoPorcinoPage() {
             <div className="px-4 py-5 flex flex-col gap-4 pb-24">
 
                 {/* 1. Contexto Visual (No editables) */}
-                <div className="bg-white rounded-2xl shadow-sm p-4 flex flex-col gap-3">
+                <div className="bg-card rounded-2xl shadow-sm p-4 flex flex-col gap-3">
                     <p className="text-[10px] uppercase font-bold text-main-orange tracking-wider bg-main-orange/10 w-fit px-2 py-1 rounded-md">
                         REMO: {form?.remo}
                     </p>
@@ -54,7 +54,7 @@ export default function ConfirmarMovimientoPorcinoPage() {
                 </div>
 
                 {/* 2. Datos del Transporte y Animales */}
-                <div className="bg-white rounded-2xl shadow-sm p-4 flex flex-col gap-4">
+                <div className="bg-card rounded-2xl shadow-sm p-4 flex flex-col gap-4">
                     <h2 className="text-sm font-bold text-dark-blue-grey flex items-center gap-2">
                         <span className="w-2 h-2 rounded-full bg-main-orange"></span>
                         {lang === "ca" ? "Dades a Confirmar" : "Datos a Confirmar"}
@@ -103,7 +103,7 @@ export default function ConfirmarMovimientoPorcinoPage() {
             </div>
 
             {/* Botones */}
-            <div className="fixed bottom-0 left-0 right-0 px-4 py-4 bg-white border-t border-surface-variant flex gap-3 z-40">
+            <div className="fixed bottom-0 left-0 right-0 px-4 py-4 bg-card border-t border-surface-variant flex gap-3 z-40">
                 <button
                     onClick={() => enviar(lang)}
                     disabled={enviando}

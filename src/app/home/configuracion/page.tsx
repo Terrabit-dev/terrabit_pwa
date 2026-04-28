@@ -16,7 +16,7 @@ function SectionLabel({ text }: { text: string }) {
     return <p className="text-xs font-semibold text-blue-grey uppercase tracking-wide px-4 mb-2">{text}</p>;
 }
 function SettingCard({ children }: { children: React.ReactNode }) {
-    return <div className="mx-4 bg-white rounded-2xl shadow-sm overflow-hidden mb-4">{children}</div>;
+    return <div className="mx-4 bg-card rounded-2xl shadow-sm overflow-hidden mb-4">{children}</div>;
 }
 function SettingRow({ icon, label, sublabel, right, onClick }: { icon: React.ReactNode; label: string; sublabel?: string; right?: React.ReactNode; onClick?: () => void; }) {
     return (
@@ -53,7 +53,6 @@ export default function ConfiguracionPage() {
     const { isDark, toggleTheme } = useTheme();
     const [nifUsuario, setNifUsuario] = useState<string>("...");
 
-    // Estados del Modal
     const [showModalMO, setShowModalMO] = useState(false);
     const [inputMO, setInputMO] = useState("");
 
@@ -61,11 +60,7 @@ export default function ConfiguracionPage() {
 
     useEffect(() => {
         const creds = getCredentials();
-        if (creds) {
-            /* eslint-disable react-hooks/set-state-in-effect */
-            setNifUsuario(creds.nif);
-            /* eslint-enable react-hooks/set-state-in-effect */
-        }
+        if (creds) setNifUsuario(creds.nif);
     }, []);
 
     const handleOpenModal = () => {
@@ -81,20 +76,19 @@ export default function ConfiguracionPage() {
     const handleSuccessClose = () => {
         setShowModalMO(false);
         reset();
-        // Si queremos podemos forzar un recargo visual aquí, pero el EventListener (paso 2) se encargará
     };
 
     const t = {
-        title:          lang === "ca" ? "Configuració"              : "Configuración",
-        usuario:        lang === "ca" ? "USUARI"                    : "USUARIO",
-        nif:            "NIF",
-        añadirSection:  lang === "ca" ? "Afegir explotació"         : "Añadir explotación",
-        añadirLabel:    lang === "ca" ? "Afegir nova explotació"    : "Añadir nueva explotación",
-        añadirSub:      lang === "ca" ? "Valida un codi GTR"        : "Valida un código de explotación GTR",
-        apariencia:     lang === "ca" ? "APARENÇA"                  : "APARIENCIA",
-        temaOscuro:     lang === "ca" ? "Tema fosc"                 : "Tema oscuro",
-        activado:       lang === "ca" ? "Activat"                   : "Activado",
-        desactivado:    lang === "ca" ? "Desactivat"                : "Desactivado",
+        title:         lang === "ca" ? "Configuració"           : "Configuración",
+        usuario:       lang === "ca" ? "USUARI"                 : "USUARIO",
+        nif:           "NIF",
+        añadirSection: lang === "ca" ? "Afegir explotació"      : "Añadir explotación",
+        añadirLabel:   lang === "ca" ? "Afegir nova explotació" : "Añadir nueva explotación",
+        añadirSub:     lang === "ca" ? "Valida un codi GTR"     : "Valida un código de explotación GTR",
+        apariencia:    lang === "ca" ? "APARENÇA"               : "APARIENCIA",
+        temaOscuro:    lang === "ca" ? "Tema fosc"              : "Tema oscuro",
+        activado:      lang === "ca" ? "Activat"                : "Activado",
+        desactivado:   lang === "ca" ? "Desactivat"             : "Desactivado",
     };
 
     return (
@@ -126,7 +120,7 @@ export default function ConfiguracionPage() {
             {/* Modal para añadir MO */}
             {showModalMO && !exito && (
                 <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center px-4 backdrop-blur-sm">
-                    <div className="bg-white rounded-2xl w-full max-w-sm overflow-hidden shadow-xl animate-scaleIn">
+                    <div className="bg-card rounded-2xl w-full max-w-sm overflow-hidden shadow-xl animate-scaleIn">
                         <div className="p-5 border-b border-surface-variant flex justify-between items-center bg-main-green/5">
                             <h3 className="font-bold text-dark-blue-grey">
                                 {lang === "ca" ? "Afegir MO" : "Añadir MO"}
@@ -143,7 +137,7 @@ export default function ConfiguracionPage() {
                                 type="text"
                                 value={inputMO}
                                 onChange={(e) => setInputMO(e.target.value.toUpperCase())}
-                                className="w-full border-2 border-surface-variant rounded-xl px-4 py-3 text-sm uppercase focus:border-main-green outline-none font-mono"
+                                className="w-full border-2 border-surface-variant rounded-xl px-4 py-3 text-sm uppercase focus:border-main-green outline-none font-mono bg-surface text-dark-blue-grey"
                                 placeholder="00XXAM"
                                 autoFocus
                             />
@@ -168,8 +162,8 @@ export default function ConfiguracionPage() {
                 />
             )}
 
-            {error && <ErrorModal mensaje={error} onClose={reset} lang={lang}/>}
-            {cargando && <LoadingOverlay mensaje={lang === "ca" ? "Validant..." : "Validando..."}/>}
+            {error && <ErrorModal mensaje={error} onClose={reset} lang={lang} />}
+            {cargando && <LoadingOverlay mensaje={lang === "ca" ? "Validant..." : "Validando..."} />}
         </div>
     );
 }

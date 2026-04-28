@@ -38,8 +38,13 @@ export default function RootLayout({
   return (
       <html lang="es" suppressHydrationWarning>
       <head>
-        <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
-        <meta name="apple-mobile-web-app-capable" content="yes" />
+          <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
+          <meta name="apple-mobile-web-app-capable" content="yes" />
+          <script
+              dangerouslySetInnerHTML={{
+                  __html: `(function(){try{var t=localStorage.getItem('terrabit_theme');if(t==='dark')document.documentElement.classList.add('dark');}catch(e){}})();`,
+              }}
+          />
       </head>
       <body className={geist.className}>
       <I18nProvider>

@@ -87,7 +87,7 @@ export default function AltaGuiaPorcinoPage() {
                 )}
 
                 {/* 1. Origen y Destino */}
-                <div className="bg-white rounded-2xl shadow-sm p-4 flex flex-col gap-4">
+                <div className="bg-card rounded-2xl shadow-sm p-4 flex flex-col gap-4">
                     <h2 className="text-sm font-bold text-dark-blue-grey flex items-center gap-2">
                         <span className="w-2 h-2 rounded-full bg-main-orange"></span>
                         {lang === "ca" ? "Origen i Destí" : "Origen y Destino"}
@@ -119,7 +119,7 @@ export default function AltaGuiaPorcinoPage() {
                 </div>
 
                 {/* 2. Detalles de los Animales */}
-                <div className="bg-white rounded-2xl shadow-sm p-4 flex flex-col gap-4">
+                <div className="bg-card rounded-2xl shadow-sm p-4 flex flex-col gap-4">
                     <h2 className="text-sm font-bold text-dark-blue-grey flex items-center gap-2">
                         <span className="w-2 h-2 rounded-full bg-main-orange"></span>
                         {lang === "ca" ? "Detalls del Moviment" : "Detalles del Movimiento"}
@@ -150,7 +150,7 @@ export default function AltaGuiaPorcinoPage() {
                 </div>
 
                 {/* 3. Fechas */}
-                <div className="bg-white rounded-2xl shadow-sm p-4 flex flex-col gap-4">
+                <div className="bg-card rounded-2xl shadow-sm p-4 flex flex-col gap-4">
                     <h2 className="text-sm font-bold text-dark-blue-grey flex items-center gap-2">
                         <span className="w-2 h-2 rounded-full bg-main-orange"></span>
                         {lang === "ca" ? "Dates" : "Fechas"}
@@ -180,7 +180,7 @@ export default function AltaGuiaPorcinoPage() {
                 </div>
 
                 {/* 4. Transporte (Opcional) */}
-                <div className="bg-white rounded-2xl shadow-sm p-4 flex flex-col gap-4">
+                <div className="bg-card rounded-2xl shadow-sm p-4 flex flex-col gap-4">
                     <h2 className="text-sm font-bold text-dark-blue-grey flex items-center gap-2">
                         <span className="w-2 h-2 rounded-full bg-surface-variant"></span>
                         {lang === "ca" ? "Transport (Opcional)" : "Transporte (Opcional)"}
@@ -235,7 +235,7 @@ export default function AltaGuiaPorcinoPage() {
 
             {/* Botones */}
             {!isReadOnly && (
-                <div className="fixed bottom-0 left-0 right-0 px-4 py-4 bg-white border-t border-surface-variant flex gap-3 z-40">
+                <div className="fixed bottom-0 left-0 right-0 px-4 py-4 bg-card border-t border-surface-variant flex gap-3 z-40">
                     <button onClick={handleGuardarBorrador} className="w-12 h-12 shrink-0 flex items-center justify-center border-2 border-main-orange text-main-orange rounded-xl hover:bg-main-orange/10">
                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" /></svg>
                     </button>
@@ -246,7 +246,7 @@ export default function AltaGuiaPorcinoPage() {
             )}
 
             {isReadOnly && (
-                <div className="fixed bottom-0 left-0 right-0 px-4 py-4 bg-white border-t border-surface-variant z-40">
+                <div className="fixed bottom-0 left-0 right-0 px-4 py-4 bg-card border-t border-surface-variant z-40">
                     <button onClick={() => window.history.back()} className="w-full bg-surface-variant text-dark-blue-grey rounded-xl py-3 text-sm font-semibold">
                         {lang === "ca" ? "Tornar" : "Volver"}
                     </button>
@@ -255,7 +255,7 @@ export default function AltaGuiaPorcinoPage() {
 
             {mostrarConfirm && (
                 <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center px-4">
-                    <div className="bg-white rounded-2xl p-6 w-full max-w-sm">
+                    <div className="bg-card rounded-2xl p-6 w-full max-w-sm">
                         <h3 className="text-base font-bold text-dark-blue-grey mb-2">{lang === "ca" ? "Confirmar Guia" : "Confirmar Guía"}</h3>
                         <p className="text-sm text-blue-grey mb-4">{lang === "ca" ? "Vols registrar la guia al sistema de la Generalitat?" : "¿Quieres registrar la guía en el sistema?"}</p>
                         <div className="flex gap-3 mt-5">

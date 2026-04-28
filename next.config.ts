@@ -15,6 +15,11 @@ const withPWA = withPWAInit({
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   turbopack: {},
+  logging: {
+    fetches: {
+      fullUrl: false,
+    },
+  },
 };
 
 export default withPWA(nextConfig);
