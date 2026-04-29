@@ -60,6 +60,16 @@ function sanitizeArg(arg: unknown): unknown {
     return arg;
 }
 
+
+// Oculta las credenciales en los logs
+
+export function maskPartial(value: string, visibleStart = 2, visibleEnd = 2): string {
+    if (!value || value.length <= visibleStart + visibleEnd) return "***";
+    const start = value.slice(0, visibleStart);
+    const end = value.slice(-visibleEnd);
+    return `${start}***${end}`;
+}
+
 export const secureLog = {
     info:  (...args: unknown[]) => console.log(...args.map(sanitizeArg)),
     warn:  (...args: unknown[]) => console.warn(...args.map(sanitizeArg)),

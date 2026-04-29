@@ -13,12 +13,7 @@ export async function validateCredentials(
     if (!response.ok) throw new Error("network");
 
     const data = await response.json();
-
-    if (data.errors && data.errors.length > 0) {
-      return false;
-    }
-
-    return true;
+    return data.valid === true;
   } catch {
     throw new Error("network");
   }

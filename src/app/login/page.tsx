@@ -123,7 +123,7 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {/* Contraseña */}
+        {/* Contraseña de Mobilidad */}
         <div className="mb-4">
           <label className="text-xs font-semibold text-blue-grey uppercase tracking-wide mb-1 block">
             {t("login.password")}
@@ -136,7 +136,7 @@ export default function LoginPage() {
               type={showPassword ? "text" : "password"}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder={lang === "es" ? "Tu contraseña" : "La teva contrasenya"}
+              placeholder={lang === "es" ? "Contraseña de Mobilidad" : "Contrasenya de Mobilitat"}
               autoComplete="current-password"
               className="flex-1 text-sm bg-transparent outline-none text-dark-blue-grey placeholder-blue-grey/50"
             />
