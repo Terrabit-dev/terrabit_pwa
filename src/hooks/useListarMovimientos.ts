@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { guardarValorAutocomplete } from "@/lib/storage/historial";
 import {
     LISTAR_MOVS_FILTROS_INICIAL,
     type ListarMovimientosFiltros,
@@ -47,6 +48,9 @@ export function useListarMovimientos(): UseListarMovimientosReturn {
         if (result.exito) {
             setLista(result.movimientos ?? []);
             setError(null);
+            if (filtros.explotacioDestinacio) {
+                await guardarValorAutocomplete("codi_rega", filtros.explotacioDestinacio);
+            }
         } else {
             setError(result.error ?? "Error desconocido");
             setConsultaIniciada(false);

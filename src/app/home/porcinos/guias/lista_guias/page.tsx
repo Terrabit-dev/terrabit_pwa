@@ -27,12 +27,12 @@ export default function ListaGuiasPorcinosPage() {
 
     const [fechaISO, setFechaISO] = useState("");
     const [horaStr, setHoraStr]   = useState("");
-    const [sugRegas, setSugRegas] = useState<string[]>([]); // NUEVO ESTADO PARA SUGERENCIAS
+    const [sugRegas, setSugRegas] = useState<string[]>([]);
 
     // Cargar sugerencias al montar
     useEffect(() => {
         const cargarSugerencias = async () => {
-            const regas = await obtenerHistorialAutocomplete("porcinos_rega");
+            const regas = await obtenerHistorialAutocomplete("codi_rega");
             setSugRegas(regas);
         };
         cargarSugerencias();
@@ -54,7 +54,7 @@ export default function ListaGuiasPorcinosPage() {
 
     const handleDeleteSugerenciaRega = async (valor: string) => {
         // 1. Lo borramos de la BD
-        await eliminarValorAutocomplete("porcinos_rega", valor);
+        await eliminarValorAutocomplete("codi_rega", valor);
         // 2. Lo borramos visualmente de la lista actual para que desaparezca al instante
         setSugRegas(prev => prev.filter(s => s !== valor));
     };

@@ -57,7 +57,7 @@ export function useListarGuiasPorcinos() {
             setError(null);
             //  Guardar REGA en el historial para autocompletado
             if (filtros.codiRega) {
-                await guardarValorAutocomplete("porcinos_rega", filtros.codiRega);
+                await guardarValorAutocomplete("codi_rega", filtros.codiRega);
             }
             // Guardar en caché cuando hay éxito
             sessionStorage.setItem("cacheListaGuiasPorcinos", JSON.stringify({

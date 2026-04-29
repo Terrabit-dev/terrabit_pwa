@@ -63,9 +63,6 @@ export default function AutocompleteInput({
             {/* Menú de sugerencias */}
             {show && filtered.length > 0 && (
                 <div className="absolute top-[100%] left-0 right-0 z-50 mt-1 bg-card border border-surface-variant dark:border-surface-variant/20 rounded-xl shadow-xl max-h-48 overflow-y-auto animate-in fade-in slide-in-from-top-2">
-                    <p className="px-3 py-2 text-[10px] font-bold text-blue-grey bg-surface/50 dark:bg-surface-variant/10 uppercase tracking-tighter">
-                        Sugerències recents
-                    </p>
                     {filtered.map((s, i) => (
                         <div key={i} className="flex items-center w-full border-t border-surface-variant/30 hover:bg-main-green/10 transition-colors group">
                             {/* Botón para seleccionar */}
