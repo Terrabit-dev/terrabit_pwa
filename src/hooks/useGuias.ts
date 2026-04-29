@@ -37,7 +37,7 @@ interface UseGuiasReturn {
     cargarDesdeHistorial:    (id: number | string) => Promise<void>;
 }
 
-const TIPO = "GUIA";
+const TIPO = "ALTA_GUIA_BOVINO";
 
 export function useGuias(): UseGuiasReturn {
     const [form, setForm]             = useState<GuiaForm>(GUIA_FORM_INICIAL);

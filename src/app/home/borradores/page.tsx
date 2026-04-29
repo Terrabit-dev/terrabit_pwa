@@ -25,24 +25,36 @@ interface DatosBorrador {
 
 function obtenerRutaFormulario(tipo: string): string {
     switch (tipo) {
-        case "IDENTIFICACION": return "/home/bovinos/gestion/identificacion_aplazada";
-        case "NACIMIENTO": return "/home/bovinos/gestion/nacimiento";
-        case "CORRECCION_SEXO": return "/home/bovinos/gestion/correccion_sexo";
-        case "FALLECIMIENTO": return "/home/bovinos/gestion/fallecimiento";
+        case "IDENTIFICACION":    return "/home/bovinos/gestion/identificacion_aplazada";
+        case "NACIMIENTO":        return "/home/bovinos/gestion/nacimiento";
+        case "CORRECCION_SEXO":   return "/home/bovinos/gestion/correccion_sexo";
+        case "FALLECIMIENTO":     return "/home/bovinos/gestion/fallecimiento";
         case "SOLICITUD_MATERIAL": return "/home/bovinos/material-categoria/solicitar";
         case "SOLICITUD_DUPLICADO": return "/home/bovinos/material-categoria/duplicado";
+        case "ALTA_GUIA_BOVINO":  return "/home/bovinos/guias-movimientos/alta_guia";
         case "ALTA_GUIA_PORCINO": return "/home/porcinos/guias/creacion";
-        default: return "/home";
+        default:                  return "/home";
     }
 }
 
-// NUEVO HELPER: Decide qué mostrar en función del tipo de trámite
+// Decide qué mostrar en función del tipo de trámite
 function obtenerResumenBorrador(tipo: string, datos: DatosBorrador, lang: string): string {
     const sinInfo = lang === "ca" ? "Sense informació" : "Sin información";
 
     switch (tipo) {
+
+        case "ALTA_GUIA_BOVINO": {
+            const origen = datos.explotacioOrigen as string | undefined;
+            const destino = datos.explotacioDestinacio as string | undefined;
+            if (origen && destino) {
+                return `${origen} → ${destino}`;
+            }
+            if (origen) return `${lang === "ca" ? "Origen" : "Origen"}: ${origen}`;
+            return lang === "ca" ? "Alta de guia bovina" : "Alta de guía bovina";
+        }
+
         case "NACIMIENTO":
-            // Asumo que la variable de la madre se llama identificadorMadre (ajusta si se llama distinto)
+
             const idMadre = datos.idMadre || datos.madre;
             return idMadre
                 ? `${lang === "ca" ? "Mare" : "Madre"}: ES${String(idMadre).replace('ES', '')}`
@@ -56,7 +68,7 @@ function obtenerResumenBorrador(tipo: string, datos: DatosBorrador, lang: string
                     return lang === "ca" ? materialObj.nombre : (materialObj.nombreEs || materialObj.nombre);
                 }
             }
-            // Fallback por si acaso el borrador estaba muy vacío
+
             return lang === "ca" ? "Sol·licitud de material" : "Solicitud de material";
 
         case "SOLICITUD_DUPLICADO":
@@ -66,6 +78,7 @@ function obtenerResumenBorrador(tipo: string, datos: DatosBorrador, lang: string
                 return `ES${String(primerId).replace('ES', '')}${extra}`;
             }
             return lang === "ca" ? "Sol·licitud de duplicats" : "Solicitud de duplicados";
+
 
         case "ALTA_GUIA_PORCINO":
             const codCat = datos.codiCategoria;
@@ -77,8 +90,9 @@ function obtenerResumenBorrador(tipo: string, datos: DatosBorrador, lang: string
             }
             return lang === "ca" ? "Alta de guia porcina" : "Alta de guía porcina";
 
+
         default:
-            // Por defecto (Fallecimiento, Corrección, Identificación) usamos el identificador normal
+
             return datos.identificador
                 ? `ES${String(datos.identificador).replace('ES', '')}`
                 : (lang === "ca" ? "Sense identificador" : "Sin identificador");
@@ -91,8 +105,7 @@ function filtrar(lista: Borrador[], busqueda: string, lang: string): Borrador[] 
 
     return lista.filter((r) => {
         const matchTipo = r.tipo.toLowerCase().includes(q);
-        // ANTES: const datos = r.datos as Record<string, any>;
-        // AHORA:
+
         const datos = r.datos as DatosBorrador;
 
         const resumenVisual = obtenerResumenBorrador(r.tipo, datos, lang).toLowerCase();
