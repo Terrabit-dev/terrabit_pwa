@@ -10,8 +10,9 @@ import SelectInput from "@/components/forms/SelectInput";
 import ErrorModal from "@/components/common/ErrorModal";
 import SuccessModal from "@/components/common/SuccessModal";
 import LoadingOverlay from "@/components/common/LoadingOverlay";
-import { useAltaGuias } from "@/hooks/useAltaGuiaPorcino";
-
+import AutocompleteInput from "@/components/forms/AutocompleteInput";
+import { obtenerHistorialAutocomplete, eliminarValorAutocomplete } from "@/lib/storage/historial";
+import { useAltaGuias } from "@/hooks/useAltaGuiaPorcino"; // Verifica que la ruta de importación sea correcta en tu proyecto
 import { CATEGORIAS_PORCINOS, MEDIOS_TRANSPORTE, validarAltaGuia } from "@/lib/porcinos/altaGuias";
 
 export default function AltaGuiaPorcinoPage() {
@@ -27,6 +28,41 @@ export default function AltaGuiaPorcinoPage() {
 
     const [errorLocal, setErrorLocal] = useState<string | null>(null);
     const [mostrarConfirm, setMostrarConfirm] = useState(false);
+
+    // ESTADOS PARA LAS SUGERENCIAS
+    const [sugExplotacionSalida, setSugExplotacionSalida] = useState<string[]>([]);
+    const [sugMatriculas, setSugMatriculas] = useState<string[]>([]);
+    const [sugNifs, setSugNifs] = useState<string[]>([]);
+    const [sugSirentra, setSugSirentra] = useState<string[]>([]);
+
+    // CARGAR SUGERENCIAS AL ENTRAR
+    useEffect(() => {
+        const cargarSugerencias = async () => {
+            setSugExplotacionSalida(await obtenerHistorialAutocomplete("explotacion_salida"));
+            setSugMatriculas(await obtenerHistorialAutocomplete("porcinos_matricula"));
+            setSugNifs(await obtenerHistorialAutocomplete("porcinos_nif_conductor"));
+            setSugSirentra(await obtenerHistorialAutocomplete("sirentra"));
+        };
+        cargarSugerencias();
+    }, []);
+
+    // FUNCIONES PARA BORRAR SUGERENCIAS ("La X")
+    const handleDeleteExplotacionSalida = async (val: string) => {
+        await eliminarValorAutocomplete("explotacion_salida", val);
+        setSugExplotacionSalida(prev => prev.filter(s => s !== val));
+    };
+    const handleDeleteMatricula = async (val: string) => {
+        await eliminarValorAutocomplete("porcinos_matricula", val);
+        setSugMatriculas(prev => prev.filter(s => s !== val));
+    };
+    const handleDeleteNif = async (val: string) => {
+        await eliminarValorAutocomplete("porcinos_nif_conductor", val);
+        setSugNifs(prev => prev.filter(s => s !== val));
+    };
+    const handleDeleteSirentra = async (val: string) => {
+        await eliminarValorAutocomplete("sirentra", val);
+        setSugSirentra(prev => prev.filter(s => s !== val));
+    };
 
     useEffect(() => {
         const draftId = searchParams.get("draftId");
@@ -63,7 +99,6 @@ export default function AltaGuiaPorcinoPage() {
 
     return (
         <div className="min-h-screen bg-surface pointer-events-auto">
-            {/* Color accent orange */}
             <TopBar title={lang === "ca" ? "Crear Guia" : "Crear Guía"} onMenuClick={toggle} accentColor="orange" showBack />
 
             <div className="px-4 py-5 flex flex-col gap-4 pb-24">
@@ -97,24 +132,23 @@ export default function AltaGuiaPorcinoPage() {
                         <FormField label={lang === "ca" ? "Explotació d'Entrada *" : "Explotación de Entrada *"}>
                             <input
                                 type="text"
-                                value={form.explotacioSortida}
-                                onChange={(e) => update({ explotacioSortida: e.target.value.toUpperCase() })}
-                                className="w-full border border-surface-variant rounded-xl px-3 py-2.5 text-sm uppercase placeholder-normal"
+                                value={form.explotacioEntrada}
+                                onChange={(e) => update({ explotacioEntrada: e.target.value.toUpperCase() })}
+                                className="w-full border border-surface-variant rounded-xl px-3 py-2.5 text-sm uppercase placeholder-normal focus:border-main-orange outline-none"
                                 placeholder="ES..."
                             />
                         </FormField>
                     </div>
 
                     <div className={isReadOnly ? "opacity-70 pointer-events-none" : ""}>
-                        <FormField label={lang === "ca" ? "Explotació de Sortida *" : "Explotación de Salida *"}>
-                            <input
-                                type="text"
-                                value={form.explotacioEntrada}
-                                onChange={(e) => update({ explotacioEntrada: e.target.value.toUpperCase() })}
-                                className="w-full border border-surface-variant rounded-xl px-3 py-2.5 text-sm uppercase placeholder-normal"
-                                placeholder="ES..."
-                            />
-                        </FormField>
+                        <AutocompleteInput
+                            label={lang === "ca" ? "Explotació de Sortida *" : "Explotación de Salida *"}
+                            value={form.explotacioSortida}
+                            onChange={(val) => update({ explotacioSortida: val.toUpperCase() })}
+                            suggestions={sugExplotacionSalida}
+                            onDeleteSuggestion={handleDeleteExplotacionSalida}
+                            placeholder="ES..."
+                        />
                     </div>
                 </div>
 
@@ -142,7 +176,7 @@ export default function AltaGuiaPorcinoPage() {
                                 type="number"
                                 value={form.numAnimals}
                                 onChange={(e) => update({ numAnimals: e.target.value })}
-                                className="w-full border border-surface-variant rounded-xl px-3 py-2.5 text-sm"
+                                className="w-full border border-surface-variant rounded-xl px-3 py-2.5 text-sm focus:border-main-orange outline-none"
                                 min="1"
                             />
                         </FormField>
@@ -162,7 +196,7 @@ export default function AltaGuiaPorcinoPage() {
                                 type="datetime-local"
                                 value={form.dataSortida}
                                 onChange={(e) => update({ dataSortida: e.target.value })}
-                                className="w-full border border-surface-variant rounded-xl px-3 py-2.5 text-sm"
+                                className="w-full border border-surface-variant rounded-xl px-3 py-2.5 text-sm focus:border-main-orange outline-none"
                             />
                         </FormField>
                     </div>
@@ -173,7 +207,7 @@ export default function AltaGuiaPorcinoPage() {
                                 type="datetime-local"
                                 value={form.dataArribada}
                                 onChange={(e) => update({ dataArribada: e.target.value })}
-                                className="w-full border border-surface-variant rounded-xl px-3 py-2.5 text-sm"
+                                className="w-full border border-surface-variant rounded-xl px-3 py-2.5 text-sm focus:border-main-orange outline-none"
                             />
                         </FormField>
                     </div>
@@ -199,36 +233,33 @@ export default function AltaGuiaPorcinoPage() {
 
                     <div className="grid grid-cols-2 gap-3">
                         <div className={isReadOnly ? "opacity-70 pointer-events-none" : ""}>
-                            <FormField label="Matrícula">
-                                <input
-                                    type="text"
-                                    value={form.matricula}
-                                    onChange={(e) => update({ matricula: e.target.value.toUpperCase() })}
-                                    className="w-full border border-surface-variant rounded-xl px-3 py-2.5 text-sm uppercase"
-                                />
-                            </FormField>
+                            <AutocompleteInput
+                                label="Matrícula"
+                                value={form.matricula || ""}
+                                onChange={(val) => update({ matricula: val.toUpperCase() })}
+                                suggestions={sugMatriculas}
+                                onDeleteSuggestion={handleDeleteMatricula}
+                            />
                         </div>
                         <div className={isReadOnly ? "opacity-70 pointer-events-none" : ""}>
-                            <FormField label="NIF Conductor">
-                                <input
-                                    type="text"
-                                    value={form.nifConductor}
-                                    onChange={(e) => update({ nifConductor: e.target.value.toUpperCase() })}
-                                    className="w-full border border-surface-variant rounded-xl px-3 py-2.5 text-sm uppercase"
-                                />
-                            </FormField>
+                            <AutocompleteInput
+                                label="NIF Conductor"
+                                value={form.nifConductor || ""}
+                                onChange={(val) => update({ nifConductor: val.toUpperCase() })}
+                                suggestions={sugNifs}
+                                onDeleteSuggestion={handleDeleteNif}
+                            />
                         </div>
                     </div>
 
                     <div className={isReadOnly ? "opacity-70 pointer-events-none" : ""}>
-                        <FormField label="Codi Sirentra (Opcional)">
-                            <input
-                                type="text"
-                                value={form.codiSirentra}
-                                onChange={(e) => update({ codiSirentra: e.target.value })}
-                                className="w-full border border-surface-variant rounded-xl px-3 py-2.5 text-sm"
-                            />
-                        </FormField>
+                        <AutocompleteInput
+                            label="Codi Sirentra (Opcional)"
+                            value={form.codiSirentra || ""}
+                            onChange={(val) => update({ codiSirentra: val })}
+                            suggestions={sugSirentra}
+                            onDeleteSuggestion={handleDeleteSirentra}
+                        />
                     </div>
                 </div>
             </div>
@@ -236,7 +267,7 @@ export default function AltaGuiaPorcinoPage() {
             {/* Botones */}
             {!isReadOnly && (
                 <div className="fixed bottom-0 left-0 right-0 px-4 py-4 bg-card border-t border-surface-variant flex gap-3 z-40">
-                    <button onClick={handleGuardarBorrador} className="w-12 h-12 shrink-0 flex items-center justify-center border-2 border-main-orange text-main-orange rounded-xl hover:bg-main-orange/10">
+                    <button onClick={handleGuardarBorrador} className="w-12 h-12 shrink-0 flex items-center justify-center border-2 border-main-orange text-main-orange rounded-xl hover:bg-main-orange/10 transition-colors">
                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" /></svg>
                     </button>
                     <button onClick={handleEnviar} disabled={enviando || !esValido} className="flex-1 bg-main-orange text-white rounded-xl py-3 text-sm font-semibold disabled:opacity-40 transition-opacity shadow-sm">
@@ -247,7 +278,7 @@ export default function AltaGuiaPorcinoPage() {
 
             {isReadOnly && (
                 <div className="fixed bottom-0 left-0 right-0 px-4 py-4 bg-card border-t border-surface-variant z-40">
-                    <button onClick={() => window.history.back()} className="w-full bg-surface-variant text-dark-blue-grey rounded-xl py-3 text-sm font-semibold">
+                    <button onClick={() => window.history.back()} className="w-full bg-surface-variant text-dark-blue-grey rounded-xl py-3 text-sm font-semibold hover:bg-surface transition-colors">
                         {lang === "ca" ? "Tornar" : "Volver"}
                     </button>
                 </div>
@@ -255,12 +286,12 @@ export default function AltaGuiaPorcinoPage() {
 
             {mostrarConfirm && (
                 <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center px-4">
-                    <div className="bg-card rounded-2xl p-6 w-full max-w-sm">
+                    <div className="bg-card rounded-2xl p-6 w-full max-w-sm animate-scaleIn">
                         <h3 className="text-base font-bold text-dark-blue-grey mb-2">{lang === "ca" ? "Confirmar Guia" : "Confirmar Guía"}</h3>
                         <p className="text-sm text-blue-grey mb-4">{lang === "ca" ? "Vols registrar la guia al sistema de la Generalitat?" : "¿Quieres registrar la guía en el sistema?"}</p>
                         <div className="flex gap-3 mt-5">
-                            <button onClick={() => setMostrarConfirm(false)} className="flex-1 border border-surface-variant text-blue-grey rounded-xl py-2.5 text-sm font-medium">{t("common.btn_cancel")}</button>
-                            <button onClick={() => { setMostrarConfirm(false); enviar(); }} className="flex-1 bg-main-orange text-white rounded-xl py-2.5 text-sm font-semibold">Confirmar</button>
+                            <button onClick={() => setMostrarConfirm(false)} className="flex-1 border border-surface-variant text-blue-grey hover:bg-surface-variant/50 rounded-xl py-2.5 text-sm font-medium transition-colors">{t("common.btn_cancel")}</button>
+                            <button onClick={() => { setMostrarConfirm(false); enviar(); }} className="flex-1 bg-main-orange text-white hover:opacity-90 rounded-xl py-2.5 text-sm font-semibold transition-opacity">Confirmar</button>
                         </div>
                     </div>
                 </div>

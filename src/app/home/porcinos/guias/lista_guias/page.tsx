@@ -8,8 +8,8 @@ import { useI18n } from "@/hooks/useI18n";
 import FormField from "@/components/forms/FormField";
 import DateInputDMY from "@/components/forms/DateInputDMY";
 import LoadingOverlay from "@/components/common/LoadingOverlay";
-import AutocompleteInput from "@/components/forms/AutocompleteInput"; // NUEVO IMPORT
-import { obtenerHistorialAutocomplete, eliminarValorAutocomplete } from "@/lib/storage/historial"; // NUEVO IMPORT
+import AutocompleteInput from "@/components/forms/AutocompleteInput";
+import { obtenerHistorialAutocomplete, eliminarValorAutocomplete } from "@/lib/storage/historial";
 import { useListarGuiasPorcinos } from "@/hooks/useListarGuiasPorcinos";
 import { apiFormatToDisplayFecha, apiFormatToDisplayHora, type GuiaPorcino } from "@/lib/porcinos/listarGuiasPorcinos";
 
