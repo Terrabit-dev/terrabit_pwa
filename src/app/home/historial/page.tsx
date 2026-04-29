@@ -9,30 +9,49 @@ import { obtenerHistorial, eliminarHistorialMultiple, type HistorialEntry } from
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-// Mapeamos el 'tipo' guardado a la ruta real de tu aplicación
 function obtenerRutaFormulario(tipo: string): string {
     switch (tipo) {
-        case "IDENTIFICACION":return "/home/bovinos/gestion/identificacion_aplazada";
-        case "NACIMIENTO":return "/home/bovinos/gestion/nacimiento";
-        case "CORRECCION_SEXO":return "/home/bovinos/gestion/correccion_sexo";
-        case "FALLECIMIENTO":return "/home/bovinos/gestion/fallecimiento";
-        case "SOLICITUD_MATERIAL":return "/home/bovinos/material-categoria/solicitar";
-        case "SOLICITUD_DUPLICADO":return "/home/bovinos/material-categoria/duplicado";
-        case "EMISION_GUIA_PORCINO":return "/home/porcinos/guias/lista_guias/editar";
-        case "ALTA_GUIA_PORCINO": return "/home/porcinos/guias/creacion";
+        case "IDENTIFICACION":                 return "/home/bovinos/gestion/identificacion_aplazada";
+        case "NACIMIENTO":                     return "/home/bovinos/gestion/nacimiento";
+        case "CORRECCION_SEXO":                return "/home/bovinos/gestion/correccion_sexo";
+        case "FALLECIMIENTO":                  return "/home/bovinos/gestion/fallecimiento";
+        case "SOLICITUD_MATERIAL":             return "/home/bovinos/material-categoria/solicitar";
+        case "SOLICITUD_DUPLICADO":            return "/home/bovinos/material-categoria/duplicado";
+        case "ALTA_GUIA_BOVINO":               return "/home/bovinos/guias-movimientos/alta_guia";
+        case "CONFIRMAR_GUIA":                 return "/home/bovinos/guias-movimientos/confirmar_guia";
+        case "CONFIRMAR_MOVIMIENTO":           return "/home/bovinos/guias-movimientos/confirmar_movimiento";
+        case "ALTA_GUIA_PORCINO":              return "/home/porcinos/guias/creacion";
+        case "EMISION_GUIA_PORCINO":           return "/home/porcinos/guias/lista_guias/editar";
         case "CONFIRMACION_MOVIMIENTO_PORCINO": return "/home/porcinos/movimientos/lista_movimientos/confirmar";
-        default:
-            return "/home";
+        default:                               return "/home";
     }
 }
 
-// Filtramos por el tipo o por el resumen guardado
-function filtrar(lista: HistorialEntry[], busqueda: string): HistorialEntry[] {
+function obtenerEtiquetaTipo(tipo: string, lang: string): string {
+    const ca = lang === "ca";
+    switch (tipo) {
+        case "NACIMIENTO":                      return ca ? "Naixement"                   : "Nacimiento";
+        case "IDENTIFICACION":                  return ca ? "Identificació"               : "Identificación";
+        case "CORRECCION_SEXO":                 return ca ? "Correcció de sexe"           : "Corrección de sexo";
+        case "FALLECIMIENTO":                   return ca ? "Defunció"                    : "Fallecimiento";
+        case "SOLICITUD_MATERIAL":              return ca ? "Sol·licitud de material"     : "Solicitud de material";
+        case "SOLICITUD_DUPLICADO":             return ca ? "Sol·licitud de duplicat"     : "Solicitud de duplicado";
+        case "ALTA_GUIA_BOVINO":                return ca ? "Alta de guia bovina"         : "Alta de guía bovina";
+        case "CONFIRMAR_GUIA":                  return ca ? "Confirmar guia"              : "Confirmar guía";
+        case "CONFIRMAR_MOVIMIENTO":            return ca ? "Confirmar moviment"          : "Confirmar movimiento";
+        case "ALTA_GUIA_PORCINO":               return ca ? "Alta de guia porcina"        : "Alta de guía porcina";
+        case "EMISION_GUIA_PORCINO":            return ca ? "Emissió de guia porcina"     : "Emisión de guía porcina";
+        case "CONFIRMACION_MOVIMIENTO_PORCINO": return ca ? "Confirmació moviment porcí"  : "Confirmación movimiento porcino";
+        default:                                return tipo.replace(/_/g, " ");
+    }
+}
+
+function filtrar(lista: HistorialEntry[], busqueda: string, lang: string): HistorialEntry[] {
     if (!busqueda.trim()) return lista;
     const q = busqueda.toLowerCase();
     return lista.filter((r) =>
         (r.resumen && r.resumen.toLowerCase().includes(q)) ||
-        (r.tipo && r.tipo.toLowerCase().includes(q))
+        obtenerEtiquetaTipo(r.tipo, lang).toLowerCase().includes(q)
     );
 }
 
@@ -51,7 +70,7 @@ export default function HistorialPage() {
     const [isEditing, setIsEditing] = useState(false);
     const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
 
-    const listaFiltrada = filtrar(lista, busqueda);
+    const listaFiltrada = filtrar(lista, busqueda, lang);
 
     async function cargarHistorial() {
         setCargando(true);
@@ -72,7 +91,6 @@ export default function HistorialPage() {
         cargarHistorial();
     }, []);
 
-    // Funciones de Selección Múltiple
     const toggleEdit = () => {
         setIsEditing(!isEditing);
         setSelectedIds(new Set());
@@ -171,8 +189,6 @@ export default function HistorialPage() {
                 </div>
             </div>
 
-            {/* Loading y Errores... */}
-
             {/* Lista */}
             {!cargando && !error && (
                 <div className="px-4 pb-6 flex flex-col gap-3 mt-2">
@@ -185,7 +201,6 @@ export default function HistorialPage() {
                                 onClick={() => handleVerDetalle(registro)}
                                 className={`bg-card rounded-2xl p-4 shadow-sm border transition-all duration-200 flex items-center gap-3 ${isEditing ? "cursor-pointer" : ""} ${isSelected ? "border-main-green bg-main-green/5" : "border-surface-variant"}`}
                             >
-                                {/* Checkbox animado */}
                                 {isEditing && (
                                     <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-colors ${isSelected ? "bg-main-green border-main-green text-white" : "border-surface-variant"}`}>
                                         {isSelected && <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
@@ -196,7 +211,7 @@ export default function HistorialPage() {
                                     <div className="flex justify-between items-start">
                                         <div>
                                             <span className="text-[10px] font-bold uppercase tracking-wider text-main-green bg-main-green/10 px-2 py-1 rounded-md">
-                                                {registro.tipo.replace("_", " ")}
+                                                {obtenerEtiquetaTipo(registro.tipo, lang)}
                                             </span>
                                             <h3 className="text-sm font-bold text-dark-blue-grey mt-2 truncate">
                                                 {registro.resumen}
