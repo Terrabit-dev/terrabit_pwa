@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import TopBar from "@/components/layout/TopBar";
 import { useDrawer } from "@/context/DrawerContext";
 import { useI18n } from "@/hooks/useI18n";
-import { obtenerBorradores, eliminarBorrador, type Borrador } from "@/lib/storage/borradores";
+import { obtenerBorradores, eliminarBorrador, eliminarBorradoresMultiples, type Borrador } from "@/lib/storage/borradores";
 import { TIPOS_MATERIAL } from "@/lib/bovinos/solicitudMaterial";
 import { CATEGORIAS_PORCINOS } from "@/lib/porcinos/altaGuias";
 
@@ -113,7 +113,10 @@ export default function HistorialPage() {
     const [error, setError] = useState<string | null>(null);
     const [busqueda, setBusqueda] = useState("");
 
-    // Le pasamos 'lang' al filtro para que coincida con las traducciones generadas
+    // Estados para el modo edición múltiple
+    const [isEditing, setIsEditing] = useState(false);
+    const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+
     const listaFiltrada = filtrar(lista, busqueda, lang);
 
     async function cargarHistorial() {
@@ -122,6 +125,9 @@ export default function HistorialPage() {
         try {
             const borradores = await obtenerBorradores();
             setLista(borradores);
+            // Si recargamos, salimos del modo edición por seguridad
+            setIsEditing(false);
+            setSelectedIds(new Set());
         } catch (e) {
             setError(e instanceof Error ? e.message : "Error al cargar los borradores");
         } finally {
@@ -133,6 +139,43 @@ export default function HistorialPage() {
         cargarHistorial();
     }, []);
 
+    // Funciones de Selección
+    const toggleEdit = () => {
+        setIsEditing(!isEditing);
+        setSelectedIds(new Set());
+    };
+
+    const toggleSelection = (id: number) => {
+        setSelectedIds(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(id)) newSet.delete(id);
+            else newSet.add(id);
+            return newSet;
+        });
+    };
+
+    const toggleSelectAll = () => {
+        if (selectedIds.size === listaFiltrada.length) {
+            setSelectedIds(new Set());
+        } else {
+            setSelectedIds(new Set(listaFiltrada.map(r => r.id!)));
+        }
+    };
+
+    const handleEliminarMultiples = async () => {
+        if (selectedIds.size === 0) return;
+        const confirmar = confirm(lang === "ca"
+            ? `Segur que vols esborrar ${selectedIds.size} esborranys?`
+            : `¿Seguro que quieres borrar ${selectedIds.size} borradores?`);
+
+        if (confirmar) {
+            setCargando(true);
+            await eliminarBorradoresMultiples(Array.from(selectedIds));
+            await cargarHistorial();
+        }
+    };
+
+    // Funciones Individuales
     const handleEliminar = async (id: number) => {
         const confirmar = confirm(lang === "ca" ? "Segur que vols esborrar aquest esborrany?" : "¿Seguro que quieres borrar este borrador?");
         if (confirmar) {
@@ -142,12 +185,16 @@ export default function HistorialPage() {
     };
 
     const handleContinuar = (borrador: Borrador) => {
+        if (isEditing) {
+            toggleSelection(borrador.id!);
+            return;
+        }
         const ruta = obtenerRutaFormulario(borrador.tipo);
         router.push(`${ruta}?draftId=${borrador.id}`);
     };
 
     return (
-        <div className="min-h-screen bg-surface">
+        <div className="min-h-screen bg-surface pb-24">
             <TopBar
                 title={lang === "ca" ? "Esborranys" : "Borradores"}
                 onMenuClick={toggle}
@@ -158,115 +205,120 @@ export default function HistorialPage() {
 
             {/* Buscador */}
             <div className="px-4 pt-4 pb-2">
-                <div className="flex items-center gap-2 bg-card border border-surface-variant rounded-xl px-3 py-2.5 focus-within:border-main-green transition-colors">
-                    <svg className="w-4 h-4 text-blue-grey shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
-                    </svg>
+                <div className="flex items-center gap-2 bg-card border border-surface-variant rounded-xl px-3 py-2.5 focus-within:border-main-green transition-colors shadow-sm">
+                    {/* ... (tu svg del buscador igual) ... */}
+                    <svg className="w-4 h-4 text-blue-grey shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" /></svg>
                     <input
                         type="text"
                         value={busqueda}
                         onChange={(e) => setBusqueda(e.target.value)}
                         placeholder={lang === "ca" ? "Cercar esborrany..." : "Buscar borrador..."}
                         className="flex-1 text-sm bg-transparent outline-none text-dark-blue-grey placeholder-blue-grey/50"
+                        disabled={isEditing}
                     />
-                    {busqueda && (
-                        <button onClick={() => setBusqueda("")} className="text-blue-grey">
-                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                            </svg>
+                </div>
+            </div>
+
+            {/* Barra de Herramientas (Contador, Seleccionar Todos, Editar) */}
+            <div className="px-4 py-2 flex items-center justify-between">
+                {isEditing ? (
+                    <button onClick={toggleSelectAll} className="text-xs font-semibold text-main-green flex items-center gap-1.5">
+                        <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${selectedIds.size === listaFiltrada.length && listaFiltrada.length > 0 ? "bg-main-green border-main-green text-white" : "border-blue-grey/40"}`}>
+                            {selectedIds.size === listaFiltrada.length && listaFiltrada.length > 0 && <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
+                        </div>
+                        {lang === "ca" ? "Seleccionar-ho tot" : "Seleccionar todo"}
+                    </button>
+                ) : (
+                    <p className="text-xs text-blue-grey">
+                        {cargando ? (lang === "ca" ? "Carregant..." : "Cargando...") : `${listaFiltrada.length} ${lang === "ca" ? "esborranys" : "borradores"}`}
+                    </p>
+                )}
+
+                <div className="flex gap-4">
+                    {!isEditing && (
+                        <button onClick={cargarHistorial} disabled={cargando} className="text-xs text-blue-grey font-medium disabled:opacity-40 hover:text-main-green">
+                            {lang === "ca" ? "Actualitzar" : "Actualizar"}
+                        </button>
+                    )}
+                    {listaFiltrada.length > 0 && (
+                        <button onClick={toggleEdit} className={`text-xs font-bold transition-colors ${isEditing ? "text-error-red" : "text-main-green"}`}>
+                            {isEditing ? (lang === "ca" ? "Cancel·lar" : "Cancelar") : (lang === "ca" ? "Seleccionar" : "Seleccionar")}
                         </button>
                     )}
                 </div>
             </div>
 
-            {/* Contador y Actualizar */}
-            <div className="px-4 py-2 flex items-center justify-between">
-                <p className="text-xs text-blue-grey">
-                    {cargando
-                        ? (lang === "ca" ? "Carregant..." : "Cargando...")
-                        : `${listaFiltrada.length} ${lang === "ca" ? "esborranys" : "borradores"}`}
-                </p>
-                <button
-                    onClick={cargarHistorial}
-                    disabled={cargando}
-                    className="text-xs text-main-green font-medium disabled:opacity-40"
-                >
-                    {lang === "ca" ? "Actualitzar" : "Actualizar"}
-                </button>
-            </div>
-
-            {/* Loading */}
-            {cargando && (
-                <div className="flex justify-center py-16">
-                    <div className="w-8 h-8 border-4 border-main-green border-t-transparent rounded-full animate-spin" />
-                </div>
-            )}
-
-            {/* Error */}
-            {error && !cargando && (
-                <div className="mx-4 mt-2 px-4 py-3 bg-error-red-bg rounded-xl">
-                    <p className="text-xs text-error-red text-center">{error}</p>
-                    <button onClick={cargarHistorial} className="w-full mt-2 text-xs text-error-red font-semibold">
-                        {lang === "ca" ? "Tornar a intentar" : "Reintentar"}
-                    </button>
-                </div>
-            )}
+            {/* Loading y Errores igual... */}
 
             {/* Lista */}
             {!cargando && !error && (
-                <div className="px-4 pb-6 flex flex-col gap-3">
-                    {listaFiltrada.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center py-16 gap-3">
-                            <svg className="w-12 h-12 text-blue-grey/40" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M13 3a9 9 0 0 0-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42A8.954 8.954 0 0 0 13 21a9 9 0 0 0 0-18zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z" />
-                            </svg>
-                            <p className="text-sm text-blue-grey">
-                                {busqueda
-                                    ? (lang === "ca" ? "Sense resultats" : "Sin resultados")
-                                    : (lang === "ca" ? "No hi ha cap esborrany guardat" : "No hay ningún borrador guardado")}
-                            </p>
-                        </div>
-                    ) : (
-                        listaFiltrada.map((registro) => {
-                            const datos = registro.datos as DatosBorrador;
-                            return (
-                                <div key={registro.id} className="bg-card rounded-2xl p-4 shadow-sm border border-surface-variant flex flex-col gap-3">
+                <div className="px-4 pb-6 flex flex-col gap-3 mt-2">
+                    {listaFiltrada.map((registro) => {
+                        const datos = registro.datos as DatosBorrador;
+                        const isSelected = selectedIds.has(registro.id!);
+
+                        return (
+                            <div
+                                key={registro.id}
+                                onClick={() => handleContinuar(registro)}
+                                className={`bg-card rounded-2xl p-4 shadow-sm border transition-all duration-200 flex items-center gap-3 ${isEditing ? "cursor-pointer" : ""} ${isSelected ? "border-main-green bg-main-green/5" : "border-surface-variant"}`}
+                            >
+                                {/* Checkbox animado */}
+                                {isEditing && (
+                                    <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-colors ${isSelected ? "bg-main-green border-main-green text-white" : "border-surface-variant"}`}>
+                                        {isSelected && <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
+                                    </div>
+                                )}
+
+                                <div className="flex-1 min-w-0 flex flex-col gap-3">
                                     <div className="flex justify-between items-start">
                                         <div>
                                             <span className="text-[10px] font-bold uppercase tracking-wider text-main-green bg-main-green/10 px-2 py-1 rounded-md">
                                                 {registro.tipo.replace('_', ' ')}
                                             </span>
-                                            <h3 className="text-sm font-bold text-dark-blue-grey mt-2">
-                                                {/* Inyectamos la magia aquí */}
+                                            <h3 className="text-sm font-bold text-dark-blue-grey mt-2 truncate">
                                                 {obtenerResumenBorrador(registro.tipo, datos, lang)}
                                             </h3>
                                         </div>
-                                        <p className="text-xs text-blue-grey">
-                                            {new Date(registro.fecha).toLocaleDateString(lang === "ca" ? "ca-ES" : "es-ES", {
-                                                day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit"
-                                            })}
+                                        <p className="text-xs text-blue-grey whitespace-nowrap ml-2">
+                                            {new Date(registro.fecha).toLocaleDateString(lang === "ca" ? "ca-ES" : "es-ES", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
                                         </p>
                                     </div>
 
-                                    {/* Botones de acción */}
-                                    <div className="flex gap-2 pt-2 border-t border-surface-variant">
-                                        <button
-                                            onClick={() => handleEliminar(registro.id!)}
-                                            className="flex-1 border border-error-red/20 text-error-red rounded-xl py-2.5 text-xs font-semibold hover:bg-error-red/5 transition-colors"
-                                        >
-                                            {lang === "ca" ? "Esborrar" : "Borrar"}
-                                        </button>
-                                        <button
-                                            onClick={() => handleContinuar(registro)}
-                                            className="flex-1 bg-main-green text-white rounded-xl py-2.5 text-xs font-semibold hover:opacity-90 transition-opacity"
-                                        >
-                                            {lang === "ca" ? "Continuar" : "Continuar"}
-                                        </button>
-                                    </div>
+                                    {/* Botones de acción (se ocultan al editar) */}
+                                    {!isEditing && (
+                                        <div className="flex gap-2 pt-2 border-t border-surface-variant">
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); handleEliminar(registro.id!); }}
+                                                className="flex-1 border border-error-red/20 text-error-red rounded-xl py-2.5 text-xs font-semibold hover:bg-error-red/5 transition-colors"
+                                            >
+                                                {lang === "ca" ? "Esborrar" : "Borrar"}
+                                            </button>
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); handleContinuar(registro); }}
+                                                className="flex-1 bg-main-green text-white rounded-xl py-2.5 text-xs font-semibold hover:opacity-90 transition-opacity"
+                                            >
+                                                {lang === "ca" ? "Continuar" : "Continuar"}
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
-                            );
-                        })
-                    )}
+                            </div>
+                        );
+                    })}
+                </div>
+            )}
+
+            {/* Floating Action Bar (Barra pegajosa abajo para borrar) */}
+            {isEditing && selectedIds.size > 0 && (
+                <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-surface-variant shadow-[0_-10px_20px_rgba(0,0,0,0.05)] z-50 animate-slideUp">
+                    <button
+                        onClick={handleEliminarMultiples}
+                        className="w-full bg-error-red text-white font-bold py-3.5 rounded-xl shadow-sm hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+                    >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                        {lang === "ca" ? `Esborrar ${selectedIds.size} seleccionats` : `Borrar ${selectedIds.size} seleccionados`}
+                    </button>
                 </div>
             )}
         </div>

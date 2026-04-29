@@ -41,3 +41,9 @@ export async function eliminarBorrador(id: number): Promise<void> {
   const db = await getDB();
   await db.delete(STORE_BORRADORES, id);
 }
+export async function eliminarBorradoresMultiples(ids: number[]): Promise<void> {
+  const db = await getDB();
+  const tx = db.transaction(STORE_BORRADORES, 'readwrite');
+  await Promise.all(ids.map(id => tx.store.delete(id)));
+  await tx.done;
+}

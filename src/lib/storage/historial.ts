@@ -97,3 +97,9 @@ export async function eliminarValorAutocomplete(key: string, valor: string): Pro
   const existing: string[] = (await db.get(STORE_AUTOCOMPLETE, key)) ?? [];
   await db.put(STORE_AUTOCOMPLETE, existing.filter((v) => v !== valor), key);
 }
+export async function eliminarHistorialMultiple(ids: number[]): Promise<void> {
+  const db = await getDB();
+  const tx = db.transaction(STORE_HISTORIAL, 'readwrite');
+  await Promise.all(ids.map(id => tx.store.delete(id)));
+  await tx.done;
+}
