@@ -1,6 +1,6 @@
 "use client";
 
-import {useEffect, useState} from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import TopBar from "@/components/layout/TopBar";
 import { useDrawer } from "@/context/DrawerContext";
@@ -8,6 +8,8 @@ import { useI18n } from "@/hooks/useI18n";
 import FormField from "@/components/forms/FormField";
 import DateInputDMY from "@/components/forms/DateInputDMY";
 import LoadingOverlay from "@/components/common/LoadingOverlay";
+import AutocompleteInput from "@/components/forms/AutocompleteInput"; // NUEVO IMPORT
+import { obtenerHistorialAutocomplete, eliminarValorAutocomplete } from "@/lib/storage/historial"; // NUEVO IMPORT
 import { useListarGuiasPorcinos } from "@/hooks/useListarGuiasPorcinos";
 import { apiFormatToDisplayFecha, apiFormatToDisplayHora, type GuiaPorcino } from "@/lib/porcinos/listarGuiasPorcinos";
 
@@ -25,13 +27,23 @@ export default function ListaGuiasPorcinosPage() {
 
     const [fechaISO, setFechaISO] = useState("");
     const [horaStr, setHoraStr]   = useState("");
+    const [sugRegas, setSugRegas] = useState<string[]>([]); // NUEVO ESTADO PARA SUGERENCIAS
+
+    // Cargar sugerencias al montar
+    useEffect(() => {
+        const cargarSugerencias = async () => {
+            const regas = await obtenerHistorialAutocomplete("porcinos_rega");
+            setSugRegas(regas);
+        };
+        cargarSugerencias();
+    }, []);
+
     // Sincroniza los inputs de fecha visuales si venimos con datos de la caché
     useEffect(() => {
         if (filtros.fechaDisplay) {
             const parts = filtros.fechaDisplay.split(" ");
             if (parts.length === 2) {
                 const [d, m, y] = parts[0].split("/");
-
                 /* eslint-disable react-hooks/set-state-in-effect */
                 setFechaISO(`${y}-${m}-${d}`);
                 setHoraStr(parts[1]);
@@ -39,6 +51,13 @@ export default function ListaGuiasPorcinosPage() {
             }
         }
     }, [filtros.fechaDisplay]);
+
+    const handleDeleteSugerenciaRega = async (valor: string) => {
+        // 1. Lo borramos de la BD
+        await eliminarValorAutocomplete("porcinos_rega", valor);
+        // 2. Lo borramos visualmente de la lista actual para que desaparezca al instante
+        setSugRegas(prev => prev.filter(s => s !== valor));
+    };
 
     const actualizarFecha = (fISO: string, h: string) => {
         if (fISO && h) {
@@ -73,7 +92,6 @@ export default function ListaGuiasPorcinosPage() {
         seleccionarGuia(guia);
         if (typeof window !== "undefined") {
             sessionStorage.setItem(SESSION_KEY_GUIA_PORCINO, JSON.stringify(guia));
-            // NUEVO: Levantamos la bandera para saber que venimos de la lista
             sessionStorage.setItem("volverAListaPorcinos", "true");
         }
         router.push("/home/porcinos/guias/lista_guias/editar");
@@ -99,15 +117,16 @@ export default function ListaGuiasPorcinosPage() {
                     onHoraChange={handleHoraChange}
                     onConsultar={handleConsultar}
                     lang={lang}
+                    sugRegas={sugRegas}
+                    onDeleteSugerencia={handleDeleteSugerenciaRega}
                 />
             )}
 
+            {/* Resto del renderizado (Loading, Empty, Lista)... se queda igual */}
             {consultaIniciada && cargando && (
                 <div className="flex flex-col items-center justify-center py-20 gap-4">
                     <div className="w-12 h-12 rounded-full border-4 border-main-orange border-t-transparent animate-spin"/>
-                    <p className="text-sm text-blue-grey">
-                        {t("common.loading")}
-                    </p>
+                    <p className="text-sm text-blue-grey">{t("common.loading")}</p>
                 </div>
             )}
 
@@ -116,27 +135,16 @@ export default function ListaGuiasPorcinosPage() {
                     <svg className="w-12 h-12 text-blue-grey" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 3h.01"/>
                     </svg>
-                    <p className="text-sm text-blue-grey">
-                        {lang === "ca" ? "No s'han trobat guies" : "No se han encontrado guías"}
-                    </p>
-                    <button onClick={resetearConsulta} className="text-main-orange text-sm font-semibold">
-                        {lang === "ca" ? "Nova consulta" : "Nueva consulta"}
-                    </button>
+                    <p className="text-sm text-blue-grey">{lang === "ca" ? "No s'han trobat guies" : "No se han encontrado guías"}</p>
+                    <button onClick={resetearConsulta} className="text-main-orange text-sm font-semibold">{lang === "ca" ? "Nova consulta" : "Nueva consulta"}</button>
                 </div>
             )}
 
             {consultaIniciada && !cargando && lista.length > 0 && (
                 <div className="px-4 py-4 flex flex-col gap-3 pb-8">
-                    <p className="text-xs text-blue-grey pl-1">
-                        {lista.length} {lang === "ca" ? "guies trobades" : "guías encontradas"}
-                    </p>
+                    <p className="text-xs text-blue-grey pl-1">{lista.length} {lang === "ca" ? "guies trobades" : "guías encontradas"}</p>
                     {lista.map((guia, idx) => (
-                        <GuiaPorcinoCard
-                            key={`${guia.remo}-${idx}`}
-                            guia={guia}
-                            lang={lang}
-                            onEditar={() => handleEditar(guia)}
-                        />
+                        <GuiaPorcinoCard key={`${guia.remo}-${idx}`} guia={guia} lang={lang} onEditar={() => handleEditar(guia)} />
                     ))}
                 </div>
             )}
@@ -151,9 +159,11 @@ interface MiniFormularioProps {
     rega: string; fechaISO: string; horaStr: string; error: string | null;
     onRegaChange: (v: string) => void; onFechaChange: (v: string) => void;
     onHoraChange: (v: string) => void; onConsultar: () => void; lang: "es" | "ca";
+    sugRegas: string[];
+    onDeleteSugerencia: (val: string) => void;
 }
 
-function MiniFormulario({ rega, fechaISO, horaStr, error, onRegaChange, onFechaChange, onHoraChange, onConsultar, lang }: MiniFormularioProps) {
+function MiniFormulario({ rega, fechaISO, horaStr, error, onRegaChange, onFechaChange, onHoraChange, onConsultar, lang, sugRegas, onDeleteSugerencia }: MiniFormularioProps) {
     return (
         <div className="px-4 py-6">
             <div className="bg-card rounded-2xl shadow-sm p-5 flex flex-col gap-5">
@@ -168,9 +178,15 @@ function MiniFormulario({ rega, fechaISO, horaStr, error, onRegaChange, onFechaC
 
                 <div className="border-t border-surface-variant"/>
 
-                <FormField label={lang === "ca" ? "Codi REGA destí *" : "Código REGA destino *"}>
-                    <input type="text" value={rega} onChange={(e) => onRegaChange(e.target.value.toUpperCase())} className="w-full border border-surface-variant rounded-xl px-3 py-2.5 text-sm uppercase focus:border-main-orange" placeholder="ES..."/>
-                </FormField>
+                {/* AQUÍ REEMPLAZAMOS EL FORMFIELD POR EL NUEVO AUTOCOMPLETE */}
+                <AutocompleteInput
+                    label={lang === "ca" ? "Codi REGA destí *" : "Código REGA destino *"}
+                    value={rega}
+                    onChange={(val) => onRegaChange(val.toUpperCase())}
+                    suggestions={sugRegas}
+                    onDeleteSuggestion={onDeleteSugerencia}
+                    placeholder="ES..."
+                />
 
                 <div className="grid grid-cols-2 gap-3">
                     <FormField label={lang === "ca" ? "Data sortida *" : "Fecha salida *"}>

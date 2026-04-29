@@ -8,6 +8,7 @@ import {
     consultarGuiasPorcinos,
     validarFiltrosGuiasPorcinos,
 } from "@/lib/porcinos/listarGuiasPorcinos";
+import { guardarValorAutocomplete } from "@/lib/storage/historial";
 
 export function useListarGuiasPorcinos() {
     const [filtros, setFiltros] = useState<ListarGuiasPorcinosFiltros>(LISTAR_GUIAS_PORCINOS_FILTROS_INICIAL);
@@ -51,12 +52,14 @@ export function useListarGuiasPorcinos() {
     const cargarDatos = useCallback(async () => {
         setCargando(true);
         const result = await consultarGuiasPorcinos(filtros);
-
         if (result.exito) {
             setLista(result.guias ?? []);
             setError(null);
-
-            // NUEVO: Guardar en caché cuando hay éxito
+            //  Guardar REGA en el historial para autocompletado
+            if (filtros.codiRega) {
+                await guardarValorAutocomplete("porcinos_rega", filtros.codiRega);
+            }
+            // Guardar en caché cuando hay éxito
             sessionStorage.setItem("cacheListaGuiasPorcinos", JSON.stringify({
                 filtros,
                 lista: result.guias,
