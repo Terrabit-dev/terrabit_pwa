@@ -3,7 +3,7 @@
   "login": {
     "title": "Iniciar sessió",
     "nif": "NIF",
-    "password": "Contrasenya",
+    "password": "Contrasenya de Mobilitat",
     "btn_login": "Accedir",
     "btn_next": "Següent",
     "error_empty_fields": "Si us plau, omple tots els camps",

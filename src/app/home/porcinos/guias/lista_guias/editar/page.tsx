@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import TopBar from "@/components/layout/TopBar";
 import { useDrawer } from "@/context/DrawerContext";
@@ -9,8 +10,10 @@ import SelectInput from "@/components/forms/SelectInput";
 import ErrorModal from "@/components/common/ErrorModal";
 import SuccessModal from "@/components/common/SuccessModal";
 import LoadingOverlay from "@/components/common/LoadingOverlay";
+import AutocompleteInput from "@/components/forms/AutocompleteInput";
+import { obtenerHistorialAutocomplete, eliminarValorAutocomplete } from "@/lib/storage/historial";
 import { useEditarGuiaPorcinos } from "@/hooks/useEditarGuiaPorcinos";
-import { CATEGORIAS_PORCINOS } from "@/lib/porcinos/altaGuias"; // Reutilizamos el diccionario
+import { CATEGORIAS_PORCINOS } from "@/lib/porcinos/altaGuias";
 
 export default function EditarGuiaPorcinoPage() {
     const { toggle }  = useDrawer();
@@ -21,6 +24,35 @@ export default function EditarGuiaPorcinoPage() {
         form, enviando, exito, errorApi,
         update, enviar, cerrarExito, limpiarErrorApi
     } = useEditarGuiaPorcinos();
+
+    // Estados para almacenar las sugerencias de cada campo
+    const [sugTransportistas, setSugTransportistas] = useState<string[]>([]);
+    const [sugNifs, setSugNifs] = useState<string[]>([]);
+    const [sugMatriculas, setSugMatriculas] = useState<string[]>([]);
+
+    // Cargar las sugerencias al montar la pantalla
+    useEffect(() => {
+        const cargarSugerencias = async () => {
+            setSugTransportistas(await obtenerHistorialAutocomplete("transportista"));
+            setSugNifs(await obtenerHistorialAutocomplete("nif_conductor"));
+            setSugMatriculas(await obtenerHistorialAutocomplete("matricula"));
+        };
+        cargarSugerencias();
+    }, []);
+
+    //  Funciones para borrar sugerencias concretas
+    const handleDeleteTransportista = async (val: string) => {
+        await eliminarValorAutocomplete("transportista", val);
+        setSugTransportistas(prev => prev.filter(s => s !== val));
+    };
+    const handleDeleteNif = async (val: string) => {
+        await eliminarValorAutocomplete("nif_conductor", val);
+        setSugNifs(prev => prev.filter(s => s !== val));
+    };
+    const handleDeleteMatricula = async (val: string) => {
+        await eliminarValorAutocomplete("matricula", val);
+        setSugMatriculas(prev => prev.filter(s => s !== val));
+    };
 
     const mapIdiomas = (arr: { codigo: string; nombre: string; nombreEs?: string }[]) => arr.map(item => ({
         codigo: item.codigo,
@@ -104,39 +136,35 @@ export default function EditarGuiaPorcinoPage() {
                     </FormField>
                 </div>
 
-                {/* 4. Transporte (Obligatorios aquí) */}
                 <div className="bg-card rounded-2xl shadow-sm p-4 flex flex-col gap-4">
                     <h2 className="text-sm font-bold text-dark-blue-grey flex items-center gap-2">
                         <span className="w-2 h-2 rounded-full bg-main-orange"></span>
                         {lang === "ca" ? "Transport" : "Transporte"}
                     </h2>
 
-                    <FormField label={lang === "ca" ? "Transportista (codi ATES) *" : "Transportista (código ATES) *"}>
-                        <input
-                            type="text"
-                            value={form?.transportista || ""}
-                            onChange={(e) => update({ transportista: e.target.value.toUpperCase() })}
-                            className="w-full border border-surface-variant rounded-xl px-3 py-2.5 text-sm uppercase focus:border-main-orange outline-none"
-                        />
-                    </FormField>
+                    <AutocompleteInput
+                        label={lang === "ca" ? "Transportista (codi ATES) *" : "Transportista (código ATES) *"}
+                        value={form?.transportista || ""}
+                        onChange={(val) => update({ transportista: val.toUpperCase() })}
+                        suggestions={sugTransportistas}
+                        onDeleteSuggestion={handleDeleteTransportista}
+                    />
 
-                    <FormField label="NIF del conductor *">
-                        <input
-                            type="text"
-                            value={form?.responsable || ""}
-                            onChange={(e) => update({ responsable: e.target.value.toUpperCase() })}
-                            className="w-full border border-surface-variant rounded-xl px-3 py-2.5 text-sm uppercase focus:border-main-orange outline-none"
-                        />
-                    </FormField>
+                    <AutocompleteInput
+                        label="NIF del conductor *"
+                        value={form?.responsable || ""}
+                        onChange={(val) => update({ responsable: val.toUpperCase() })}
+                        suggestions={sugNifs}
+                        onDeleteSuggestion={handleDeleteNif}
+                    />
 
-                    <FormField label={lang === "ca" ? "Matrícula del Vehicle *" : "Matrícula del Vehículo *"}>
-                        <input
-                            type="text"
-                            value={form?.vehicle || ""}
-                            onChange={(e) => update({ vehicle: e.target.value.toUpperCase() })}
-                            className="w-full border border-surface-variant rounded-xl px-3 py-2.5 text-sm uppercase focus:border-main-orange outline-none"
-                        />
-                    </FormField>
+                    <AutocompleteInput
+                        label={lang === "ca" ? "Matrícula del Vehicle *" : "Matrícula del Vehículo *"}
+                        value={form?.vehicle || ""}
+                        onChange={(val) => update({ vehicle: val.toUpperCase() })}
+                        suggestions={sugMatriculas}
+                        onDeleteSuggestion={handleDeleteMatricula}
+                    />
                 </div>
             </div>
 

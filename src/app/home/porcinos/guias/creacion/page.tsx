@@ -7,12 +7,28 @@ import { useDrawer } from "@/context/DrawerContext";
 import { useI18n } from "@/hooks/useI18n";
 import FormField from "@/components/forms/FormField";
 import SelectInput from "@/components/forms/SelectInput";
+import DateInputDMY from "@/components/forms/DateInputDMY";
 import ErrorModal from "@/components/common/ErrorModal";
 import SuccessModal from "@/components/common/SuccessModal";
 import LoadingOverlay from "@/components/common/LoadingOverlay";
 import { useAltaGuias } from "@/hooks/useAltaGuiaPorcino";
-
 import { CATEGORIAS_PORCINOS, MEDIOS_TRANSPORTE, validarAltaGuia } from "@/lib/porcinos/altaGuias";
+
+// ─── Helper: combina YYYY-MM-DD + HH:mm → YYYY-MM-DDTHH:mm (formato interno del hook) ─
+function combineDateTime(date: string, time: string): string {
+    if (!date || !time) return "";
+    return `${date}T${time}`;
+}
+
+// ─── Helper: extrae la parte fecha (YYYY-MM-DD) de un datetime interno ─────────
+function getDatePart(dt: string): string {
+    return dt ? dt.split("T")[0] : "";
+}
+
+// ─── Helper: extrae la parte hora (HH:mm) de un datetime interno ──────────────
+function getTimePart(dt: string): string {
+    return dt ? (dt.split("T")[1] ?? "") : "";
+}
 
 export default function AltaGuiaPorcinoPage() {
     const { toggle }  = useDrawer();
@@ -41,10 +57,11 @@ export default function AltaGuiaPorcinoPage() {
         ? errorApi.tipo === "api" && errorApi.mensaje ? errorApi.mensaje : t("errors.network")
         : null;
 
-    const mapIdiomas = (arr: { codigo: string; nombre: string; nombreEs?: string }[]) => arr.map(item => ({
-        codigo: item.codigo,
-        nombre: lang === "ca" ? item.nombre : (item.nombreEs || item.nombre)
-    }));
+    const mapIdiomas = (arr: { codigo: string; nombre: string; nombreEs?: string }[]) =>
+        arr.map(item => ({
+            codigo: item.codigo,
+            nombre: lang === "ca" ? item.nombre : (item.nombreEs || item.nombre)
+        }));
 
     const handleGuardarBorrador = async () => {
         const guardado = await guardarBorradorActual();
@@ -61,9 +78,16 @@ export default function AltaGuiaPorcinoPage() {
         setMostrarConfirm(true);
     };
 
+    // ── Partes de fecha/hora derivadas del estado del formulario ────────────────
+    // No se usan estados locales separados: se derivan directamente de form
+    // para que la carga de borradores sincronice automáticamente.
+    const dataSortidaDate = getDatePart(form.dataSortida);
+    const dataSortidaTime = getTimePart(form.dataSortida);
+    const dataArribadaDate = getDatePart(form.dataArribada);
+    const dataArribadaTime = getTimePart(form.dataArribada);
+
     return (
         <div className="min-h-screen bg-surface pointer-events-auto">
-            {/* Color accent orange */}
             <TopBar title={lang === "ca" ? "Crear Guia" : "Crear Guía"} onMenuClick={toggle} accentColor="orange" showBack />
 
             <div className="px-4 py-5 flex flex-col gap-4 pb-24">
@@ -118,7 +142,7 @@ export default function AltaGuiaPorcinoPage() {
                     </div>
                 </div>
 
-                {/* 2. Detalles de los Animales */}
+                {/* 2. Detalles del Movimiento */}
                 <div className="bg-card rounded-2xl shadow-sm p-4 flex flex-col gap-4">
                     <h2 className="text-sm font-bold text-dark-blue-grey flex items-center gap-2">
                         <span className="w-2 h-2 rounded-full bg-main-orange"></span>
@@ -149,31 +173,58 @@ export default function AltaGuiaPorcinoPage() {
                     </div>
                 </div>
 
-                {/* 3. Fechas */}
+                {/* 3. Fechas — dd/mm/yyyy + HH:mm separados */}
                 <div className="bg-card rounded-2xl shadow-sm p-4 flex flex-col gap-4">
                     <h2 className="text-sm font-bold text-dark-blue-grey flex items-center gap-2">
                         <span className="w-2 h-2 rounded-full bg-main-orange"></span>
                         {lang === "ca" ? "Dates" : "Fechas"}
                     </h2>
 
+                    {/* Fecha y Hora de Salida */}
                     <div className={isReadOnly ? "opacity-70 pointer-events-none" : ""}>
-                        <FormField label={lang === "ca" ? "Data i Hora de Sortida *" : "Fecha y Hora de Salida *"}>
+                        <FormField label={lang === "ca" ? "Data de Sortida *" : "Fecha de Salida *"}>
+                            {/* key fuerza remount si se carga un borrador con fecha distinta */}
+                            <DateInputDMY
+                                key={`sortida-date-${dataSortidaDate || "empty"}`}
+                                value={dataSortidaDate}
+                                onChange={(newDate) =>
+                                    update({ dataSortida: combineDateTime(newDate, dataSortidaTime) })
+                                }
+                                placeholder="dd/mm/aaaa"
+                            />
+                        </FormField>
+                        <FormField label={lang === "ca" ? "Hora de Sortida *" : "Hora de Salida *"}>
                             <input
-                                type="datetime-local"
-                                value={form.dataSortida}
-                                onChange={(e) => update({ dataSortida: e.target.value })}
-                                className="w-full border border-surface-variant rounded-xl px-3 py-2.5 text-sm"
+                                type="time"
+                                value={dataSortidaTime}
+                                onChange={(e) =>
+                                    update({ dataSortida: combineDateTime(dataSortidaDate, e.target.value) })
+                                }
+                                className="w-full border border-surface-variant rounded-xl px-3 py-2.5 text-sm focus:border-main-orange outline-none"
                             />
                         </FormField>
                     </div>
 
+                    {/* Fecha y Hora de Llegada */}
                     <div className={isReadOnly ? "opacity-70 pointer-events-none" : ""}>
-                        <FormField label={lang === "ca" ? "Data i Hora d'Arribada *" : "Fecha y Hora de Llegada *"}>
+                        <FormField label={lang === "ca" ? "Data d'Arribada *" : "Fecha de Llegada *"}>
+                            <DateInputDMY
+                                key={`arribada-date-${dataArribadaDate || "empty"}`}
+                                value={dataArribadaDate}
+                                onChange={(newDate) =>
+                                    update({ dataArribada: combineDateTime(newDate, dataArribadaTime) })
+                                }
+                                placeholder="dd/mm/aaaa"
+                            />
+                        </FormField>
+                        <FormField label={lang === "ca" ? "Hora d'Arribada *" : "Hora de Llegada *"}>
                             <input
-                                type="datetime-local"
-                                value={form.dataArribada}
-                                onChange={(e) => update({ dataArribada: e.target.value })}
-                                className="w-full border border-surface-variant rounded-xl px-3 py-2.5 text-sm"
+                                type="time"
+                                value={dataArribadaTime}
+                                onChange={(e) =>
+                                    update({ dataArribada: combineDateTime(dataArribadaDate, e.target.value) })
+                                }
+                                className="w-full border border-surface-variant rounded-xl px-3 py-2.5 text-sm focus:border-main-orange outline-none"
                             />
                         </FormField>
                     </div>

@@ -14,7 +14,7 @@ import {
     precargarDesdeMovimiento,
     ESTATS_ESCORXADOR,
 } from "@/lib/bovinos/confirmarMovimiento";
-import { obtenerHistorialPorId } from "@/lib/storage/historial";
+import { obtenerHistorialPorId, guardarEnHistorial } from "@/lib/storage/historial";
 import {
     actualizarBorrador,
     guardarBorrador,
@@ -79,7 +79,6 @@ export function useConfirmarMovimiento(): UseConfirmarMovReturn {
         });
     }, []);
 
-    // Al cambiar el estado de arribada, si NO es sacrificio, limpiar campos asociados
     const seleccionarEstatAnimal = useCallback((index: number, estat: string) => {
         setForm((prev) => {
             const next = [...prev.animales];
@@ -156,6 +155,16 @@ export function useConfirmarMovimiento(): UseConfirmarMovReturn {
             await eliminarBorrador(draftId);
             setDraftId(null);
         }
+
+        await guardarEnHistorial({
+            tipo:    TIPO,
+            resumen: form.codiRemo
+                ? `REMO: ${form.codiRemo}`
+                : form.explotacioDestinacio
+                    ? `Destí: ${form.explotacioDestinacio}`
+                    : "Confirmar moviment",
+            datos: form as unknown as Record<string, unknown>,
+        });
 
         setForm(CONFIRMAR_MOV_FORM_INICIAL);
         setExito(true);

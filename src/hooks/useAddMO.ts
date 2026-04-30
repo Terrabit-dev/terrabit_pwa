@@ -21,7 +21,7 @@ export function useAddMO() {
             return;
         }
 
-        // Evitar duplicados
+        // Evitar duplicados — si ya existe, solo lo activamos
         if (credentials.codiMOList.includes(cleanMO)) {
             setActiveCodiMO(cleanMO);
             setExito(true);
@@ -33,40 +33,40 @@ export function useAddMO() {
         setExito(false);
 
         try {
-            // Hacemos el fetch directamente para poder capturar el mensaje de error de la Generalitat
-            const params = new URLSearchParams({
-                nif: credentials.nif,
-                passwordMobilitat: credentials.password,
-                codiMO: cleanMO
+            const response = await fetch("/api/gtr/identificadors", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    nif: credentials.nif,
+                    passwordMobilitat: credentials.password,
+                    codiMO: cleanMO,
+                }),
             });
 
-            // Usamos el mismo endpoint que usaba tu validateCredentials
-            const response = await fetch(`/api/gtr/identificadors?${params.toString()}`);
-
-            let data: { errors?: Array<{ codi?: string; descripcio?: string }> };
+            let data: { valid?: boolean; errors?: Array<{ codi?: string; descripcio?: string }> };
             try {
                 data = await response.json();
             } catch {
                 setError(lang === "ca" ? "Error llegint la resposta" : "Error leyendo la respuesta");
-                setCargando(false);
                 return;
             }
 
-            // Si la API nos devuelve su array de errores, cogemos el mensaje exacto
             if (data.errors && data.errors.length > 0) {
-                const apiError = data.errors[0].descripcio || (lang === "ca" ? "Codi invàlid" : "Código inválido");
+                const apiError = data.errors[0].descripcio ?? (lang === "ca" ? "Codi invàlid" : "Código inválido");
                 setError(apiError);
-                setCargando(false);
                 return;
             }
 
-            // Si pasa y no hay errores, es un éxito total
+            if (data.valid === false) {
+                setError(lang === "ca" ? "Codi MO no vàlid" : "Código MO no válido");
+                return;
+            }
+
             addCodiMO(cleanMO);
             setActiveCodiMO(cleanMO);
             setExito(true);
 
-        } catch (err) {
-            console.error("Error validando MO:", err);
+        } catch {
             setError(lang === "ca" ? "Error de connexió" : "Error de conexión");
         } finally {
             setCargando(false);

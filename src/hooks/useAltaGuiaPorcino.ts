@@ -8,6 +8,7 @@ import { guardarEnHistorial, obtenerHistorialPorId } from "@/lib/storage/histori
 import { actualizarBorrador, guardarBorrador, obtenerBorradorPorId, eliminarBorrador } from "@/lib/storage/borradores";
 import { secureLog } from "@/lib/utils/secureLogger";
 import { parseDraft } from "@/lib/storage/parseDraft";
+import { guardarValorAutocomplete } from "@/lib/storage/historial";
 
 
 // Interfaz estricta para el Payload de la API
@@ -179,7 +180,16 @@ export function useAltaGuias() {
 
                 const catObj = CATEGORIAS_PORCINOS.find(c => c.codigo === form.codiCategoria);
                 const nombreCat = catObj ? (lang === "ca" ? catObj.nombre : (catObj.nombreEs || catObj.nombre)) : form.codiCategoriaNombre;
-
+                await  guardarValorAutocomplete("explotacion_salida",body.explotacioSortida)
+                if (body.nifConductor){
+                    await guardarValorAutocomplete("matricula", body.nifConductor)
+                }
+                if (body.matricula){
+                    await guardarValorAutocomplete("matricula", body.matricula)
+                }
+                if (body.codiSirentra){
+                    await guardarValorAutocomplete("sirentra", body.codiSirentra)
+                }
                 await guardarEnHistorial({
                     tipo: "ALTA_GUIA_PORCINO",
                     resumen: `${nombreCat} — ${trackingCode}`,

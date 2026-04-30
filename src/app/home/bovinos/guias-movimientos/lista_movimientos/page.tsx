@@ -9,6 +9,8 @@ import FormField from "@/components/forms/FormField";
 import DateInputDMY from "@/components/forms/DateInputDMY";
 import LoadingOverlay from "@/components/common/LoadingOverlay";
 import { useListarMovimientos } from "@/hooks/useListarMovimientos";
+import AutocompleteInput from "@/components/forms/AutocompleteInput";
+import { obtenerHistorialAutocomplete, eliminarValorAutocomplete } from "@/lib/storage/historial";
 import {
     apiFormatToDisplayFecha,
     type Moviment,
@@ -29,8 +31,16 @@ export default function ListaMovimientosPage() {
 
     const [fechaISO, setFechaISO] = useState("");
     const [horaStr, setHoraStr]   = useState("");
+    const [sugRegas, setSugRegas] = useState<string[]>([]);
 
-    // Interceptar el back del navegador cuando hay consulta iniciada:
+    useEffect(() => {
+        const cargarSugerencias = async () => {
+            const regas = await obtenerHistorialAutocomplete("codi_rega");
+            setSugRegas(regas);
+        };
+        cargarSugerencias();
+    }, []);
+
     // en vez de salir de la página, volvemos al MiniFormulario.
     useEffect(() => {
         if (!consultaIniciada) return;
@@ -41,6 +51,11 @@ export default function ListaMovimientosPage() {
         window.addEventListener("popstate", handlePopState);
         return () => window.removeEventListener("popstate", handlePopState);
     }, [consultaIniciada, resetearConsulta]);
+
+    const handleDeleteSugerenciaRega = async (valor: string) => {
+        await eliminarValorAutocomplete("codi_rega", valor);
+        setSugRegas(prev => prev.filter(s => s !== valor));
+    };
 
     const actualizarFecha = (fISO: string, h: string) => {
         if (fISO && h) {
@@ -91,6 +106,8 @@ export default function ListaMovimientosPage() {
                     onHoraChange={handleHoraChange}
                     onConsultar={handleConsultar}
                     lang={lang}
+                    sugRegas={sugRegas}
+                    onDeleteSugerencia={handleDeleteSugerenciaRega}
                 />
             )}
 
@@ -164,11 +181,13 @@ interface MiniFormularioProps {
     onHoraChange:   (v: string) => void;
     onConsultar:    () => void;
     lang:           "es" | "ca";
+    sugRegas: string[];
+    onDeleteSugerencia: (val: string) => void;
 }
 
 function MiniFormulario({
                             rega, fechaISO, horaStr, error,
-                            onRegaChange, onFechaChange, onHoraChange, onConsultar, lang,
+                            onRegaChange, onFechaChange, onHoraChange, onConsultar, lang, sugRegas, onDeleteSugerencia
                         }: MiniFormularioProps) {
     return (
         <div className="px-4 py-6">
@@ -186,14 +205,14 @@ function MiniFormulario({
 
                 <div className="border-t border-surface-variant"/>
 
-                <FormField label={lang === "ca" ? "Codi REGA destí" : "Código REGA destino"}>
-                    <input
-                        type="text"
-                        value={rega}
-                        onChange={(e) => onRegaChange(e.target.value)}
-                        className="w-full border border-surface-variant rounded-xl px-3 py-2.5 text-sm bg-surface outline-none text-dark-blue-grey focus:border-main-orange"
-                    />
-                </FormField>
+                <AutocompleteInput
+                    label={lang === "ca" ? "Codi REGA destí *" : "Código REGA destino *"}
+                    value={rega}
+                    onChange={(val) => onRegaChange(val.toUpperCase())}
+                    suggestions={sugRegas}
+                    onDeleteSuggestion={onDeleteSugerencia}
+                    placeholder="ES..."
+                />
 
                 <div className="grid grid-cols-2 gap-3">
                     <FormField label={lang === "ca" ? "Data sortida" : "Fecha salida"}>

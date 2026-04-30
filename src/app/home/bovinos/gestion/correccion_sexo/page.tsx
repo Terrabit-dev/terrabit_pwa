@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useSearchParams } from "next/navigation"; // NUEVO
+import { useSearchParams } from "next/navigation";
 import TopBar from "@/components/layout/TopBar";
 import { useDrawer } from "@/context/DrawerContext";
 import { useI18n } from "@/hooks/useI18n";
@@ -17,6 +17,7 @@ import { getAppError } from "@/lib/errors/appErrors";
 import { useCorreccionSexo } from "@/hooks/useCorreccionSexo";
 import { useListarBovinos } from "@/hooks/useListarBovinos";
 import { useAutoCompleteBovinos } from "@/hooks/useAutoCompleteBovinos";
+import { consumeSelectedBovino } from "@/lib/storage/selectedBovino";
 
 export default function CorreccionSexoPage() {
     const { toggle }  = useDrawer();
@@ -44,19 +45,22 @@ export default function CorreccionSexoPage() {
         ? errorApi.tipo === "api" ? errorApi.mensaje : t("errors.network")
         : null;
 
-    // NUEVO: Interceptar URL para cargar borradores o historial
+
     useEffect(() => {
-        const draftId = searchParams.get("draftId");
+        const draftId   = searchParams.get("draftId");
         const historyId = searchParams.get("historyId");
 
         if (draftId) {
             cargarBorrador(Number(draftId));
         } else if (historyId) {
             cargarDesdeHistorial(Number(historyId));
+        } else {
+            const animalId = consumeSelectedBovino();
+            if (animalId) update({ identificador: animalId });
         }
-    }, [searchParams, cargarBorrador, cargarDesdeHistorial]);
+    }, [searchParams, cargarBorrador, cargarDesdeHistorial, update]);
 
-    // NUEVO: Guardar borrador
+
     const handleGuardarBorrador = async () => {
         const guardadoExito = await guardarBorradorActual();
         if (guardadoExito) {

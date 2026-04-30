@@ -9,7 +9,7 @@ import {
     validarGuia,
     enviarGuia,
 } from "@/lib/bovinos/guias";
-import { obtenerHistorialPorId } from "@/lib/storage/historial";
+import { obtenerHistorialPorId, guardarEnHistorial } from "@/lib/storage/historial";
 import {
     actualizarBorrador,
     guardarBorrador,
@@ -37,7 +37,7 @@ interface UseGuiasReturn {
     cargarDesdeHistorial:    (id: number | string) => Promise<void>;
 }
 
-const TIPO = "GUIA";
+const TIPO = "ALTA_GUIA_BOVINO";
 
 export function useGuias(): UseGuiasReturn {
     const [form, setForm]             = useState<GuiaForm>(GUIA_FORM_INICIAL);
@@ -123,6 +123,14 @@ export function useGuias(): UseGuiasReturn {
             await eliminarBorrador(draftId);
             setDraftId(null);
         }
+
+        await guardarEnHistorial({
+            tipo:   TIPO,
+            resumen: form.explotacioOrigen && form.explotacioDestinacio
+                ? `${form.explotacioOrigen} → ${form.explotacioDestinacio}`
+                : form.explotacioOrigen || "Alta de guía",
+            datos: form as unknown as Record<string, unknown>,
+        });
 
         setForm(GUIA_FORM_INICIAL);
         setExito(true);

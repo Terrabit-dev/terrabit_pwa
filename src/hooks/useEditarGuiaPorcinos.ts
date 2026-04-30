@@ -10,6 +10,7 @@ import {
     datetimeLocalToApi,
     validarEditarGuiaPorcino
 } from "@/lib/porcinos/editarGuiaPorcinos";
+import { guardarValorAutocomplete } from "@/lib/storage/historial";
 
 export function useEditarGuiaPorcinos() {
     const [form, setForm] = useState<EditarGuiaPorcinoForm | null>(null);
@@ -100,6 +101,15 @@ export function useEditarGuiaPorcinos() {
 
             // Analizamos el código de respuesta (OK vs 002)
             if (data.codi === "OK") {
+                if (form.transportista){
+                    await guardarValorAutocomplete("transportista", form.transportista);
+                }
+                if (form.vehicle){
+                    await guardarValorAutocomplete("matricula", form.vehicle);
+                }
+                if (form.responsable){
+                    await guardarValorAutocomplete("nif_conductor", form.responsable);
+                }
                 setExito(true);
                 sessionStorage.removeItem("guiaPorcinoSeleccionada");
 

@@ -17,6 +17,7 @@ import { getAppError } from "@/lib/errors/appErrors";
 import { useGuias } from "@/hooks/useGuias";
 import { useListarBovinos } from "@/hooks/useListarBovinos";
 import { useAutoCompleteBovinos } from "@/hooks/useAutoCompleteBovinos";
+import { consumeSelectedBovino } from "@/lib/storage/selectedBovino";
 
 // Sí/No — PDF §5.4.3: valores "True" / "False"
 const OPCIONES_SI_NO = [
@@ -78,9 +79,16 @@ export default function AltaGuiaPage() {
     useEffect(() => {
         const draftId   = searchParams.get("draftId");
         const historyId = searchParams.get("historyId");
-        if (draftId)        void cargarBorrador(Number(draftId));
-        else if (historyId) void cargarDesdeHistorial(Number(historyId));
-    }, [searchParams, cargarBorrador, cargarDesdeHistorial]);
+
+        if (draftId) {
+            void cargarBorrador(Number(draftId));
+        } else if (historyId) {
+            cargarDesdeHistorial(Number(historyId));
+        } else {
+            const animalId = consumeSelectedBovino();
+            if (animalId) update({ identificadors: [animalId] });
+        }
+    }, [searchParams, cargarBorrador, cargarDesdeHistorial, update]);
 
     const handleGuardarBorrador = async () => {
         const ok = await guardarBorradorActual();

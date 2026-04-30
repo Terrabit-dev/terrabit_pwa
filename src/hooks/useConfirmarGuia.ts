@@ -17,7 +17,7 @@ import {
     obtenerBorradorPorId,
     eliminarBorrador,
 } from "@/lib/storage/borradores";
-import { obtenerHistorialPorId } from "@/lib/storage/historial";
+import { obtenerHistorialPorId, guardarEnHistorial } from "@/lib/storage/historial";
 import { parseDraft } from "@/lib/storage/parseDraft";
 
 interface UseConfirmarGuiaReturn {
@@ -55,19 +55,13 @@ export function useConfirmarGuia(): UseConfirmarGuiaReturn {
     }, []);
 
     const agregarIdentificador = useCallback(() => {
-        setForm((prev) => ({
-            ...prev,
-            identificadors: [...prev.identificadors, ""],
-        }));
+        setForm((prev) => ({ ...prev, identificadors: [...prev.identificadors, ""] }));
     }, []);
 
     const eliminarIdentificador = useCallback((index: number) => {
         setForm((prev) => {
             if (prev.identificadors.length <= 1) return prev;
-            return {
-                ...prev,
-                identificadors: prev.identificadors.filter((_, i) => i !== index),
-            };
+            return { ...prev, identificadors: prev.identificadors.filter((_, i) => i !== index) };
         });
     }, []);
 
@@ -138,6 +132,16 @@ export function useConfirmarGuia(): UseConfirmarGuiaReturn {
             await eliminarBorrador(draftId);
             setDraftId(null);
         }
+
+        await guardarEnHistorial({
+            tipo:    TIPO,
+            resumen: form.remo
+                ? `REMO: ${form.remo}`
+                : form.explotacioOrigen && form.explotacioDestinacio
+                    ? `${form.explotacioOrigen} → ${form.explotacioDestinacio}`
+                    : "Confirmar guia",
+            datos: form as unknown as Record<string, unknown>,
+        });
 
         setForm(CONFIRMAR_GUIA_FORM_INICIAL);
         setExito(true);

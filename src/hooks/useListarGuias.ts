@@ -8,6 +8,7 @@ import {
     consultarGuias,
     validarFiltrosGuias,
 } from "@/lib/bovinos/listarGuias";
+import { guardarValorAutocomplete } from "@/lib/storage/historial";
 
 interface UseListarGuiasReturn {
     filtros:           ListarGuiasFiltros;
@@ -47,6 +48,9 @@ export function useListarGuias(): UseListarGuiasReturn {
         if (result.exito) {
             setLista(result.guias ?? []);
             setError(null);
+            if (filtros.codiRega) {
+                await guardarValorAutocomplete("codi_rega", filtros.codiRega);
+            }
         } else {
             setError(result.error ?? "Error desconocido");
             setConsultaIniciada(false);

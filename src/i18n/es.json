@@ -3,7 +3,7 @@
   "login": {
     "title": "Iniciar sesión",
     "nif": "NIF",
-    "password": "Contraseña",
+    "password": "Contraseña de Mobilidad",
     "btn_login": "Acceder",
     "btn_next": "Siguiente",
     "error_empty_fields": "Por favor, rellena todos los campos",

@@ -1,11 +1,11 @@
 import { openDB, IDBPDatabase } from "idb";
 
 const DB_NAME = "terrabit_db";
-const DB_VERSION = 3; // <-- Subimos a 3 para arreglar el conflicto
+const DB_VERSION = 3;
 
 export const STORE_HISTORIAL = "historial";
 export const STORE_AUTOCOMPLETE = "autocomplete";
-export const STORE_BORRADORES = "borradores"; // <-- Añadimos los borradores aquí
+export const STORE_BORRADORES = "borradores";
 
 export async function getDB(): Promise<IDBPDatabase> {
   return openDB(DB_NAME, DB_VERSION, {
@@ -97,3 +97,12 @@ export async function eliminarValorAutocomplete(key: string, valor: string): Pro
   const existing: string[] = (await db.get(STORE_AUTOCOMPLETE, key)) ?? [];
   await db.put(STORE_AUTOCOMPLETE, existing.filter((v) => v !== valor), key);
 }
+export async function eliminarHistorialMultiple(ids: number[]): Promise<void> {
+  const db = await getDB();
+  const tx = db.transaction(STORE_HISTORIAL, 'readwrite');
+  await Promise.all(ids.map(id => tx.store.delete(id)));
+  await tx.done;
+}
+// explotacion de origen, explotacion destiono, pais (pif), codigo explotacion pif
+//porcinos: explotacion de entrada y salida, matricula, nif conductor y codi sirentra
+// emitir guia, codigo ates transportista, nif delc odmnuctor y matricula del vehiculo
