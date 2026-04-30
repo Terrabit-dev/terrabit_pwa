@@ -26,6 +26,9 @@ import {
     TIPOS_MATERIAL_DUPLICAT, validarSolicitudDuplicado
 } from "@/lib/bovinos/solicitudDuplicado";
 
+import { consumeSelectedBovino } from "@/lib/storage/selectedBovino";
+
+
 interface OpcionMapa {
     codigo: string;
     nombre: string;
@@ -72,11 +75,22 @@ export default function SolicitudDuplicadoPage() {
     }));
 
     useEffect(() => {
-        const draftId = searchParams.get("draftId");
+        const draftId   = searchParams.get("draftId");
         const historyId = searchParams.get("historyId");
-        if (draftId) cargarBorrador(Number(draftId));
-        else if (historyId) cargarDesdeHistorial(Number(historyId));
-    }, [searchParams, cargarBorrador, cargarDesdeHistorial]);
+
+        if (draftId) {
+            cargarBorrador(Number(draftId));
+        } else if (historyId) {
+            cargarDesdeHistorial(Number(historyId));
+        } else {
+            const animalId = consumeSelectedBovino();
+            if (animalId) {
+                update({
+                    identificadors: [{ identificador: animalId, tipusMaterial: "", tipusMaterialNombre: "" }]
+                });
+            }
+        }
+    }, [searchParams, cargarBorrador, cargarDesdeHistorial, update]);
 
     const handleGuardarBorrador = async () => {
         const guardado = await guardarBorradorActual();

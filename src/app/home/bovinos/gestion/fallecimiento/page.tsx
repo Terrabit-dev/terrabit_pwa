@@ -18,6 +18,7 @@ import { getAppError } from "@/lib/errors/appErrors";
 import { useFallecimiento } from "@/hooks/useFallecimiento";
 import { useListarBovinos } from "@/hooks/useListarBovinos";
 import { useAutoCompleteBovinos } from "@/hooks/useAutoCompleteBovinos";
+import { consumeSelectedBovino } from "@/lib/storage/selectedBovino";
 
 export default function FallecimientoPage() {
     const { toggle }  = useDrawer();
@@ -52,19 +53,22 @@ export default function FallecimientoPage() {
         ? `${lang === "ca" ? "Identificador mare" : "Identificador madre"} *`
         : `${lang === "ca" ? "ID Animal" : "ID Animal"} *`;
 
-    // NUEVO: Interceptar URL para cargar borradores o historial
+
     useEffect(() => {
-        const draftId = searchParams.get("draftId");
+        const draftId   = searchParams.get("draftId");
         const historyId = searchParams.get("historyId");
 
         if (draftId) {
             cargarBorrador(Number(draftId));
         } else if (historyId) {
             cargarDesdeHistorial(Number(historyId));
+        } else {
+            // Pre-rellenar desde la pantalla de listar bovinos
+            const animalId = consumeSelectedBovino();
+            if (animalId) update({ identificador: animalId });
         }
-    }, [searchParams, cargarBorrador, cargarDesdeHistorial]);
+    }, [searchParams, cargarBorrador, cargarDesdeHistorial, update]);
 
-    // NUEVO: Guardar borrador
     const handleGuardarBorrador = async () => {
         const guardadoExito = await guardarBorradorActual();
         if (guardadoExito) {
