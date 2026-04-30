@@ -5,6 +5,7 @@ import TopBar from "@/components/layout/TopBar";
 import { useDrawer } from "@/context/DrawerContext";
 import { useI18n } from "@/hooks/useI18n";
 import FormField from "@/components/forms/FormField";
+import DateInputDMY from "@/components/forms/DateInputDMY";
 import LoadingOverlay from "@/components/common/LoadingOverlay";
 import { useListarMovimientosPorcinos } from "@/hooks/useListarMovimientosPorcinos";
 import { type MovimientoPorcino } from "@/lib/porcinos/listarMovimientosPorcinos";
@@ -28,7 +29,6 @@ export default function ListaMovimientosPorcinosPage() {
 
     const handleConfirmar = (movimiento: MovimientoPorcino) => {
         seleccionarMovimiento(movimiento);
-        // Este path será para la página de confirmación que haremos luego
         router.push("/home/porcinos/movimientos/confirmar");
     };
 
@@ -65,21 +65,23 @@ export default function ListaMovimientosPorcinosPage() {
                             />
                         </FormField>
 
+                        {/* Fechas en dd/mm/yyyy — DateInputDMY devuelve YYYY-MM-DD internamente */}
+                        {/* formatToApiRangeDate y new Date() del hook siguen recibiendo YYYY-MM-DD sin cambios */}
                         <div className="grid grid-cols-2 gap-3">
                             <FormField label={lang === "ca" ? "Data sortida des de *" : "Fecha salida desde *"}>
-                                <input
-                                    type="date"
+                                <DateInputDMY
+                                    key={`desde-${filtros.fechaDesde || "empty"}`}
                                     value={filtros.fechaDesde}
-                                    onChange={(e) => updateFiltro("fechaDesde", e.target.value)}
-                                    className="w-full border border-surface-variant rounded-xl px-3 py-2.5 text-sm focus:border-main-orange"
+                                    onChange={(v) => updateFiltro("fechaDesde", v)}
+                                    placeholder="dd/mm/aaaa"
                                 />
                             </FormField>
                             <FormField label={lang === "ca" ? "Data sortida fins *" : "Fecha salida hasta *"}>
-                                <input
-                                    type="date"
+                                <DateInputDMY
+                                    key={`fins-${filtros.fechaFins || "empty"}`}
                                     value={filtros.fechaFins}
-                                    onChange={(e) => updateFiltro("fechaFins", e.target.value)}
-                                    className="w-full border border-surface-variant rounded-xl px-3 py-2.5 text-sm focus:border-main-orange"
+                                    onChange={(v) => updateFiltro("fechaFins", v)}
+                                    placeholder="dd/mm/aaaa"
                                 />
                             </FormField>
                         </div>
@@ -159,6 +161,7 @@ function MovimientoCard({ movimiento, lang, onConfirmar }: { movimiento: Movimie
 
             <div className="border-t border-surface-variant mt-1"/>
 
+            {/* Fechas: ya vienen en dd/MM/yyyy desde la API — se muestran directamente */}
             <div className="flex gap-6 mt-1">
                 <div>
                     <p className="text-[10px] uppercase font-bold text-blue-grey/70 tracking-wider">{lang === "ca" ? "Data sortida" : "Fecha salida"}</p>
