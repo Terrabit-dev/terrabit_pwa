@@ -19,18 +19,18 @@ interface SubMenuPageProps {
 }
 
 export default function SubMenuPage({
-  title,
-  subtitle,
-  accentColor,
-  actions,
-}: SubMenuPageProps) {
+                                      title,
+                                      subtitle,
+                                      accentColor,
+                                      actions,
+                                    }: SubMenuPageProps) {
   const { toggle } = useDrawer();
   const router = useRouter();
 
   const colorMap = {
     green: {
-      primary: { icon: "bg-main-green text-white", card: "" },
-      danger:  { icon: "bg-error-red text-white",  card: "" },
+      primary: { icon: "bg-main-green text-white",  card: "" },
+      danger:  { icon: "bg-error-red text-white",   card: "" },
     },
     orange: {
       primary: { icon: "bg-main-orange text-white", card: "" },
@@ -39,34 +39,34 @@ export default function SubMenuPage({
   };
 
   return (
-    <div className="min-h-screen bg-surface">
-      <TopBar title={title} onMenuClick={toggle} accentColor={accentColor} showBack />
+      <div className="min-h-screen bg-surface">
+        <TopBar title={title} onMenuClick={toggle} accentColor={accentColor} showBack />
 
-      <div className="px-4 py-5">
-        <p className="text-sm text-slate-500 font-medium mb-4">{subtitle}</p>
+        <div className="px-4 py-6">
+          <p className="text-base text-slate-500 font-medium mb-5">{subtitle}</p>
 
-        <div className="grid grid-cols-2 gap-3">
-          {actions.map((action) => {
-            const variant = action.variant ?? "primary";
-            const colors = colorMap[accentColor][variant];
+          <div className="grid grid-cols-2 gap-4">
+            {actions.map((action) => {
+              const variant = action.variant ?? "primary";
+              const colors = colorMap[accentColor][variant];
 
-            return (
-              <button
-                key={action.path}
-                onClick={() => router.push(action.path)}
-                className="bg-card rounded-2xl p-5 shadow-sm flex flex-col items-center gap-3 active:scale-95 transition-transform text-center"
-              >
-                <div className={`${colors.icon} p-4 rounded-2xl`}>
-                  {action.icon}
-                </div>
-                <p className="text-dark-blue-grey text-sm font-semibold leading-tight">
-                  {action.label}
-                </p>
-              </button>
-            );
-          })}
+              return (
+                  <button
+                      key={action.path}
+                      onClick={() => router.push(action.path)}
+                      className="bg-card rounded-2xl p-6 shadow-sm flex flex-col items-center gap-4 active:scale-95 transition-transform text-center min-h-[170px] justify-center"
+                  >
+                    <div className={`${colors.icon} p-5 rounded-2xl`}>
+                      {action.icon}
+                    </div>
+                    <p className="text-dark-blue-grey text-base font-semibold leading-tight">
+                      {action.label}
+                    </p>
+                  </button>
+              );
+            })}
+          </div>
         </div>
       </div>
-    </div>
   );
 }

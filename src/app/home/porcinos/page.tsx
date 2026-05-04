@@ -5,15 +5,15 @@ import { useI18n } from "@/hooks/useI18n";
 import { useRouter } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
 
-const IconTractor = () => (
-    <svg className="w-8 h-8" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M8 18c-1.66 0-3-1.34-3-3H3v-2.25c0-1.24.9-2.25 2-2.25h2.5L9 8h5v7h1.5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5H19v-2h2v3h-1c0 1.66-1.34 3-3 3s-3-1.34-3-3H9.5c0 1.66-1.34 3-3 3zm0-4.5c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5-1.5-.67-1.5-1.5.67-1.5 1.5-1.5zm9 0c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5-1.5-.67-1.5-1.5.67-1.5 1.5-1.5zM14 9.5V13h-4.5l-1.5-3.5H14z"/>
+const IconGuies = () => (
+    <svg className="w-12 h-12" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2V3H9v2zm0 2h6v1H9V7zm-1 4h8v2H8v-2zm0 4h5v2H8v-2z" />
     </svg>
 );
 
-const IconCart = () => (
-    <svg className="w-8 h-8" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96C5 16.1 6.1 17 7 17h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63H19c.75 0 1.41-.41 1.75-1.03l3.58-6.49A1 1 0 0023.45 4H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z"/>
+const IconMoviments = () => (
+    <svg className="w-10 h-10" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4zM6 18.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm13.5-9l1.96 2.5H17V9.5h2.5zm-1.5 9c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z" />
     </svg>
 );
 
@@ -59,17 +59,17 @@ export default function HomePorcinos() {
 
     const secciones: SeccionCard[] = [
         {
-            titleKey: "porcinos.guias_title",
+            titleKey:    "porcinos.guias_title",
             subtitleKey: "porcinos.guias_subtitle",
-            path: "/home/porcinos/guias",
-            icon: <IconTractor />,
+            path:        "/home/porcinos/guias",
+            icon:        <IconGuies />,
         },
         {
-            titleKey: "porcinos.movimientos_title",
+            titleKey:    "porcinos.movimientos_title",
             subtitleKey: "porcinos.movimientos_subtitle",
-            path: "/home/porcinos/movimientos",
-            icon: <IconCart />,
-        }
+            path:        "/home/porcinos/movimientos",
+            icon:        <IconMoviments />,
+        },
     ];
 
     return (
@@ -83,7 +83,7 @@ export default function HomePorcinos() {
                         aria-label="Menú"
                     >
                         <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/>
+                            <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z" />
                         </svg>
                     </button>
 
@@ -94,7 +94,7 @@ export default function HomePorcinos() {
                             aria-label="Cambiar idioma"
                         >
                             <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zm6.93 6h-2.95c-.32-1.25-.78-2.45-1.38-3.56 1.84.63 3.37 1.91 4.33 3.56zM12 4.04c.83 1.2 1.48 2.53 1.91 3.96h-3.82c.43-1.43 1.08-2.76 1.91-3.96zM4.26 14C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.32-.14 2s.06 1.34.14 2H4.26zm.82 2h2.95c.32 1.25.78 2.45 1.38 3.56-1.84-.63-3.37-1.9-4.33-3.56zm2.95-8H5.08c.96-1.66 2.49-2.93 4.33-3.56C8.81 5.55 8.35 6.75 8.03 8zM12 19.96c-.83-1.2-1.48-2.53-1.91-3.96h3.82c-.43 1.43-1.08 2.76-1.91 3.96zM14.34 14H9.66c-.09-.66-.16-1.32-.16-2s.07-1.35.16-2h4.68c.09.65.16 1.32.16 2s-.07 1.34-.16 2zm.25 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95c-.96 1.65-2.49 2.93-4.33 3.56zM16.36 14c.08-.66.14-1.32.14-2s-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2h-3.38z"/>
+                                <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zm6.93 6h-2.95c-.32-1.25-.78-2.45-1.38-3.56 1.84.63 3.37 1.91 4.33 3.56zM12 4.04c.83 1.2 1.48 2.53 1.91 3.96h-3.82c.43-1.43 1.08-2.76 1.91-3.96zM4.26 14C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.32-.14 2s.06 1.34.14 2H4.26zm.82 2h2.95c.32 1.25.78 2.45 1.38 3.56-1.84-.63-3.37-1.9-4.33-3.56zm2.95-8H5.08c.96-1.66 2.49-2.93 4.33-3.56C8.81 5.55 8.35 6.75 8.03 8zM12 19.96c-.83-1.2-1.48-2.53-1.91-3.96h3.82c-.43 1.43-1.08 2.76-1.91 3.96zM14.34 14H9.66c-.09-.66-.16-1.32-.16-2s.07-1.35.16-2h4.68c.09.65.16 1.32.16 2s-.07 1.34-.16 2zm.25 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95c-.96 1.65-2.49 2.93-4.33 3.56zM16.36 14c.08-.66.14-1.32.14-2s-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2h-3.38z" />
                             </svg>
                         </button>
 
@@ -123,18 +123,20 @@ export default function HomePorcinos() {
                 </div>
 
                 <h1 className="text-white text-2xl font-bold mb-3">
-                    {lang === "ca" ? "Benvingut/da!" : "¡Bienvenido/a!"}
+                    {t("nav.welcome")}
                 </h1>
 
                 <div className="inline-flex items-center gap-2 bg-white/20 rounded-full px-3 py-1.5">
                     <IconPig />
-                    <span className="text-white text-sm font-medium">Porcinos</span>
+                    <span className="text-white text-sm font-medium">
+            {t("porcinos.title")}
+          </span>
                 </div>
             </div>
 
             {/* Tarjetas */}
-            <div className="flex-1 px-4 -mt-3 pb-6 flex flex-col gap-3">
-                <p className="text-dark-blue-grey text-base font-semibold mt-4 mb-1">
+            <div className="flex-1 px-4 -mt-3 pb-6 flex flex-col gap-4">
+                <p className="text-dark-blue-grey text-lg font-semibold mt-4 mb-2">
                     {lang === "ca" ? "Menú Principal" : "Menú Principal"}
                 </p>
 
@@ -142,27 +144,27 @@ export default function HomePorcinos() {
                     <button
                         key={seccion.path}
                         onClick={() => router.push(seccion.path)}
-                        className="bg-card rounded-2xl p-5 shadow-sm flex items-center gap-4 active:scale-[0.98] transition-transform text-left w-full"
+                        className="bg-card rounded-2xl p-6 shadow-sm flex items-center gap-5 active:scale-[0.98] transition-transform text-left w-full"
                     >
-                        <div className="p-4 rounded-2xl shrink-0 flex items-center justify-center bg-main-orange text-white">
+                        <div className="p-5 rounded-2xl shrink-0 flex items-center justify-center bg-main-orange text-white">
                             {seccion.icon}
                         </div>
 
                         <div className="flex-1 min-w-0">
-                            <p className="text-dark-blue-grey text-base font-semibold leading-snug">
+                            <p className="text-dark-blue-grey text-lg font-semibold leading-snug">
                                 {t(seccion.titleKey)}
                             </p>
-                            <p className="text-blue-grey text-sm mt-0.5 leading-snug">
+                            <p className="text-blue-grey text-sm mt-1 leading-snug">
                                 {t(seccion.subtitleKey)}
                             </p>
                         </div>
 
                         <svg
-                            className="w-5 h-5 text-blue-grey shrink-0"
+                            className="w-6 h-6 text-blue-grey shrink-0"
                             viewBox="0 0 24 24"
                             fill="currentColor"
                         >
-                            <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/>
+                            <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z" />
                         </svg>
                     </button>
                 ))}
