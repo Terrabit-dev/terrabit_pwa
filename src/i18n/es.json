@@ -11,6 +11,7 @@
     "codiMO": "Código MO"
   },
   "nav": {
+    "welcome": "Bienvenido/a",
     "bovinos": "Bovinos",
     "porcinos": "Porcinos",
     "historial": "Historial",

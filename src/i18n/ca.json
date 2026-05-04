@@ -11,6 +11,7 @@
     "codiMO": "Codi MO"
   },
   "nav": {
+    "welcome": "Benvingut/da",
     "bovinos": "Bovins",
     "porcinos": "Porcins",
     "historial": "Historial",
