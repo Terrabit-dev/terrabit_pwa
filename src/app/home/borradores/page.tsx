@@ -42,6 +42,26 @@ function obtenerRutaFormulario(tipo: string): string {
     }
 }
 
+// Tabla de traducciones del tipo de trámite (título de la tarjeta)
+// Si añades un nuevo tipo de borrador, sólo tienes que añadirlo aquí.
+const TIPO_BORRADOR_LABELS: Record<string, { es: string; ca: string }> = {
+    IDENTIFICACION:      { es: "Identificación aplazada", ca: "Identificació ajornada" },
+    NACIMIENTO:          { es: "Nacimiento",              ca: "Naixement" },
+    CORRECCION_SEXO:     { es: "Corrección de sexo",      ca: "Correcció de sexe" },
+    FALLECIMIENTO:       { es: "Fallecimiento",           ca: "Defunció" },
+    SOLICITUD_MATERIAL:  { es: "Solicitud de material",   ca: "Sol·licitud de material" },
+    SOLICITUD_DUPLICADO: { es: "Solicitud de duplicado",  ca: "Sol·licitud de duplicat" },
+    ALTA_GUIA_BOVINO:    { es: "Alta de guía bovina",     ca: "Alta de guia bovina" },
+    ALTA_GUIA_PORCINO:   { es: "Alta de guía porcina",    ca: "Alta de guia porcina" },
+};
+
+function obtenerTipoBorrador(tipo: string, lang: string): string {
+    const entry = TIPO_BORRADOR_LABELS[tipo];
+    if (entry) return lang === "ca" ? entry.ca : entry.es;
+    // Fallback: si llega un tipo no contemplado, mostramos el código limpio
+    return tipo.replace(/_/g, " ");
+}
+
 // Decide qué mostrar en función del tipo de trámite
 function obtenerResumenBorrador(tipo: string, datos: DatosBorrador, lang: string): string {
     switch (tipo) {
@@ -107,10 +127,11 @@ function filtrar(lista: Borrador[], busqueda: string, lang: string): Borrador[] 
     const q = busqueda.toLowerCase();
 
     return lista.filter((r) => {
-        const matchTipo = r.tipo.toLowerCase().includes(q);
+        const matchTipoCodigo = r.tipo.toLowerCase().includes(q);
+        const matchTipoLabel = obtenerTipoBorrador(r.tipo, lang).toLowerCase().includes(q);
         const datos = r.datos as DatosBorrador;
         const resumenVisual = obtenerResumenBorrador(r.tipo, datos, lang).toLowerCase();
-        return matchTipo || resumenVisual.includes(q);
+        return matchTipoCodigo || matchTipoLabel || resumenVisual.includes(q);
     });
 }
 
@@ -362,7 +383,7 @@ export default function BorradoresPage() {
                                     <div className="flex justify-between items-start">
                                         <div className="min-w-0">
                       <span className="text-xs font-bold uppercase tracking-wider text-main-green bg-main-green/10 px-2.5 py-1 rounded-md">
-                        {registro.tipo.replace(/_/g, " ")}
+                        {obtenerTipoBorrador(registro.tipo, lang)}
                       </span>
                                             <h3 className="text-base font-bold text-dark-blue-grey mt-2 truncate">
                                                 {obtenerResumenBorrador(registro.tipo, datos, lang)}
