@@ -11,7 +11,7 @@ const LANGUAGES = [
 
 export default function LoginPage() {
   const { t, lang, changeLanguage } = useI18n();
-  const { state, login, loginOffline, savedForm } = useAuth();
+  const { state, login, loginDemo, savedForm, demoDisponible } = useAuth();
 
   const [nif, setNif] = useState("");
   const [password, setPassword] = useState("");
@@ -19,6 +19,7 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [showLangMenu, setShowLangMenu] = useState(false);
+  const [credencialesEnmascaradas, setCredencialesEnmascaradas] = useState(false);
   const langRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -31,6 +32,12 @@ export default function LoginPage() {
   }, [savedForm]);
 
   useEffect(() => {
+    if (state === "error_credentials" || state === "error_network" || state === "error_demo") {
+      setCredencialesEnmascaradas(false);
+    }
+  }, [state]);
+
+  useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (langRef.current && !langRef.current.contains(e.target as Node)) {
         setShowLangMenu(false);
@@ -40,10 +47,21 @@ export default function LoginPage() {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
+
+  const handleLoginDemo = () => {
+    setCredencialesEnmascaradas(true);
+    loginDemo();
+  };
+
+  const displayNif      = credencialesEnmascaradas ? "*****" : nif;
+  const displayPassword = credencialesEnmascaradas ? "*****" : password;
+  const displayCodiMO   = credencialesEnmascaradas ? "*****" : codiMO;
+
   const errorMessage: Record<string, string> = {
     error_empty:       t("login.error_empty_fields"),
     error_credentials: t("login.error_invalid_credentials"),
     error_network:     t("common.error_network"),
+    error_demo:        lang === "es" ? "No se pudo cargar la cuenta demo" : "No s'ha pogut carregar el compte demo",
   };
 
   const isLoading = state === "loading";
@@ -114,8 +132,9 @@ export default function LoginPage() {
             </svg>
             <input
               type="text"
-              value={nif}
-              onChange={(e) => setNif(e.target.value)}
+              value={displayNif}
+              onChange={(e) => { if (!credencialesEnmascaradas) setNif(e.target.value); }}
+              readOnly={credencialesEnmascaradas}
               placeholder={lang === "es" ? "Tu Código Usuario" : "El teu Codi Usuari"}
               autoComplete="username"
               className="flex-1 text-sm bg-transparent outline-none text-dark-blue-grey placeholder-blue-grey/50"
@@ -134,8 +153,9 @@ export default function LoginPage() {
             </svg>
             <input
               type={showPassword ? "text" : "password"}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              value={displayPassword}
+              onChange={(e) => { if (!credencialesEnmascaradas) setPassword(e.target.value); }}
+              readOnly={credencialesEnmascaradas}
               placeholder={lang === "es" ? "Contraseña de Mobilidad" : "Contrasenya de Mobilitat"}
               autoComplete="current-password"
               className="flex-1 text-sm bg-transparent outline-none text-dark-blue-grey placeholder-blue-grey/50"
@@ -165,8 +185,9 @@ export default function LoginPage() {
             </svg>
             <input
               type="text"
-              value={codiMO}
-              onChange={(e) => setCodiMO(e.target.value)}
+              value={displayCodiMO}
+              onChange={(e) => { if (!credencialesEnmascaradas) setCodiMO(e.target.value); }}
+              readOnly={credencialesEnmascaradas}
               placeholder={lang === "es" ? "Tu código MO" : "El teu codi MO"}
               className="flex-1 text-sm bg-transparent outline-none text-dark-blue-grey placeholder-blue-grey/50"
             />
@@ -179,6 +200,7 @@ export default function LoginPage() {
             <input
               type="checkbox"
               checked={rememberMe}
+              disabled={credencialesEnmascaradas}
               onChange={(e) => setRememberMe(e.target.checked)}
               className="w-4 h-4 accent-main-green"
             />
@@ -207,12 +229,34 @@ export default function LoginPage() {
 
         {/* Acceder */}
         <button
-          onClick={() => login(nif, password, codiMO, rememberMe)}
-          disabled={isLoading}
-          className="w-full bg-main-green text-white rounded-xl py-3 text-sm font-semibold disabled:opacity-50 transition-opacity mb-3 shadow-sm"
+            onClick={() => login(nif, password, codiMO, rememberMe)}
+            disabled={isLoading || credencialesEnmascaradas}
+            className="w-full bg-main-green text-white rounded-xl py-3 text-sm font-semibold disabled:opacity-50 transition-opacity mb-3 shadow-sm"
         >
           {isLoading ? t("common.loading") : t("login.btn_login")}
         </button>
+        {demoDisponible && (
+            <>
+              <div className="flex items-center gap-3 my-3">
+                <div className="flex-1 h-px bg-surface-variant" />
+                <span className="text-xs text-blue-grey shrink-0">
+                {lang === "es" ? "o" : "o"}
+              </span>
+                <div className="flex-1 h-px bg-surface-variant" />
+              </div>
+
+              <button
+                  onClick={handleLoginDemo}
+                  disabled={isLoading}
+                  className="w-full flex items-center justify-center gap-2 border border-main-green text-main-green rounded-xl py-3 text-sm font-semibold disabled:opacity-50 transition-opacity hover:bg-main-green-bg"
+              >
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd"/>
+                </svg>
+                {lang === "es" ? "Probar con cuenta demo" : "Prova amb compte demo"}
+              </button>
+            </>
+        )}
 
       </div>
 
