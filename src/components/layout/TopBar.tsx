@@ -4,6 +4,7 @@ import { useI18n } from "@/hooks/useI18n";
 import { useRouter } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
 import SelectorMO from "@/components/common/SelectorMO";
+import { useThemeColor } from "@/hooks/useThemeColor";
 
 type TopBarIcon =
     | "history"
@@ -80,6 +81,9 @@ export default function TopBar({
                                }: TopBarProps) {
     const { lang, changeLanguage } = useI18n();
     const router = useRouter();
+
+    // Sincroniza la barra de estado del SO / título de PWA con el acento de la pantalla
+    useThemeColor(accentColor);
 
     const [showLangMenu, setShowLangMenu] = useState(false);
     const langRef = useRef<HTMLDivElement>(null);
