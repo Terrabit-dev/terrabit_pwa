@@ -11,7 +11,7 @@ const LANGUAGES = [
 
 export default function LoginPage() {
   const { t, lang, changeLanguage } = useI18n();
-  const { state, login, loginDemo, savedForm, demoDisponible } = useAuth();
+  const { state, progress, login, loginDemo, savedForm, demoDisponible } = useAuth();
 
   const [nif, setNif] = useState("");
   const [password, setPassword] = useState("");
@@ -32,7 +32,7 @@ export default function LoginPage() {
   }, [savedForm]);
 
   useEffect(() => {
-    if (state === "error_credentials" || state === "error_network" || state === "error_demo") {
+    if (state === "error_credentials" || state === "error_network" || state === "error_demo" || state === "error_timeout") {
       setCredencialesEnmascaradas(false);
     }
   }, [state]);
@@ -62,9 +62,29 @@ export default function LoginPage() {
     error_credentials: t("login.error_invalid_credentials"),
     error_network:     t("common.error_network"),
     error_demo:        lang === "es" ? "No se pudo cargar la cuenta demo" : "No s'ha pogut carregar el compte demo",
+    error_timeout:     lang === "es" ? "El servidor GTR no respondió a tiempo. Vuelve a intentarlo." : "El servidor GTR no ha respost a temps. Torna-ho a provar.",
   };
 
   const isLoading = state === "loading";
+
+  // Texto mostrado en el botón según la fase del login.
+  // La idea: que el usuario sepa siempre que la app está trabajando y, si tarda,
+  // entienda que es normal porque GTR puede ser lento (especialmente en preproducción).
+  const loadingLabel = (() => {
+    if (!isLoading) return null;
+    switch (progress) {
+      case "connecting":
+        return lang === "es" ? "Conectando…" : "Connectant…";
+      case "working":
+        return lang === "es" ? "Validando credenciales…" : "Validant credencials…";
+      case "slow":
+        return lang === "es" ? "Tardando un poco más de lo normal…" : "Triga una mica més del normal…";
+      case "very_slow":
+        return lang === "es" ? "GTR está lento. Seguimos intentándolo…" : "GTR està lent. Seguim intentant-ho…";
+      default:
+        return t("common.loading");
+    }
+  })();
 
   return (
     <main className="min-h-screen bg-surface flex flex-col items-center justify-center px-5 py-10">
@@ -233,7 +253,7 @@ export default function LoginPage() {
             disabled={isLoading || credencialesEnmascaradas}
             className="w-full bg-main-green text-white rounded-xl py-3 text-sm font-semibold disabled:opacity-50 transition-opacity mb-3 shadow-sm"
         >
-          {isLoading ? t("common.loading") : t("login.btn_login")}
+          {isLoading ? loadingLabel : t("login.btn_login")}
         </button>
         {demoDisponible && (
             <>
