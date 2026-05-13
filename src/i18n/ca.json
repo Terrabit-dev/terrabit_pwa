@@ -77,6 +77,11 @@
   "submenu": {
     "selecciona_accion" : "Selecciona una acció"
   },
+  "language": {
+    "change": "Canviar idioma",
+    "es": "Castellà",
+    "ca": "Català"
+  },
   "common": {
     "btn_send": "Enviar",
     "btn_cancel": "Cancel·lar",

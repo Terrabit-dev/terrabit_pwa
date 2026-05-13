@@ -1,22 +1,31 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
-import es from "@/i18n/es.json";
-import ca from "@/i18n/ca.json";
-
-type Language = "es" | "ca";
-type Translations = typeof es;
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+  ReactNode,
+} from "react";
+import {
+  TRANSLATIONS,
+  DEFAULT_LANGUAGE,
+  isLanguage,
+  type Language,
+} from "@/i18n/languages";
 
 const LANG_KEY = "terrabit_lang";
-const translations: Record<Language, Translations> = { es, ca };
 
 function getNestedValue(obj: Record<string, unknown>, path: string): string {
-  return path.split(".").reduce((acc: unknown, key: string) => {
-    if (acc && typeof acc === "object") {
-      return (acc as Record<string, unknown>)[key];
-    }
-    return path;
-  }, obj) as string ?? path;
+  return (
+      (path.split(".").reduce((acc: unknown, key: string) => {
+        if (acc && typeof acc === "object") {
+          return (acc as Record<string, unknown>)[key];
+        }
+        return path;
+      }, obj) as string) ?? path
+  );
 }
 
 interface I18nContextProps {
@@ -27,40 +36,40 @@ interface I18nContextProps {
 
 const I18nContext = createContext<I18nContextProps | undefined>(undefined);
 
-// Este es el Proveedor que envolverá tu aplicación
 export function I18nProvider({ children }: { children: ReactNode }) {
-  const [lang, setLang] = useState<Language>("es");
+  const [lang, setLang] = useState<Language>(DEFAULT_LANGUAGE);
 
   useEffect(() => {
-    const stored = localStorage.getItem(LANG_KEY) as Language | null;
-    if (stored && (stored === "es" || stored === "ca")) {
+    if (typeof window === "undefined") return;
+    const stored = localStorage.getItem(LANG_KEY);
+    if (isLanguage(stored)) {
       setLang(stored);
     }
   }, []);
 
   const changeLanguage = useCallback((newLang: Language) => {
     setLang(newLang);
-    localStorage.setItem(LANG_KEY, newLang);
+    if (typeof window !== "undefined") {
+      localStorage.setItem(LANG_KEY, newLang);
+    }
   }, []);
 
   const t = useCallback(
-    (key: string): string => {
-      return getNestedValue(
-        translations[lang] as unknown as Record<string, unknown>,
-        key
-      );
-    },
-    [lang]
+      (key: string): string =>
+          getNestedValue(
+              TRANSLATIONS[lang] as unknown as Record<string, unknown>,
+              key,
+          ),
+      [lang],
   );
 
   return (
-    <I18nContext.Provider value={{ t, lang, changeLanguage }}>
-      {children}
-    </I18nContext.Provider>
+      <I18nContext.Provider value={{ t, lang, changeLanguage }}>
+        {children}
+      </I18nContext.Provider>
   );
 }
 
-// Este es el hook que usarás en tus componentes
 export function useI18n() {
   const context = useContext(I18nContext);
   if (context === undefined) {

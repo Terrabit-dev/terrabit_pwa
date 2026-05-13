@@ -2,8 +2,8 @@
 
 import { useI18n } from "@/hooks/useI18n";
 import { useRouter } from "next/navigation";
-import { useState, useRef, useEffect } from "react";
 import SelectorMO from "@/components/common/SelectorMO";
+import LanguageSwitcher from "@/components/common/LanguageSwitcher";
 import { useThemeColor } from "@/hooks/useThemeColor";
 
 type TopBarIcon =
@@ -26,11 +26,6 @@ interface TopBarProps {
     rightIcon?: TopBarIcon;
     onRightIconClick?: () => void;
 }
-
-const LANGUAGES = [
-    { code: "es" as const, label: "Castellano" },
-    { code: "ca" as const, label: "Català" },
-];
 
 const ICON_PATHS: Record<TopBarIcon, string> = {
     history:
@@ -57,18 +52,6 @@ const ACCENT_BG: Record<NonNullable<TopBarProps["accentColor"]>, string> = {
     red: "bg-error-red",
 };
 
-const ACCENT_TEXT: Record<NonNullable<TopBarProps["accentColor"]>, string> = {
-    green: "text-main-green",
-    orange: "text-main-orange",
-    red: "text-error-red",
-};
-
-const ACCENT_LIGHT_BG: Record<NonNullable<TopBarProps["accentColor"]>, string> = {
-    green: "bg-main-green/10",
-    orange: "bg-main-orange/10",
-    red: "bg-error-red/10",
-};
-
 export default function TopBar({
                                    title,
                                    onMenuClick,
@@ -79,28 +62,13 @@ export default function TopBar({
                                    rightIcon,
                                    onRightIconClick,
                                }: TopBarProps) {
-    const { lang, changeLanguage } = useI18n();
+    const { t, lang } = useI18n();
     const router = useRouter();
 
     // Sincroniza la barra de estado del SO / título de PWA con el acento de la pantalla
     useThemeColor(accentColor);
 
-    const [showLangMenu, setShowLangMenu] = useState(false);
-    const langRef = useRef<HTMLDivElement>(null);
-
-    useEffect(() => {
-        const handler = (e: MouseEvent) => {
-            if (langRef.current && !langRef.current.contains(e.target as Node)) {
-                setShowLangMenu(false);
-            }
-        };
-        document.addEventListener("mousedown", handler);
-        return () => document.removeEventListener("mousedown", handler);
-    }, []);
-
     const bgColor = ACCENT_BG[accentColor];
-    const activeLangText = ACCENT_TEXT[accentColor];
-    const activeLangBg = ACCENT_LIGHT_BG[accentColor];
 
     return (
         <header className={`${bgColor} px-4 pt-10 pb-4 shadow-md z-30 relative`}>
@@ -148,39 +116,7 @@ export default function TopBar({
                             </svg>
                         </button>
                     ) : (
-                        <div ref={langRef} className="relative shrink-0">
-                            <button
-                                onClick={() => setShowLangMenu((v) => !v)}
-                                className="text-white p-1 rounded-lg hover:bg-white/10 transition-colors"
-                                aria-label="Cambiar idioma"
-                            >
-                                <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                                    <path d={ICON_PATHS["language"]} />
-                                </svg>
-                            </button>
-
-                            {showLangMenu && (
-                                <div className="absolute right-0 top-10 bg-card rounded-xl shadow-lg overflow-hidden z-50 min-w-[120px]">
-                                    {LANGUAGES.map((l) => (
-                                        <button
-                                            key={l.code}
-                                            onClick={() => {
-                                                changeLanguage(l.code);
-                                                setShowLangMenu(false);
-                                            }}
-                                            className={[
-                                                "w-full text-left px-4 py-3 text-sm transition-colors",
-                                                lang === l.code
-                                                    ? `${activeLangBg} ${activeLangText} font-semibold`
-                                                    : "text-dark-blue-grey hover:bg-surface",
-                                            ].join(" ")}
-                                        >
-                                            {l.label}
-                                        </button>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
+                        <LanguageSwitcher variant="header" accentColor={accentColor} />
                     )}
                 </div>
             </div>
