@@ -36,7 +36,7 @@ interface SeccionCard {
 }
 
 const LANGUAGES = [
-    { code: "es" as const, label: "Español" },
+    { code: "es" as const, label: "Castellano" },
     { code: "ca" as const, label: "Català" },
 ];
 

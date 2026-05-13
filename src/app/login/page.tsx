@@ -5,7 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useI18n } from "@/hooks/useI18n";
 
 const LANGUAGES = [
-  { code: "es" as const, label: "Español" },
+  { code: "es" as const, label: "Castellano" },
   { code: "ca" as const, label: "Català" },
 ];
 
