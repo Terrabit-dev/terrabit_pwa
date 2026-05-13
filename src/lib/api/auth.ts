@@ -5,11 +5,13 @@
  *  - timeout de GTR (timeout)
  *  - error de red genérico (network)
  */
+
 export type ValidateResult =
     | { kind: "valid" }
     | { kind: "invalid" }
     | { kind: "timeout" }
-    | { kind: "network" };
+    | { kind: "network" }
+    | { kind: "rate_limited"; retryAfter: number };
 
 export async function validateCredentials(
     nif: string,
@@ -23,6 +25,10 @@ export async function validateCredentials(
       body: JSON.stringify({ nif, passwordMobilitat: password, codiMO }),
     });
 
+    if (response.status === 429) {
+      const retryAfter = parseInt(response.headers.get("Retry-After") ?? "60", 10);
+      return { kind: "rate_limited", retryAfter };
+    }
     if (response.status === 504) return { kind: "timeout" };
     if (response.status === 502) return { kind: "network" };
 

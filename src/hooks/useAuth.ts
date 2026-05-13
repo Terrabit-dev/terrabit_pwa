@@ -17,7 +17,8 @@ type LoginState =
     | "error_network"
     | "error_empty"
     | "error_demo"
-    | "error_timeout";
+    | "error_timeout"
+    | "error_rate_limited";
 
 /**
  * Fases de progreso visibles en la UI durante el "loading".
@@ -118,6 +119,9 @@ export function useAuth() {
             break;
           case "timeout":
             setState("error_timeout");
+            break;
+          case "rate_limited":
+            setState("error_rate_limited");
             break;
           case "network":
             setState("error_network");

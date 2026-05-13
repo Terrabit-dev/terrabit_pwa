@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { secureLog } from "@/lib/utils/secureLog";
+import { enforceRateLimit } from "@/lib/security/rateLimit";
 
 const GTR_BASE = "https://preproduccio.aplicacions.agricultura.gencat.cat/gtr/";
+
+const PROXY_RATE_LIMIT = { bucket: "gtr-proxy", max: 120, windowSec: 60 };
 
 async function parseResponse(response: Response): Promise<unknown> {
   const contentType = response.headers.get("content-type") ?? "";
@@ -19,6 +22,9 @@ async function parseResponse(response: Response): Promise<unknown> {
 }
 
 export async function GET(request: NextRequest) {
+  const limited = enforceRateLimit(request, PROXY_RATE_LIMIT);
+  if (limited) return limited;
+
   const { searchParams } = new URL(request.url);
   const endpoint = searchParams.get("endpoint");
 
@@ -50,6 +56,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function PUT(request: NextRequest) {
+  const limited = enforceRateLimit(request, PROXY_RATE_LIMIT);
+  if (limited) return limited;
+
   const { searchParams } = new URL(request.url);
   const endpoint = searchParams.get("endpoint");
 
@@ -71,35 +80,6 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json(data, { status: 200 });
   } catch (error) {
     secureLog.error("GTR proxy PUT error:", error);
-    return NextResponse.json(
-        { codi: "503", descripcio: "Error de connexió amb GTR" },
-        { status: 503 }
-    );
-  }
-}
-
-export async function POST(request: NextRequest) {
-  const { searchParams } = new URL(request.url);
-  const endpoint = searchParams.get("endpoint");
-
-  if (!endpoint) {
-    return NextResponse.json({ error: "Endpoint requerido" }, { status: 400 });
-  }
-
-  try {
-    const body = await request.json();
-    const url = new URL(endpoint, GTR_BASE);
-
-    const response = await fetch(url.toString(), {
-      method: "POST",
-      headers: { "Accept": "application/json", "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-
-    const data = await parseResponse(response);
-    return NextResponse.json(data, { status: 200 });
-  } catch (error) {
-    secureLog.error("GTR proxy POST error:", error);
     return NextResponse.json(
         { codi: "503", descripcio: "Error de connexió amb GTR" },
         { status: 503 }

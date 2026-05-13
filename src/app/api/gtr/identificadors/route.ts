@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { secureLog, maskPartial } from "@/lib/utils/secureLog";
+import { enforceRateLimit } from "@/lib/security/rateLimit";
 
 const GTR_BASE = process.env.GTR_BASE_URL ?? "https://preproduccio.aplicacions.agricultura.gencat.cat/gtr/";
-
-// Timeout total para la petición a GTR (ms).
-// GTR preproducción puede tardar en cold start; 40s da margen sin colgar al usuario.
 const GTR_TIMEOUT_MS = 40_000;
 
 interface GtrErrorResponse {
@@ -24,20 +22,19 @@ async function parseResponse(response: Response): Promise<unknown> {
   }
 }
 
-/**
- * Endpoint de validación de credenciales contra GTR.
- *
- * Nota: el GTR no expone un endpoint dedicado de login. Se utiliza
- * WSIdentificadorsDisponibles porque exige credenciales válidas para responder.
- * Se descartan los datos de respuesta y solo devolvemos { valid: true/false }.
- *
- * Distinguimos códigos HTTP para que el cliente pueda dar mensajes específicos:
- *   200 valid:true / valid:false  → respuesta normal de GTR
- *   400                            → datos incompletos
- *   504                            → timeout (GTR no respondió en GTR_TIMEOUT_MS)
- *   502                            → GTR respondió con error de red/HTTP
- */
 export async function POST(request: NextRequest) {
+  // ─── RATE LIMIT ─────────────────────────────────────────────────
+  // 5 intentos de login por IP por minuto. Suficiente para usuarios
+  // reales (incluso si fallan 2-3 veces escribiendo mal el password)
+  // y bloquea ataques de fuerza bruta.
+  const limited = enforceRateLimit(request, {
+    bucket: "login",
+    max: 5,
+    windowSec: 60,
+  });
+  if (limited) return limited;
+  // ────────────────────────────────────────────────────────────────
+
   const startedAt = Date.now();
 
   let nif: string, passwordMobilitat: string, codiMO: string;
@@ -76,7 +73,6 @@ export async function POST(request: NextRequest) {
       method: "GET",
       headers: { "Accept": "application/json" },
       signal: controller.signal,
-      // Importante en Next.js: nunca cachear esta llamada
       cache: "no-store",
     });
 

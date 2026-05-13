@@ -32,7 +32,9 @@ export default function LoginPage() {
   }, [savedForm]);
 
   useEffect(() => {
-    if (state === "error_credentials" || state === "error_network" || state === "error_demo" || state === "error_timeout") {
+    if (state === "error_credentials" || state === "error_network" ||
+        state === "error_demo" || state === "error_timeout" ||
+        state === "error_rate_limited") {
       setCredencialesEnmascaradas(false);
     }
   }, [state]);
@@ -63,6 +65,9 @@ export default function LoginPage() {
     error_network:     t("common.error_network"),
     error_demo:        lang === "es" ? "No se pudo cargar la cuenta demo" : "No s'ha pogut carregar el compte demo",
     error_timeout:     lang === "es" ? "El servidor GTR no respondió a tiempo. Vuelve a intentarlo." : "El servidor GTR no ha respost a temps. Torna-ho a provar.",
+    error_rate_limited: lang === "es"
+        ? "Demasiados intentos. Espera un momento antes de volver a probar."
+        : "Massa intents. Espera un moment abans de tornar a provar.",
   };
 
   const isLoading = state === "loading";
