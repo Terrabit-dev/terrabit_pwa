@@ -118,7 +118,6 @@ export default function FallecimientoPage() {
                                     cadaverInaccesible: false,
                                     latitud:            "",
                                     longitud:           "",
-                                    identificador:      "",
                                 })}
                                 options={tiposMuerte}
                                 placeholder={lang === "ca" ? "Seleccionar tipus" : "Seleccionar tipo"}
