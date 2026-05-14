@@ -23,7 +23,7 @@ export const AVAILABLE_LANGUAGES: readonly Language[] = Object.freeze(
 );
 
 /** Idioma por defecto cuando no hay nada en localStorage. */
-export const DEFAULT_LANGUAGE: Language = "es";
+export const DEFAULT_LANGUAGE: Language = "ca";
 
 /** Type guard seguro para validar strings externos (localStorage, query params, etc.). */
 export function isLanguage(value: unknown): value is Language {
