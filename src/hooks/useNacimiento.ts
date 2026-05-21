@@ -110,7 +110,6 @@ export function useNacimiento(): UseNacimientoReturn {
         secureLog.request("WSEnregistramentNaixement", body as Record<string, unknown>);
 
         try {
-            // OJO: Le he quitado la barra final "/" a la URL por el bug del 404 que arreglamos ayer
             const response = await fetch(
                 "/api/gtr/proxy?endpoint=WSBovi/AppJava/Bovi/WSEnregistramentNaixement",
                 {

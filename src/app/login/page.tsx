@@ -5,7 +5,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { useI18n } from "@/hooks/useI18n";
 import LanguageSwitcher from "@/components/common/LanguageSwitcher";
 
-
 export default function LoginPage() {
   const { t, lang } = useI18n();
   const { state, progress, login, loginDemo, savedForm, demoDisponible } = useAuth();
@@ -17,6 +16,8 @@ export default function LoginPage() {
   const [rememberMe, setRememberMe] = useState(false);
   const [credencialesEnmascaradas, setCredencialesEnmascaradas] = useState(false);
 
+  // Estado del entorno (por defecto producción)
+  const [entorno, setEntorno] = useState<"prod" | "preprod">("prod");
 
   useEffect(() => {
     if (savedForm.rememberMe) {
@@ -28,6 +29,14 @@ export default function LoginPage() {
   }, [savedForm]);
 
   useEffect(() => {
+    const match = document.cookie.match(/(^| )terrabit_env=([^;]+)/);
+    const savedEnv = match ? match[2] : "prod";
+    if (savedEnv === "preprod" || savedEnv === "prod") {
+      setEntorno(savedEnv as "prod" | "preprod");
+    }
+  }, []);
+
+  useEffect(() => {
     if (state === "error_credentials" || state === "error_network" ||
         state === "error_demo" || state === "error_timeout" ||
         state === "error_rate_limited") {
@@ -35,11 +44,15 @@ export default function LoginPage() {
     }
   }, [state]);
 
-
-
   const handleLoginDemo = () => {
     setCredencialesEnmascaradas(true);
     loginDemo();
+  };
+
+  const handleEntornoChange = (nuevoEntorno: "prod" | "preprod") => {
+    setEntorno(nuevoEntorno);
+    // Creamos la cookie de forma nativa (expira en 1 año)
+    document.cookie = `terrabit_env=${nuevoEntorno}; path=/; max-age=31536000; SameSite=Strict`;
   };
 
   const displayNif      = credencialesEnmascaradas ? "*****" : nif;
@@ -59,195 +72,179 @@ export default function LoginPage() {
 
   const isLoading = state === "loading";
 
-  // Texto mostrado en el botón según la fase del login.
-  // La idea: que el usuario sepa siempre que la app está trabajando y, si tarda,
-  // entienda que es normal porque GTR puede ser lento (especialmente en preproducción).
   const loadingLabel = (() => {
     if (!isLoading) return null;
     switch (progress) {
-      case "connecting":
-        return lang === "es" ? "Conectando…" : "Connectant…";
-      case "working":
-        return lang === "es" ? "Validando credenciales…" : "Validant credencials…";
-      case "slow":
-        return lang === "es" ? "Tardando un poco más de lo normal…" : "Triga una mica més del normal…";
-      case "very_slow":
-        return lang === "es" ? "GTR está lento. Seguimos intentándolo…" : "GTR està lent. Seguim intentant-ho…";
-      default:
-        return t("common.loading");
+      case "connecting": return lang === "es" ? "Conectando…" : "Connectant…";
+      case "working":    return lang === "es" ? "Validando credenciales…" : "Validant credencials…";
+      case "slow":       return lang === "es" ? "Tardando un poco más de lo normal…" : "Triga una mica més del normal…";
+      case "very_slow":  return lang === "es" ? "GTR está lento. Seguimos intentándolo…" : "GTR està lent. Seguim intentant-ho…";
+      default:           return t("common.loading");
     }
   })();
 
   return (
-    <main className="min-h-screen bg-surface flex flex-col items-center justify-center px-5 py-10">
+      <main className="min-h-screen bg-surface flex flex-col items-center justify-center px-5 py-10">
 
-      {/* Selector de idioma */}
-      <LanguageSwitcher
-          variant="floating"
-          accentColor="green"
-          className="top-4 right-4 z-10"
-      />
-      {/* Logo */}
-      <div className="mb-6 flex flex-col items-center">
-        <img
-            src="/images/terrabit_prime_sin_letra.png"
-            alt="Terrabit logo"
-            className="w-24 h-24 object-contain mb-3"
-        />
-        <h1 className="text-3xl font-bold text-dark-blue-grey">Terrabit</h1>
-        <p className="text-sm text-main-green font-medium mt-1">
-          {lang === "es" ? "Gestión Ganadera Inteligente" : "Gestió Ramadera Intel·ligent"}
-        </p>
-      </div>
+        <LanguageSwitcher variant="floating" accentColor="green" className="top-4 right-4 z-10" />
 
-      {/* Card */}
-      <div className="w-full max-w-sm bg-card rounded-2xl shadow-md px-6 py-7">
-        <h2 className="text-lg font-bold text-dark-blue-grey mb-5">{t("login.title")}</h2>
-
-        {/* NIF */}
-        <div className="mb-4">
-          <label className="text-xs font-semibold text-blue-grey uppercase tracking-wide mb-1 block">
-            {t("login.nif")}
-          </label>
-          <div className="flex items-center border border-surface-variant rounded-xl px-3 py-2.5 gap-2 bg-surface focus-within:border-main-green transition-colors">
-            <svg className="w-4 h-4 text-blue-grey shrink-0" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M10 10a4 4 0 100-8 4 4 0 000 8zm-7 8a7 7 0 0114 0H3z"/>
-            </svg>
-            <input
-              type="text"
-              value={displayNif}
-              onChange={(e) => { if (!credencialesEnmascaradas) setNif(e.target.value); }}
-              readOnly={credencialesEnmascaradas}
-              placeholder={lang === "es" ? "Tu Código Usuario" : "El teu Codi Usuari"}
-              autoComplete="username"
-              className="flex-1 text-sm bg-transparent outline-none text-dark-blue-grey placeholder-blue-grey/50"
-            />
-          </div>
+        <div className="mb-6 flex flex-col items-center">
+          <img src="/images/terrabit_prime_sin_letra.png" alt="Terrabit logo" className="w-24 h-24 object-contain mb-3" />
+          <h1 className="text-3xl font-bold text-dark-blue-grey">Terrabit</h1>
+          <p className="text-sm text-main-green font-medium mt-1">
+            {lang === "es" ? "Gestión Ganadera Inteligente" : "Gestió Ramadera Intel·ligent"}
+          </p>
         </div>
 
-        {/* Contraseña de Mobilidad */}
-        <div className="mb-4">
-          <label className="text-xs font-semibold text-blue-grey uppercase tracking-wide mb-1 block">
-            {t("login.password")}
-          </label>
-          <div className="flex items-center border border-surface-variant rounded-xl px-3 py-2.5 gap-2 bg-surface focus-within:border-main-green transition-colors">
-            <svg className="w-4 h-4 text-blue-grey shrink-0" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd"/>
-            </svg>
-            <input
-              type={showPassword ? "text" : "password"}
-              value={displayPassword}
-              onChange={(e) => { if (!credencialesEnmascaradas) setPassword(e.target.value); }}
-              readOnly={credencialesEnmascaradas}
-              placeholder={lang === "es" ? "Contraseña de Mobilidad" : "Contrasenya de Mobilitat"}
-              autoComplete="current-password"
-              className="flex-1 text-sm bg-transparent outline-none text-dark-blue-grey placeholder-blue-grey/50"
-            />
-            <button type="button" onClick={() => setShowPassword(!showPassword)} className="text-blue-grey">
-              {showPassword ? (
-                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M10 3C5 3 1.73 7.11 1 10c.73 2.89 4 7 9 7s8.27-4.11 9-7c-.73-2.89-4-7-9-7zm0 12a5 5 0 110-10 5 5 0 010 10zm0-8a3 3 0 100 6 3 3 0 000-6z"/>
-                </svg>
-              ) : (
-                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M3.28 2.22a.75.75 0 00-1.06 1.06l14.5 14.5a.75.75 0 101.06-1.06l-1.74-1.74A9.6 9.6 0 0019 10c-.73-2.89-4-7-9-7a9.44 9.44 0 00-4.74 1.26L3.28 2.22zm3.5 3.5L8.2 7.14A3 3 0 0113 10c0 .35-.06.68-.16 1l1.56 1.56A7.85 7.85 0 0017 10c-.9-2.7-3.57-5-7-5a7.55 7.55 0 00-3.22.72zM7 10a3 3 0 004.88 2.34l-4.22-4.22A2.98 2.98 0 007 10zm-4 0c.9 2.7 3.57 5 7 5a7.5 7.5 0 002.66-.49l-1.56-1.56A3 3 0 017.14 11.8L5.58 10.24A7.87 7.87 0 013 10z"/>
-                </svg>
-              )}
-            </button>
-          </div>
-        </div>
+        <div className="w-full max-w-sm bg-card rounded-2xl shadow-md px-6 py-7">
+          <h2 className="text-lg font-bold text-dark-blue-grey mb-5">{t("login.title")}</h2>
 
-        {/* Código MO */}
-        <div className="mb-4">
-          <label className="text-xs font-semibold text-blue-grey uppercase tracking-wide mb-1 block">
-            {t("login.codiMO")}
-          </label>
-          <div className="flex items-center border border-surface-variant rounded-xl px-3 py-2.5 gap-2 bg-surface focus-within:border-main-green transition-colors">
-            <svg className="w-4 h-4 text-blue-grey shrink-0" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4zM2 9v7a2 2 0 002 2h12a2 2 0 002-2V9H2zm5 3a1 1 0 011-1h4a1 1 0 110 2H8a1 1 0 01-1-1z"/>
-            </svg>
-            <input
-              type="text"
-              value={displayCodiMO}
-              onChange={(e) => { if (!credencialesEnmascaradas) setCodiMO(e.target.value); }}
-              readOnly={credencialesEnmascaradas}
-              placeholder={lang === "es" ? "Tu código MO" : "El teu codi MO"}
-              className="flex-1 text-sm bg-transparent outline-none text-dark-blue-grey placeholder-blue-grey/50"
-            />
-          </div>
-        </div>
-
-        {/* Recordarme */}
-        <div className="flex items-center justify-between mb-5">
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={rememberMe}
-              disabled={credencialesEnmascaradas}
-              onChange={(e) => setRememberMe(e.target.checked)}
-              className="w-4 h-4 accent-main-green"
-            />
-            <span className="text-xs text-blue-grey">
-              {lang === "es" ? "Recordarme" : "Recorda'm"}
-            </span>
-          </label>
-          <a
-            href="https://aplicacions.agricultura.gencat.cat/gtr/porci/AppJava/views/recuperarContrasenya.xhtml"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-xs text-main-green font-medium"
-          >
-            {lang === "es" ? "¿Olvidaste tu contraseña?" : "Has oblidat la teva contrasenya?"}
-          </a>
-        </div>
-
-        {/* Error */}
-        {errorMessage[state] && (
-          <div className="mb-4 px-3 py-2 bg-error-red-bg rounded-lg">
-            <p className="text-xs text-error-red text-center font-medium">
-              {errorMessage[state]}
-            </p>
-          </div>
-        )}
-
-        {/* Acceder */}
-        <button
-            onClick={() => login(nif, password, codiMO, rememberMe)}
-            disabled={isLoading || credencialesEnmascaradas}
-            className="w-full bg-main-green text-white rounded-xl py-3 text-sm font-semibold disabled:opacity-50 transition-opacity mb-3 shadow-sm"
-        >
-          {isLoading ? loadingLabel : t("login.btn_login")}
-        </button>
-        {demoDisponible && (
-            <>
-              <div className="flex items-center gap-3 my-3">
-                <div className="flex-1 h-px bg-surface-variant" />
-                <span className="text-xs text-blue-grey shrink-0">
-                {lang === "es" ? "o" : "o"}
-              </span>
-                <div className="flex-1 h-px bg-surface-variant" />
-              </div>
-
+          {/* Selector de Entorno */}
+          <div className="mb-5">
+            <div className="flex bg-surface-variant p-1 rounded-xl">
               <button
-                  onClick={handleLoginDemo}
-                  disabled={isLoading}
-                  className="w-full flex items-center justify-center gap-2 border border-main-green text-main-green rounded-xl py-3 text-sm font-semibold disabled:opacity-50 transition-opacity hover:bg-main-green-bg"
+                  type="button"
+                  onClick={() => handleEntornoChange("prod")}
+                  className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-colors ${
+                      entorno === "prod"
+                          ? "bg-white text-dark-blue-grey shadow-sm"
+                          : "text-blue-grey hover:text-dark-blue-grey"
+                  }`}
               >
-                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd"/>
-                </svg>
-                {lang === "es" ? "Probar con cuenta demo" : "Prova amb compte demo"}
+                {lang === "es" ? "Producción" : "Producció"}
               </button>
-            </>
-        )}
+              <button
+                  type="button"
+                  onClick={() => handleEntornoChange("preprod")}
+                  className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-colors ${
+                      entorno === "preprod"
+                          ? "bg-main-green text-white shadow-sm"
+                          : "text-blue-grey hover:text-dark-blue-grey"
+                  }`}
+              >
+                {lang === "es" ? "Entorno de prueba" : "Entorn de prova"}
+              </button>
+            </div>
 
-      </div>
+            {/* Mensaje de Alerta en Rojo */}
+            {entorno === "preprod" && (
+                <div className="mt-3 p-3 bg-error-red/10 border border-error-red/20 rounded-xl animate-in fade-in slide-in-from-top-1">
+                  <p className="text-[11px] text-error-red leading-snug font-medium text-justify">
+                    <strong>{lang === "es" ? "Atención:" : "Atenció:"}</strong>{" "}
+                    {lang === "es"
+                        ? "Estás en el entorno de pruebas. Los datos no son reales y necesitas credenciales específicas para este modo. Es muy probable que tu cuenta habitual no funcione. Cualquier dato introducido será ficticio."
+                        : "Estàs a l'entorn de proves. Les dades no són reals i necessites credencials específiques per a aquest mode. És molt probable que el teu compte habitual no funcioni. Qualsevol dada introduïda serà fictícia."
+                    }
+                  </p>
+                </div>
+            )}
+          </div>
 
-      {/* Footer */}
-      <p className="mt-6 text-xs text-blue-grey text-center">
-        © 2026 Terrabit.{" "}
-        {lang === "es" ? "Gestión ganadera moderna y eficiente" : "Gestió ramadera moderna i eficient"}
-      </p>
-    </main>
+          {/* Inputs del Formulario */}
+          <div className="mb-4">
+            <label className="text-xs font-semibold text-blue-grey uppercase tracking-wide mb-1 block">
+              {t("login.nif")}
+            </label>
+            <div className="flex items-center border border-surface-variant rounded-xl px-3 py-2.5 gap-2 bg-surface focus-within:border-main-green transition-colors">
+              <svg className="w-4 h-4 text-blue-grey shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M10 10a4 4 0 100-8 4 4 0 000 8zm-7 8a7 7 0 0114 0H3z"/></svg>
+              <input
+                  type="text"
+                  value={displayNif}
+                  onChange={(e) => { if (!credencialesEnmascaradas) setNif(e.target.value); }}
+                  readOnly={credencialesEnmascaradas}
+                  placeholder={lang === "es" ? "Tu Código Usuario" : "El teu Codi Usuari"}
+                  autoComplete="username"
+                  className="flex-1 text-sm bg-transparent outline-none text-dark-blue-grey placeholder-blue-grey/50"
+              />
+            </div>
+          </div>
+
+          <div className="mb-4">
+            <label className="text-xs font-semibold text-blue-grey uppercase tracking-wide mb-1 block">
+              {t("login.password")}
+            </label>
+            <div className="flex items-center border border-surface-variant rounded-xl px-3 py-2.5 gap-2 bg-surface focus-within:border-main-green transition-colors">
+              <svg className="w-4 h-4 text-blue-grey shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd"/></svg>
+              <input
+                  type={showPassword ? "text" : "password"}
+                  value={displayPassword}
+                  onChange={(e) => { if (!credencialesEnmascaradas) setPassword(e.target.value); }}
+                  readOnly={credencialesEnmascaradas}
+                  placeholder={lang === "es" ? "Contraseña de Mobilidad" : "Contrasenya de Mobilitat"}
+                  autoComplete="current-password"
+                  className="flex-1 text-sm bg-transparent outline-none text-dark-blue-grey placeholder-blue-grey/50"
+              />
+              <button type="button" onClick={() => setShowPassword(!showPassword)} className="text-blue-grey">
+                {showPassword ? (
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M10 3C5 3 1.73 7.11 1 10c.73 2.89 4 7 9 7s8.27-4.11 9-7c-.73-2.89-4-7-9-7zm0 12a5 5 0 110-10 5 5 0 010 10zm0-8a3 3 0 100 6 3 3 0 000-6z"/></svg>
+                ) : (
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M3.28 2.22a.75.75 0 00-1.06 1.06l14.5 14.5a.75.75 0 101.06-1.06l-1.74-1.74A9.6 9.6 0 0019 10c-.73-2.89-4-7-9-7a9.44 9.44 0 00-4.74 1.26L3.28 2.22zm3.5 3.5L8.2 7.14A3 3 0 0113 10c0 .35-.06.68-.16 1l1.56 1.56A7.85 7.85 0 0017 10c-.9-2.7-3.57-5-7-5a7.55 7.55 0 00-3.22.72zM7 10a3 3 0 004.88 2.34l-4.22-4.22A2.98 2.98 0 007 10zm-4 0c.9 2.7 3.57 5 7 5a7.5 7.5 0 002.66-.49l-1.56-1.56A3 3 0 017.14 11.8L5.58 10.24A7.87 7.87 0 013 10z"/></svg>
+                )}
+              </button>
+            </div>
+          </div>
+
+          <div className="mb-4">
+            <label className="text-xs font-semibold text-blue-grey uppercase tracking-wide mb-1 block">
+              {t("login.codiMO")}
+            </label>
+            <div className="flex items-center border border-surface-variant rounded-xl px-3 py-2.5 gap-2 bg-surface focus-within:border-main-green transition-colors">
+              <svg className="w-4 h-4 text-blue-grey shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4zM2 9v7a2 2 0 002 2h12a2 2 0 002-2V9H2zm5 3a1 1 0 011-1h4a1 1 0 110 2H8a1 1 0 01-1-1z"/></svg>
+              <input
+                  type="text"
+                  value={displayCodiMO}
+                  onChange={(e) => { if (!credencialesEnmascaradas) setCodiMO(e.target.value); }}
+                  readOnly={credencialesEnmascaradas}
+                  placeholder={lang === "es" ? "Tu código MO" : "El teu codi MO"}
+                  className="flex-1 text-sm bg-transparent outline-none text-dark-blue-grey placeholder-blue-grey/50"
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between mb-5">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  disabled={credencialesEnmascaradas}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="w-4 h-4 accent-main-green"
+              />
+              <span className="text-xs text-blue-grey">{lang === "es" ? "Recordarme" : "Recorda'm"}</span>
+            </label>
+            <a href="https://aplicacions.agricultura.gencat.cat/gtr/porci/AppJava/views/recuperarContrasenya.xhtml" target="_blank" rel="noopener noreferrer" className="text-xs text-main-green font-medium">
+              {lang === "es" ? "¿Olvidaste tu contraseña?" : "Has oblidat la teva contrasenya?"}
+            </a>
+          </div>
+
+          {errorMessage[state] && (
+              <div className="mb-4 px-3 py-2 bg-error-red-bg rounded-lg">
+                <p className="text-xs text-error-red text-center font-medium">{errorMessage[state]}</p>
+              </div>
+          )}
+
+          <button onClick={() => login(nif, password, codiMO, rememberMe)} disabled={isLoading || credencialesEnmascaradas} className="w-full bg-main-green text-white rounded-xl py-3 text-sm font-semibold disabled:opacity-50 transition-opacity mb-3 shadow-sm">
+            {isLoading ? loadingLabel : t("login.btn_login")}
+          </button>
+
+          {demoDisponible && (
+              <>
+                <div className="flex items-center gap-3 my-3">
+                  <div className="flex-1 h-px bg-surface-variant" />
+                  <span className="text-xs text-blue-grey shrink-0">o</span>
+                  <div className="flex-1 h-px bg-surface-variant" />
+                </div>
+                <button onClick={handleLoginDemo} disabled={isLoading} className="w-full flex items-center justify-center gap-2 border border-main-green text-main-green rounded-xl py-3 text-sm font-semibold disabled:opacity-50 transition-opacity hover:bg-main-green-bg">
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd"/></svg>
+                  {lang === "es" ? "Probar con cuenta demo" : "Prova amb compte demo"}
+                </button>
+              </>
+          )}
+        </div>
+
+        <p className="mt-6 text-xs text-blue-grey text-center">
+          © 2026 Terrabit. {lang === "es" ? "Gestión ganadera moderna y eficiente" : "Gestió ramadera moderna i eficient"}
+        </p>
+      </main>
   );
 }

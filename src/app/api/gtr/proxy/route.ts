@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { secureLog } from "@/lib/utils/secureLog";
 import { enforceRateLimit } from "@/lib/security/rateLimit";
 
-const GTR_BASE = "https://preproduccio.aplicacions.agricultura.gencat.cat/gtr/";
+// URLs del servidor de la Generalitat de Catalunya (GTR)
+const GTR_BASE_PROD = "https://aplicacions.agricultura.gencat.cat/gtr/";
+const GTR_BASE_PREPROD = "https://preproduccio.aplicacions.agricultura.gencat.cat/gtr/";
 
 const PROXY_RATE_LIMIT = { bucket: "gtr-proxy", max: 120, windowSec: 60 };
 
@@ -27,6 +29,9 @@ export async function GET(request: NextRequest) {
 
   const { searchParams } = new URL(request.url);
   const endpoint = searchParams.get("endpoint");
+
+  const env = request.cookies.get("terrabit_env")?.value || "prod";
+  const GTR_BASE = env === "preprod" ? GTR_BASE_PREPROD : GTR_BASE_PROD;
 
   if (!endpoint) {
     return NextResponse.json({ error: "Endpoint requerido" }, { status: 400 });
@@ -61,6 +66,9 @@ export async function PUT(request: NextRequest) {
 
   const { searchParams } = new URL(request.url);
   const endpoint = searchParams.get("endpoint");
+
+  const env = request.cookies.get("terrabit_env")?.value || "prod";
+  const GTR_BASE = env === "preprod" ? GTR_BASE_PREPROD : GTR_BASE_PROD;
 
   if (!endpoint) {
     return NextResponse.json({ error: "Endpoint requerido" }, { status: 400 });
