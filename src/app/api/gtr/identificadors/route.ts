@@ -2,7 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { secureLog, maskPartial } from "@/lib/utils/secureLog";
 import { enforceRateLimit } from "@/lib/security/rateLimit";
 
-const GTR_BASE = process.env.GTR_BASE_URL ?? "https://preproduccio.aplicacions.agricultura.gencat.cat/gtr/";
+// 1. Definimos las dos URLs base de la Generalitat
+const GTR_BASE_PROD = "https://aplicacions.agricultura.gencat.cat/gtr/";
+const GTR_BASE_PREPROD = "https://preproduccio.aplicacions.agricultura.gencat.cat/gtr/";
+
 const GTR_TIMEOUT_MS = 40_000;
 
 interface GtrErrorResponse {
@@ -23,6 +26,12 @@ async function parseResponse(response: Response): Promise<unknown> {
 }
 
 export async function POST(request: NextRequest) {
+  // ─── LEER ENTORNO DESDE LA COOKIE ───────────────────────────────
+  // Si no existe la cookie, por defecto irá a producción ("prod")
+  const env = request.cookies.get("terrabit_env")?.value || "prod";
+  const GTR_BASE = env === "preprod" ? GTR_BASE_PREPROD : GTR_BASE_PROD;
+  // ────────────────────────────────────────────────────────────────
+
   // ─── RATE LIMIT ─────────────────────────────────────────────────
   // 5 intentos de login por IP por minuto. Suficiente para usuarios
   // reales (incluso si fallan 2-3 veces escribiendo mal el password)
@@ -33,8 +42,6 @@ export async function POST(request: NextRequest) {
     windowSec: 60,
   });
   if (limited) return limited;
-  // ────────────────────────────────────────────────────────────────
-
   const startedAt = Date.now();
 
   let nif: string, passwordMobilitat: string, codiMO: string;
@@ -49,7 +56,6 @@ export async function POST(request: NextRequest) {
         { status: 400 }
     );
   }
-
   if (!nif || !passwordMobilitat || !codiMO) {
     secureLog.warn(`[LOGIN] Intento con datos incompletos — nif: ${maskPartial(nif ?? "")} | codiMO: ${maskPartial(codiMO ?? "")}`);
     return NextResponse.json(
@@ -58,7 +64,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  secureLog.info(`[LOGIN] Intento de validación — nif: ${maskPartial(nif)} | codiMO: ${maskPartial(codiMO)}`);
+  secureLog.info(`[LOGIN] Intento de validación (${env.toUpperCase()}) — nif: ${maskPartial(nif)} | codiMO: ${maskPartial(codiMO)}`);
 
   const url = new URL("WSBovi/AppJava/Bovi/WSIdentificadorsDisponibles", GTR_BASE);
   url.searchParams.set("nif", nif);
