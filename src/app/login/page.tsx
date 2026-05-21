@@ -107,7 +107,7 @@ export default function LoginPage() {
                   onClick={() => handleEntornoChange("prod")}
                   className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-colors ${
                       entorno === "prod"
-                          ? "bg-white text-dark-blue-grey shadow-sm"
+                          ? "bg-card text-dark-blue-grey shadow-sm" // <-- ¡Aquí está la magia del modo oscuro!
                           : "text-blue-grey hover:text-dark-blue-grey"
                   }`}
               >
@@ -130,7 +130,7 @@ export default function LoginPage() {
             {entorno === "preprod" && (
                 <div className="mt-3 p-3 bg-error-red/10 border border-error-red/20 rounded-xl animate-in fade-in slide-in-from-top-1">
                   <p className="text-[11px] text-error-red leading-snug font-medium text-justify">
-                    <strong>{lang === "es" ? "Atención:" : "Atenció:"}</strong>{" "}
+                    ⚠️ <strong>{lang === "es" ? "Atención:" : "Atenció:"}</strong>{" "}
                     {lang === "es"
                         ? "Estás en el entorno de pruebas. Los datos no son reales y necesitas credenciales específicas para este modo. Es muy probable que tu cuenta habitual no funcione. Cualquier dato introducido será ficticio."
                         : "Estàs a l'entorn de proves. Les dades no són reals i necessites credencials específiques per a aquest mode. És molt probable que el teu compte habitual no funcioni. Qualsevol dada introduïda serà fictícia."
