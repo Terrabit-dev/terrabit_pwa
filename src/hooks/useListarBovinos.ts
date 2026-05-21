@@ -37,13 +37,16 @@ export function useListarBovinos() {
     setError(null);
 
     try {
-      const params = new URLSearchParams({
-        nif:        credentials.nif,
-        password:   credentials.password,
-        explotacio: credentials.codiMO,
+      // Credenciales en el body (POST), nunca en la URL.
+      const response = await fetch("/api/gtr/bovinos/listar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nif: credentials.nif,
+          password: credentials.password,
+          explotacio: credentials.codiMO,
+        }),
       });
-
-      const response = await fetch(`/api/gtr/bovinos/listar?${params.toString()}`);
       if (!response.ok) throw new Error("network");
 
       const data: ListaBovinosResponse = await response.json();
@@ -65,10 +68,10 @@ export function useListarBovinos() {
     if (!busqueda.trim()) return lista;
     const q = busqueda.toLowerCase();
     return lista.filter(
-      (a) =>
-        a.identificador.toLowerCase().includes(q) ||
-        a.raza?.toLowerCase().includes(q) ||
-        a.identificadorMare?.toLowerCase().includes(q)
+        (a) =>
+            a.identificador.toLowerCase().includes(q) ||
+            a.raza?.toLowerCase().includes(q) ||
+            a.identificadorMare?.toLowerCase().includes(q)
     );
   }, []);
 

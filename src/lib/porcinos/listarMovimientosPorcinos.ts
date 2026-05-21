@@ -1,5 +1,6 @@
-import { getCredentials, getActiveCodiMO } from "@/lib/storage/credentials";
+import { getCredentials } from "@/lib/storage/credentials";
 import { secureLog } from "@/lib/utils/secureLogger";
+import { gtrQuery } from "@/lib/api/gtrClient";
 
 // ─── Tipos de la respuesta de Movimientos Porcinos ────────────────────────────
 export interface MovimientoPorcino {
@@ -10,8 +11,8 @@ export interface MovimientoPorcino {
     codiRemo:         string;
     categoria:        string;
     nombreAnimals:    string | number;
-    dataSortida:      string; // La API ya lo devuelve como "dd/MM/yyyy"
-    dataArribada:     string; // La API ya lo devuelve como "dd/MM/yyyy"
+    dataSortida:      string;
+    dataArribada:     string;
     codiAtes?:        string;
     nomTransportista?: string;
     matricula?:       string;
@@ -21,8 +22,8 @@ export interface MovimientoPorcino {
 // ─── Filtros del formulario ───────────────────────────────────────────────────
 export interface ListarMovimientosFiltros {
     moDesti:     string;
-    fechaDesde:  string; // "YYYY-MM-DD" desde el input HTML
-    fechaFins:   string; // "YYYY-MM-DD" desde el input HTML
+    fechaDesde:  string;
+    fechaFins:   string;
 }
 
 export const LISTAR_MOVIMIENTOS_FILTROS_INICIAL: ListarMovimientosFiltros = {
@@ -76,13 +77,13 @@ export async function consultarMovimientosPorcinos(filtros: ListarMovimientosFil
     const dataSortidaDesde = formatToApiRangeDate(filtros.fechaDesde, false);
     const dataSortidaFins = formatToApiRangeDate(filtros.fechaFins, true);
 
-    const params = new URLSearchParams({
+    const query = {
         nif: credentials.nif,
         password: credentials.password,
         moDesti: filtros.moDesti.trim().toUpperCase(),
         dataSortidaDesde,
         dataSortidaFins,
-    });
+    };
 
     secureLog.group("[GTR] WSObtenirMovimentPteConfirmar ←");
     secureLog.request("WSObtenirMovimentPteConfirmar", {
@@ -90,12 +91,7 @@ export async function consultarMovimientosPorcinos(filtros: ListarMovimientosFil
     });
 
     try {
-        const response = await fetch(
-            `/api/gtr/proxy?endpoint=${ENDPOINT}&${params.toString()}`,
-            { method: "GET" }
-        );
-
-        const raw = await response.text();
+        const { ok, status, raw } = await gtrQuery(ENDPOINT, query);
         let data: {
             codi?: string;
             llistat?: MovimientoPorcino[];
@@ -105,14 +101,14 @@ export async function consultarMovimientosPorcinos(filtros: ListarMovimientosFil
         try {
             data = raw ? JSON.parse(raw) : null;
         } catch {
-            return { exito: false, error: `Error ${response.status}: Resposta no processable` };
+            return { exito: false, error: `Error ${status}: Resposta no processable` };
         }
 
         secureLog.response(data ?? {});
         secureLog.groupEnd();
 
-        if (!response.ok) {
-            return { exito: false, error: `Error de servidor: ${response.status}` };
+        if (!ok) {
+            return { exito: false, error: `Error de servidor: ${status}` };
         }
 
         if (!data) return { exito: false, error: "Resposta buida" };

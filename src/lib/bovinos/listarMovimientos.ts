@@ -1,5 +1,6 @@
 import { getCredentials } from "@/lib/storage/credentials";
 import { secureLog } from "@/lib/utils/secureLogger";
+import { gtrQuery } from "@/lib/api/gtrClient";
 import {
     extraerDescripcion,
     displayToApiFormat,
@@ -75,12 +76,12 @@ export async function consultarMovimientosPendientes(
 
     const dataSortida = displayToApiFormat(filtros.fechaDisplay);
 
-    const params = new URLSearchParams({
+    const query = {
         nif:                  credentials.nif,
         passwordMobilitat:    credentials.password,
         explotacioDestinacio: filtros.explotacioDestinacio.trim(),
         dataSortida,
-    });
+    };
 
     secureLog.group("[GTR] WSConsultaConfirmacioMoviment ←");
     secureLog.request("WSConsultaConfirmacioMoviment", {
@@ -89,13 +90,8 @@ export async function consultarMovimientosPendientes(
     });
 
     try {
-        const response = await fetch(
-            `/api/gtr/proxy?endpoint=${ENDPOINT}&${params.toString()}`,
-            { method: "GET" }
-        );
-        secureLog.status(response.status, response.statusText);
-
-        const raw = await response.text();
+        const { ok, status, statusText, raw } = await gtrQuery(ENDPOINT, query);
+        secureLog.status(status, statusText);
 
         let data: MovimentsResponse = {};
         if (raw) {
@@ -104,15 +100,15 @@ export async function consultarMovimientosPendientes(
             } catch {
                 secureLog.error("Body no es JSON válido", raw);
                 secureLog.groupEnd();
-                return { exito: false, error: extraerDescripcion(raw, response.status) };
+                return { exito: false, error: extraerDescripcion(raw, status) };
             }
         }
 
         secureLog.response(data);
         secureLog.groupEnd();
 
-        if (!response.ok || (data.errors && data.errors.length > 0)) {
-            return { exito: false, error: extraerDescripcion(raw, response.status) };
+        if (!ok || (data.errors && data.errors.length > 0)) {
+            return { exito: false, error: extraerDescripcion(raw, status) };
         }
 
         return { exito: true, movimientos: data.moviments ?? [] };

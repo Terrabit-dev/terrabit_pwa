@@ -1,11 +1,12 @@
 import { getCredentials } from "@/lib/storage/credentials";
 import { getActiveCodiMO } from "@/lib/storage/credentials";
 import { secureLog } from "@/lib/utils/secureLogger";
+import { gtrQuery } from "@/lib/api/gtrClient";
 
 // ─── Tipos de la respuesta GTR ────────────────────────────────────────────────
 export interface Guia {
     codiTransportista:    string;
-    dataArribada:         string;   // "yyyymmddHHmm" tal cual del servidor
+    dataArribada:         string;
     dataSortida:          string;
     explotacioDestinacio: string;
     explotacioOrigen:     string;
@@ -26,7 +27,7 @@ interface GuiesResponse {
 // ─── Filtros del formulario ───────────────────────────────────────────────────
 export interface ListarGuiasFiltros {
     codiRega:     string;
-    fechaDisplay: string;   // "dd/MM/yyyy HH:mm" como el Android
+    fechaDisplay: string;
 }
 
 export const LISTAR_GUIAS_FILTROS_INICIAL: ListarGuiasFiltros = {
@@ -119,7 +120,7 @@ export function extraerDescripcion(rawJson: string, httpCode: number): string {
 export interface ConsultarGuiasResult {
     exito:  boolean;
     guias?: Guia[];
-    error?: string;   // mensaje ya listo para mostrar
+    error?: string;
 }
 
 const ENDPOINT = "WSBoviGuies/AppJava/guies/WSGuiaMobilitat";
@@ -133,25 +134,20 @@ export async function consultarGuias(filtros: ListarGuiasFiltros): Promise<Consu
 
     const dataSortida = displayToApiFormat(filtros.fechaDisplay);
 
-    const params = new URLSearchParams({
+    const query = {
         nif:               credentials.nif,
         passwordMobilitat: credentials.password,
         codiMo,
         codiRega:          filtros.codiRega.trim(),
         dataSortida,
-    });
+    };
 
     secureLog.group("[GTR] WSGuiaMobilitat ←");
     secureLog.request("WSGuiaMobilitat", { codiMo, codiRega: filtros.codiRega, dataSortida });
 
     try {
-        const response = await fetch(
-            `/api/gtr/proxy?endpoint=${ENDPOINT}&${params.toString()}`,
-            { method: "GET" }
-        );
-        secureLog.status(response.status, response.statusText);
-
-        const raw = await response.text();
+        const { ok, status, statusText, raw } = await gtrQuery(ENDPOINT, query);
+        secureLog.status(status, statusText);
 
         let data: GuiesResponse | null = null;
         try {
@@ -159,15 +155,15 @@ export async function consultarGuias(filtros: ListarGuiasFiltros): Promise<Consu
         } catch {
             secureLog.error("Body no es JSON válido", raw);
             secureLog.groupEnd();
-            return { exito: false, error: extraerDescripcion(raw, response.status) };
+            return { exito: false, error: extraerDescripcion(raw, status) };
         }
 
         secureLog.response(data ?? {});
         secureLog.groupEnd();
 
         // Error: status no OK, o body con errors/descripcio negativo
-        if (!response.ok || (data?.errors && data.errors.length > 0)) {
-            return { exito: false, error: extraerDescripcion(raw, response.status) };
+        if (!ok || (data?.errors && data.errors.length > 0)) {
+            return { exito: false, error: extraerDescripcion(raw, status) };
         }
 
         return { exito: true, guias: data?.guies ?? [] };

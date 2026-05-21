@@ -1,5 +1,6 @@
 import { getCredentials, getActiveCodiMO } from "@/lib/storage/credentials";
 import { secureLog } from "@/lib/utils/secureLogger";
+import { gtrQuery } from "@/lib/api/gtrClient";
 
 // ─── Tipos de la respuesta de Porcinos ────────────────────────────────────────
 export interface GuiaPorcino {
@@ -18,7 +19,7 @@ export interface GuiaPorcino {
 // ─── Filtros del formulario ───────────────────────────────────────────────────
 export interface ListarGuiasPorcinosFiltros {
     codiRega:     string;
-    fechaDisplay: string; // "dd/MM/yyyy HH:mm"
+    fechaDisplay: string;
 }
 
 export const LISTAR_GUIAS_PORCINOS_FILTROS_INICIAL: ListarGuiasPorcinosFiltros = {
@@ -86,44 +87,41 @@ export async function consultarGuiasPorcinos(filtros: ListarGuiasPorcinosFiltros
     const codiMo = getActiveCodiMO();
     const dataSortida = displayToApiFormat(filtros.fechaDisplay);
 
-    const params = new URLSearchParams({
+    const query = {
         nif: credentials.nif,
         password: credentials.password, // Nota: Porcinos usa 'password', no 'passwordMobilitat'
         codiMo: codiMo || "",
         codiRega: filtros.codiRega.trim().toUpperCase(),
         dataSortida,
-    });
+    };
 
     secureLog.group("[GTR] WSCarregaGuiesMobilitat ←");
     secureLog.request("WSCarregaGuiesMobilitat", { codiMo, codiRega: filtros.codiRega, dataSortida });
 
     try {
-        const response = await fetch(
-            `/api/gtr/proxy?endpoint=${ENDPOINT}&${params.toString()}`,
-            { method: "GET" }
-        );
+        const { ok, status, raw } = await gtrQuery(ENDPOINT, query);
 
-        const raw = await response.text();
-        let data: any = null;
+        let data: unknown = null;
 
         try {
             data = raw ? JSON.parse(raw) : null;
         } catch {
-            return { exito: false, error: `Error ${response.status}: Respuesta no procesable` };
+            return { exito: false, error: `Error ${status}: Respuesta no procesable` };
         }
 
         secureLog.response(data ?? {});
         secureLog.groupEnd();
 
-        if (!response.ok) {
-            return { exito: false, error: `Error de servidor: ${response.status}` };
+        if (!ok) {
+            return { exito: false, error: `Error de servidor: ${status}` };
         }
 
         // Parchear la respuesta de la API de Porcinos (Array directo)
         if (Array.isArray(data)) {
+            const arr = data as Array<Record<string, unknown>>;
             // Verificar si la primera posición es en realidad un error encubierto
-            if (data.length > 0 && data[0].codi && data[0].descripcio) {
-                return { exito: false, error: data[0].descripcio };
+            if (arr.length > 0 && arr[0].codi && arr[0].descripcio) {
+                return { exito: false, error: String(arr[0].descripcio) };
             }
             // Si no es un error, es nuestra lista de guías
             return { exito: true, guias: data as GuiaPorcino[] };
